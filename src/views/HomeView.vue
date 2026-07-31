@@ -774,7 +774,7 @@
               >
                 <Smartphone :size="16" /> {{ $t('home.reg_now') }}
               </button>
-              <button class="deals-btn-outline">{{ $t('home.learn_more') }}</button>
+              <button class="deals-btn-outline" @click="router.push('/deals')">{{ $t('home.learn_more') }}</button>
             </div>
           </div>
           <div class="deals-right">
