@@ -290,6 +290,9 @@ async function sendMessage() {
     })
     if (!response.ok) throw new Error('HTTP ' + response.status)
     const data = await response.json()
+    if (data.reply && import.meta.env.VITE_API_BASE_URL) {
+      data.reply = data.reply.replaceAll('http://localhost:8088', import.meta.env.VITE_API_BASE_URL)
+    }
     
     // Extract room suggestions
     const rids = extractRoomIds(data.reply)
