@@ -450,12 +450,7 @@
             <tr v-for="usr in filteredUsers" :key="usr.id">
               <td>#{{ usr.id }}</td>
               <td><strong>{{ usr.fullName }}</strong></td>
-              <td>
-                <div>{{ usr.email }}</div>
-                <small v-if="usr.phone" style="display: block; color: #64748b; margin-top: 4px; font-weight: 500;">
-                  {{ usr.phone }}
-                </small>
-              </td>
+              <td>{{ usr.email }}</td>
               <td>
                 <span class="role-badge" :class="usr.role.toLowerCase()">
                   {{ usr.role === 'CUSTOMER' ? $t('admin.role_customer') : usr.role === 'HOST' ? $t('admin.role_host') : $t('admin.role_admin') }}
@@ -508,6 +503,13 @@
                     <option value="HOST">HOST ({{ $t('admin.role_host') }})</option>
                     <option value="ADMIN">ADMIN ({{ $t('admin.role_admin') }})</option>
                   </select>
+                  <button
+                      class="btn-table-view"
+                      @click="openUserDetail(usr)"
+                      :title="locale === 'en' ? 'View Details' : 'Xem chi tiết'"
+                  >
+                    <Eye :size="14" /> {{ locale === 'en' ? 'Details' : 'Chi tiết' }}
+                  </button>
                   <button
                       v-if="usr.active"
                       class="btn-table-lock"
@@ -1004,6 +1006,53 @@
       </div>
     </div>
 
+    <!-- USER DETAIL MODAL -->
+    <div class="modal-backdrop" v-if="showUserDetailModal" @click.self="showUserDetailModal = false">
+      <div class="room-modal user-detail-modal" style="max-width: 480px;">
+        <div class="modal-header">
+          <h2>{{ locale === 'en' ? 'User Account Details' : 'Chi tiết tài khoản người dùng' }} #{{ selectedUserDetail?.id }}</h2>
+          <button class="btn-close" @click="showUserDetailModal = false">×</button>
+        </div>
+        <div class="modal-form user-detail-body" style="padding: 20px;">
+          <div class="detail-section">
+            <div class="detail-grid" style="display: flex; flex-direction: column; gap: 14px;">
+              <div class="detail-item" style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                <span class="label" style="font-weight: 600; color: #64748b;">{{ locale === 'en' ? 'Full Name' : 'Họ và tên' }}</span>
+                <span class="value" style="font-weight: 700; color: #1e293b;">{{ selectedUserDetail?.fullName }}</span>
+              </div>
+              <div class="detail-item" style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                <span class="label" style="font-weight: 600; color: #64748b;">{{ locale === 'en' ? 'Email Address' : 'Email tài khoản' }}</span>
+                <span class="value" style="font-weight: 600; color: #3b82f6;">{{ selectedUserDetail?.email }}</span>
+              </div>
+              <div class="detail-item" style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                <span class="label" style="font-weight: 600; color: #64748b;">{{ locale === 'en' ? 'Phone Number' : 'Số điện thoại' }}</span>
+                <span class="value" style="font-weight: 700; color: #1e293b;">{{ selectedUserDetail?.phone || (locale === 'en' ? 'Not updated' : 'Chưa cập nhật') }}</span>
+              </div>
+              <div class="detail-item" style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                <span class="label" style="font-weight: 600; color: #64748b;">{{ locale === 'en' ? 'Role' : 'Vai trò (Quyền)' }}</span>
+                <span class="value">
+                  <span class="role-badge" :class="selectedUserDetail?.role.toLowerCase()">
+                    {{ selectedUserDetail?.role }}
+                  </span>
+                </span>
+              </div>
+              <div class="detail-item" style="display: flex; justify-content: space-between; padding-bottom: 8px;">
+                <span class="label" style="font-weight: 600; color: #64748b;">{{ locale === 'en' ? 'Account Status' : 'Trạng thái hoạt động' }}</span>
+                <span class="value">
+                  <span class="status-badge-dot" :class="selectedUserDetail?.active ? 'active' : 'inactive'">
+                    {{ selectedUserDetail?.active ? $t('admin.status_active') : $t('admin.status_locked') }}
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; border-top: 1px solid #e2e8f0;">
+          <button class="btn-cancel" @click="showUserDetailModal = false">{{ locale === 'en' ? 'Close' : 'Đóng' }}</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast notification -->
     <Transition name="toast-slide">
       <div class="toast" :class="toast.type" v-if="toast.show">
@@ -1232,6 +1281,15 @@ const selectedBooking = ref(null)
 const openBookingDetail = (booking) => {
   selectedBooking.value = booking
   showBookingDetailModal.value = true
+}
+
+// User detail modal state
+const showUserDetailModal = ref(false)
+const selectedUserDetail = ref(null)
+
+const openUserDetail = (usr) => {
+  selectedUserDetail.value = usr
+  showUserDetailModal.value = true
 }
 
 const formatPrice = (p) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)
