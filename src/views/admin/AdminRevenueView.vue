@@ -86,9 +86,9 @@
           <div class="filter-box">
             <label for="mode-select" style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">{{ locale === 'vi' ? 'Kiểu báo cáo' : 'Report Type' }}</label>
             <select id="mode-select" v-model="filterMode" @change="handleModeChange" class="select-input" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; color: #334155;">
-              <option value="ALL_TIME">{{ locale === 'vi' ? 'Từ xưa đến nay' : 'All-time' }}</option>
+              <option value="ALL_TIME">{{ locale === 'vi' ? 'Từ trước đến nay' : 'All-time' }}</option>
               <option value="BY_YEAR">{{ locale === 'vi' ? 'Theo năm' : 'By Year' }}</option>
-              <option value="CUSTOM_RANGE">{{ locale === 'vi' ? 'Khoảng thời gian tự chọn' : 'Custom Range' }}</option>
+              <option value="CUSTOM_RANGE">{{ locale === 'vi' ? 'Khoảng thời gian tùy chọn' : 'Custom Range' }}</option>
             </select>
           </div>
 
