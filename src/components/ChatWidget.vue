@@ -282,7 +282,10 @@ async function sendMessage() {
     const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088'
     const response = await fetch(`${backendUrl}/api/chatbot/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+      },
       body: JSON.stringify({ message: text, history, lang: locale.value })
     })
     if (!response.ok) throw new Error('HTTP ' + response.status)

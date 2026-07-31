@@ -8,6 +8,7 @@ const instance = axios.create({
 // Tự động đính kèm token vào mỗi request
 instance.interceptors.request.use(
     (config) => {
+        config.headers['ngrok-skip-browser-warning'] = 'true'
         const token = localStorage.getItem('token')
         if (token) {
             config.headers.Authorization = `Bearer ${token}`
