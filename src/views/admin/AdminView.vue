@@ -220,11 +220,22 @@
         </div>
         <!-- TAB 1: ALL BOOKINGS LIST -->
         <div v-if="activeTab === 'bookings'">
-          <div class="tab-header">
+          <div class="tab-header" style="margin-bottom: 12px;">
             <h2>{{ $t('admin.bookings_tab_title') }}</h2>
           </div>
 
-        <div class="table-container" v-if="allBookings.length > 0">
+          <!-- Transaction Search Bar -->
+          <div class="search-bar-row" style="margin-bottom: 20px; display: flex; gap: 12px; align-items: center;">
+            <input 
+              type="text" 
+              v-model="bookingSearchQuery" 
+              :placeholder="locale === 'en' ? 'Search by ID, guest, room, status...' : 'Tìm kiếm theo Mã đơn, tên khách, tên phòng, trạng thái...'" 
+              class="search-input" 
+              style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; width: 100%; max-width: 420px; font-weight: 500; outline: none; transition: border 0.2s;"
+            />
+          </div>
+
+        <div class="table-container" v-if="filteredBookings.length > 0">
           <table class="admin-table">
             <thead>
             <tr>
@@ -238,8 +249,14 @@
             </tr>
             </thead>
             <tbody>
-            <tr v-for="bk in allBookings" :key="bk.id" @click="openBookingDetail(bk)" class="clickable-row">
-              <td><strong>#{{ bk.id }}</strong></td>
+            <tr v-for="bk in filteredBookings" :key="bk.id" @click="openBookingDetail(bk)" class="clickable-row">
+              <td>
+                <strong>#{{ bk.id }}</strong>
+                <div v-if="bk.createdAt" style="margin-top: 6px; font-size: 11px; color: #64748b; font-weight: 500; line-height: 1.3;">
+                  {{ locale === 'vi' ? 'Đặt lúc:' : 'Booked at:' }}
+                  <span style="display: block; font-weight: 600; color: #475569; margin-top: 1px;">{{ formatDateTime(bk.createdAt) }}</span>
+                </div>
+              </td>
               <td>
                 <div class="table-room-info">
                   <img :src="bk.roomImage" class="table-room-img" />
@@ -290,8 +307,8 @@
 
         <div class="empty-state" v-else>
           <FileText :size="48" class="color-gray" />
-          <h3>{{ $t('admin.empty_bookings') }}</h3>
-          <p>{{ $t('admin.empty_bookings_desc') }}</p>
+          <h3>{{ bookingSearchQuery ? (locale === 'en' ? 'No matching bookings found' : 'Không tìm thấy giao dịch phù hợp') : $t('admin.empty_bookings') }}</h3>
+          <p>{{ bookingSearchQuery ? (locale === 'en' ? 'Try adjusting your search query.' : 'Vui lòng thử lại với từ khóa khác.') : $t('admin.empty_bookings_desc') }}</p>
         </div>
       </div>
 
@@ -958,11 +975,26 @@ const resetCommission = async (usr) => {
 
 const stats = ref(null)
 const allBookings = ref([])
+const bookingSearchQuery = ref('')
 const usersList = ref([])
 const roomsList = ref([])
 const paymentsList = ref([])
 const reviewsList = ref([])
 const activeTab = ref('dashboard')
+
+const filteredBookings = computed(() => {
+  if (!bookingSearchQuery.value || bookingSearchQuery.value.trim() === '') {
+    return allBookings.value
+  }
+  const query = bookingSearchQuery.value.toLowerCase().trim()
+  return allBookings.value.filter(bk => {
+    const idMatch = bk.id?.toString().includes(query)
+    const guestMatch = bk.guestName?.toLowerCase().includes(query) || bk.guestEmail?.toLowerCase().includes(query) || bk.guestPhone?.includes(query)
+    const roomMatch = bk.roomName?.toLowerCase().includes(query) || bk.city?.toLowerCase().includes(query)
+    const statusMatch = getStatusLabel(bk.status)?.toLowerCase().includes(query) || bk.status?.toLowerCase().includes(query)
+    return idMatch || guestMatch || roomMatch || statusMatch
+  })
+})
 
 const todayDateLabel = computed(() => {
   const localeCode = locale.value === 'en' ? 'en-US' : 'vi-VN'
