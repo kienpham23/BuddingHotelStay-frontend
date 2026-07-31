@@ -279,7 +279,8 @@ async function sendMessage() {
   isTyping.value = true
 
   try {
-    const response = await fetch('http://localhost:8088/api/chatbot/chat', {
+    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088'
+    const response = await fetch(`${backendUrl}/api/chatbot/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: text, history, lang: locale.value })

@@ -382,7 +382,8 @@ const toastStore = useToastStore()
 const { t } = useI18n()
 
 const redirectToGoogle = () => {
-  window.location.href = 'http://localhost:8088/oauth2/authorization/google'
+  const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088'
+  window.location.href = `${backendUrl}/oauth2/authorization/google`
 }
 
 // Props & emits
