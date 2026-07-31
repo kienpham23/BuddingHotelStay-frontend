@@ -654,11 +654,62 @@
 
       <!-- TAB 5: REVIEWS MANAGEMENT -->
       <div v-if="activeTab === 'reviews'">
-        <div class="tab-header">
+        <div class="tab-header" style="margin-bottom: 12px;">
           <h2>{{ $t('admin.reviews_tab_title') }}</h2>
         </div>
 
-        <div class="table-container" v-if="reviewsList.length > 0">
+        <!-- Rating Star Filter Tabs -->
+        <div class="rating-filter-row" style="margin-bottom: 20px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <!-- ALL -->
+          <button 
+            type="button" 
+            @click="starFilter = 'ALL'"
+            :style="{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: 'none',
+              fontWeight: '600',
+              fontSize: '13px',
+              background: starFilter === 'ALL' ? '#5392f9' : '#f1f5f9',
+              color: starFilter === 'ALL' ? 'white' : '#475569',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: starFilter === 'ALL' ? '0 3px 8px rgba(83, 146, 249, 0.25)' : 'none'
+            }"
+          >
+            {{ locale === 'en' ? 'All' : 'Tất cả' }} ({{ reviewsList.length }})
+          </button>
+          
+          <!-- STAR BUTTONS -->
+          <button 
+            v-for="star in [5, 4, 3, 2, 1]" 
+            :key="star"
+            type="button" 
+            @click="starFilter = star"
+            :style="{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: 'none',
+              fontWeight: '600',
+              fontSize: '13px',
+              background: starFilter === star ? '#ffb703' : '#f1f5f9',
+              color: starFilter === star ? '#0f172a' : '#475569',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              boxShadow: starFilter === star ? '0 3px 8px rgba(255, 183, 3, 0.35)' : 'none'
+            }"
+          >
+            {{ star }} <Star :size="13" :fill="starFilter === star ? '#0f172a' : '#64748b'" :color="starFilter === star ? '#0f172a' : '#64748b'" style="margin-bottom: 1px;" /> ({{ countReviewsByStar(star) }})
+          </button>
+        </div>
+
+        <div class="table-container" v-if="filteredReviews.length > 0">
           <table class="admin-table">
             <thead>
             <tr>
@@ -672,7 +723,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr v-for="rv in reviewsList" :key="rv.id">
+            <tr v-for="rv in filteredReviews" :key="rv.id">
               <td><strong>#{{ rv.id }}</strong></td>
               <td><strong>{{ rv.customerName }}</strong></td>
               <td><span class="room-name-cell" style="font-weight:600; color:#334155">{{ rv.roomName }}</span></td>
@@ -695,8 +746,8 @@
 
         <div class="empty-state" v-else>
           <MessageSquare :size="48" class="color-gray" />
-          <h3>{{ $t('admin.empty_reviews') }}</h3>
-          <p>{{ $t('admin.empty_reviews_desc') }}</p>
+          <h3>{{ starFilter !== 'ALL' ? (locale === 'en' ? 'No matching reviews found' : 'Không có đánh giá nào tương ứng') : $t('admin.empty_reviews') }}</h3>
+          <p>{{ starFilter !== 'ALL' ? (locale === 'en' ? 'Try selecting another star rating.' : 'Vui lòng chọn mức đánh giá sao khác.') : $t('admin.empty_reviews_desc') }}</p>
         </div>
       </div>
     </main>
@@ -1158,7 +1209,19 @@ const userRoleFilter = ref('ALL') // 'ALL' | 'CUSTOMER' | 'HOST' | 'ADMIN'
 const roomsList = ref([])
 const paymentsList = ref([])
 const reviewsList = ref([])
+const starFilter = ref('ALL') // 'ALL' | 5 | 4 | 3 | 2 | 1
 const activeTab = ref('dashboard')
+
+const countReviewsByStar = (star) => {
+  return reviewsList.value.filter(rv => Math.round(rv.rating) === star).length
+}
+
+const filteredReviews = computed(() => {
+  if (starFilter.value === 'ALL') {
+    return reviewsList.value
+  }
+  return reviewsList.value.filter(rv => Math.round(rv.rating) === starFilter.value)
+})
 
 const countUsersByRole = (role) => {
   return usersList.value.filter(u => u.role === role).length
