@@ -346,11 +346,94 @@
 
       <!-- TAB 2: USER MANAGEMENT -->
       <div v-if="activeTab === 'users'">
-        <div class="tab-header">
+        <div class="tab-header" style="margin-bottom: 12px;">
           <h2>{{ $t('admin.users_tab_title') }}</h2>
         </div>
 
-        <div class="table-container" v-if="usersList.length > 0">
+        <!-- User Role Filter Tabs -->
+        <div class="user-role-filter-row" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+          <!-- ALL -->
+          <button 
+            type="button" 
+            @click="userRoleFilter = 'ALL'"
+            :style="{
+              padding: '8px 18px',
+              borderRadius: '20px',
+              border: 'none',
+              fontWeight: '600',
+              fontSize: '13.5px',
+              background: userRoleFilter === 'ALL' ? '#5392f9' : '#f1f5f9',
+              color: userRoleFilter === 'ALL' ? 'white' : '#475569',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: userRoleFilter === 'ALL' ? '0 4px 10px rgba(83, 146, 249, 0.3)' : 'none'
+            }"
+          >
+            {{ locale === 'en' ? 'All' : 'Tất cả' }} ({{ usersList.length }})
+          </button>
+
+          <!-- CUSTOMER -->
+          <button 
+            type="button" 
+            @click="userRoleFilter = 'CUSTOMER'"
+            :style="{
+              padding: '8px 18px',
+              borderRadius: '20px',
+              border: 'none',
+              fontWeight: '600',
+              fontSize: '13.5px',
+              background: userRoleFilter === 'CUSTOMER' ? '#10b981' : '#f1f5f9',
+              color: userRoleFilter === 'CUSTOMER' ? 'white' : '#475569',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: userRoleFilter === 'CUSTOMER' ? '0 4px 10px rgba(16, 185, 129, 0.3)' : 'none'
+            }"
+          >
+            {{ $t('admin.role_customer') }} ({{ countUsersByRole('CUSTOMER') }})
+          </button>
+
+          <!-- HOST -->
+          <button 
+            type="button" 
+            @click="userRoleFilter = 'HOST'"
+            :style="{
+              padding: '8px 18px',
+              borderRadius: '20px',
+              border: 'none',
+              fontWeight: '600',
+              fontSize: '13.5px',
+              background: userRoleFilter === 'HOST' ? '#f59e0b' : '#f1f5f9',
+              color: userRoleFilter === 'HOST' ? 'white' : '#475569',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: userRoleFilter === 'HOST' ? '0 4px 10px rgba(245, 158, 11, 0.3)' : 'none'
+            }"
+          >
+            {{ $t('admin.role_host') }} ({{ countUsersByRole('HOST') }})
+          </button>
+
+          <!-- ADMIN -->
+          <button 
+            type="button" 
+            @click="userRoleFilter = 'ADMIN'"
+            :style="{
+              padding: '8px 18px',
+              borderRadius: '20px',
+              border: 'none',
+              fontWeight: '600',
+              fontSize: '13.5px',
+              background: userRoleFilter === 'ADMIN' ? '#ef4444' : '#f1f5f9',
+              color: userRoleFilter === 'ADMIN' ? 'white' : '#475569',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: userRoleFilter === 'ADMIN' ? '0 4px 10px rgba(239, 68, 68, 0.3)' : 'none'
+            }"
+          >
+            {{ $t('admin.role_admin') }} ({{ countUsersByRole('ADMIN') }})
+          </button>
+        </div>
+
+        <div class="table-container" v-if="filteredUsers.length > 0">
           <table class="admin-table">
             <thead>
             <tr>
@@ -364,7 +447,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr v-for="usr in usersList" :key="usr.id">
+            <tr v-for="usr in filteredUsers" :key="usr.id">
               <td>#{{ usr.id }}</td>
               <td><strong>{{ usr.fullName }}</strong></td>
               <td>{{ usr.email }}</td>
@@ -441,6 +524,12 @@
             </tr>
             </tbody>
           </table>
+        </div>
+
+        <div class="empty-state" v-else>
+          <Users :size="48" class="color-gray" />
+          <h3>{{ locale === 'en' ? 'No accounts found' : 'Không tìm thấy tài khoản nào' }}</h3>
+          <p>{{ locale === 'en' ? 'There are no accounts matching the selected role.' : 'Không tìm thấy tài khoản nào phù hợp với vai trò đã chọn.' }}</p>
         </div>
       </div>
 
@@ -1011,10 +1100,22 @@ const bookingSearchQuery = ref('')
 const bookingStartDate = ref('')
 const bookingEndDate = ref('')
 const usersList = ref([])
+const userRoleFilter = ref('ALL') // 'ALL' | 'CUSTOMER' | 'HOST' | 'ADMIN'
 const roomsList = ref([])
 const paymentsList = ref([])
 const reviewsList = ref([])
 const activeTab = ref('dashboard')
+
+const countUsersByRole = (role) => {
+  return usersList.value.filter(u => u.role === role).length
+}
+
+const filteredUsers = computed(() => {
+  if (userRoleFilter.value === 'ALL') {
+    return usersList.value
+  }
+  return usersList.value.filter(u => u.role === userRoleFilter.value)
+})
 
 const resetBookingFilters = () => {
   bookingSearchQuery.value = ''
