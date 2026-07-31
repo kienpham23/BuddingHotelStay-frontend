@@ -281,10 +281,24 @@
                 {{ bookingError }}
               </div>
 
+              <!-- LOGIN WARNING NOTICE -->
+              <div v-if="!authStore.isLoggedIn" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: flex-start; gap: 10px; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <Info :size="16" style="color: #d97706; margin-top: 2px; flex-shrink: 0;" />
+                <span style="font-size: 13px; font-weight: 600; color: #b45309; line-height: 1.45;">
+                  {{ locale === 'vi' ? 'Bạn cần đăng nhập trước khi tiến hành đặt phòng này.' : 'You need to log in before booking this room.' }}
+                </span>
+              </div>
+
               <!-- BUTTON -->
-              <button type="submit" class="btn-book-now" :disabled="bookingLoading || !!bookingError || nights <= 0">
+              <button 
+                type="submit" 
+                class="btn-book-now" 
+                :disabled="authStore.isLoggedIn && (bookingLoading || !!bookingError || nights <= 0)"
+              >
                 <Lock :size="16" v-if="!bookingLoading" />
-                <span v-if="!bookingLoading">{{ locale === 'vi' ? 'Xác nhận đặt phòng' : 'Confirm booking' }}</span>
+                <span v-if="!bookingLoading">
+                  {{ authStore.isLoggedIn ? (locale === 'vi' ? 'Xác nhận đặt phòng' : 'Confirm booking') : (locale === 'vi' ? 'Đăng nhập để đặt phòng' : 'Log in to book') }}
+                </span>
                 <span v-else class="spinner-small"></span>
               </button>
             </form>
