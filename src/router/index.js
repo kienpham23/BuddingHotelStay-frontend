@@ -77,12 +77,32 @@ router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('token')
     const role = localStorage.getItem('role')
 
+    if (token) {
+        if (role === 'ADMIN') {
+            const isAdminRoute = to.path.startsWith('/admin')
+            const isOauthRoute = to.path.startsWith('/oauth2')
+            if (!isAdminRoute && !isOauthRoute) {
+                return next('/admin')
+            }
+        } else if (role === 'HOST') {
+            const isHostRoute = to.path.startsWith('/host')
+            const isOauthRoute = to.path.startsWith('/oauth2')
+            if (!isHostRoute && !isOauthRoute) {
+                return next('/host/rooms')
+            }
+        }
+    }
+
     if (to.meta.requiresAuth && !token) {
         next('/login')
-    } else if (to.path === '/bookings' && role === 'ADMIN') {
-        next('/admin')
     } else if (to.meta.role && to.meta.role !== role) {
-        next('/')
+        if (role === 'ADMIN') {
+            next('/admin')
+        } else if (role === 'HOST') {
+            next('/host/rooms')
+        } else {
+            next('/')
+        }
     } else {
         next()
     }

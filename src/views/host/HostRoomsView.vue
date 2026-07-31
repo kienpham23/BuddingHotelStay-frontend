@@ -3,7 +3,7 @@
     <!-- SIDEBAR -->
     <aside class="host-sidebar">
       <div class="sidebar-logo">
-        <RouterLink to="/" class="logo">
+        <RouterLink to="/host/rooms" class="logo" @click="activeSidebarTab = 'dashboard'">
           <svg class="logo-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22" style="width: 22px; height: 22px; flex-shrink: 0; margin-right: 6px;">
             <path d="M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h6M9 11h6M9 15h6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -63,7 +63,7 @@
 
       <!-- Sidebar Footer -->
       <div class="sidebar-footer">
-        <RouterLink to="/" class="sidebar-link">
+        <RouterLink to="/host/rooms" class="sidebar-link" @click="activeSidebarTab = 'dashboard'">
           <Home :size="16" />
           <span>{{ $t('host.sidebar.back_home') }}</span>
         </RouterLink>
@@ -902,7 +902,7 @@ import {
   Building2, FileText, DollarSign, Hotel, Users,
   Plus, MapPin, Star, Edit2, Trash2, Check, X,
   UploadCloud, Loader2, RefreshCw, UserCheck, CalendarCheck, BedDouble,
-  LayoutDashboard, BarChart3, PieChart, Award, LogOut, Home
+  LayoutDashboard, BarChart3, PieChart, Award, LogOut, Home, Wallet
 } from 'lucide-vue-next'
 import ExcelDataPanel from '../../components/host/ExcelDataPanel.vue'
 import { getMyInvoices, payInvoice } from '../../api/invoices'

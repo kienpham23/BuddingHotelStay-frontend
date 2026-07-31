@@ -11,6 +11,11 @@ import ToastContainer from './components/common/ToastContainer.vue'
 </script>
 
 <style>
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
 .header-lang-selector-dropdown {
   position: relative;
   display: inline-block;

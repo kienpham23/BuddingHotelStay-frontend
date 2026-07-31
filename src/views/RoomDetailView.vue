@@ -735,6 +735,12 @@ body { font-family: 'Inter', sans-serif; color: #1e293b; background: #f8f9fc; }
   .highlights-grid { grid-template-columns: 1fr; }
   .rating-summary { flex-direction: column; gap: 1.5rem; text-align: center; }
   .rating-big-box { border-right: none; border-bottom: 1px solid #e2e8f0; padding-right: 0; padding-bottom: 1.5rem; width: 100%; }
+  
+  /* Header responsive */
+  .header-lang-selector-dropdown { display: none !important; }
+  .logo { font-size: 1.15rem; }
+  .btn-back { font-size: 0.8rem; }
+  .btn-outline { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
 }
 
 .header-lang-selector {

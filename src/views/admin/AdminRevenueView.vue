@@ -4,7 +4,7 @@
     <header class="header">
       <div class="container">
         <div class="header-left">
-          <RouterLink to="/" class="logo">
+          <RouterLink to="/admin" class="logo">
             <svg class="logo-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22" style="width: 22px; height: 22px; flex-shrink: 0; margin-right: 6px;">
               <path d="M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h6M9 11h6M9 15h6" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>

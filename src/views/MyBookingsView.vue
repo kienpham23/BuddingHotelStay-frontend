@@ -1561,6 +1561,12 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
     height: auto;
     min-height: 130px;
   }
+  
+  /* Header responsive */
+  .header-lang-selector-dropdown { display: none !important; }
+  .logo { font-size: 1.15rem; }
+  .btn-back { font-size: 0.8rem; }
+  .btn-outline { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
 }
 .btn-view-review {
   display: flex;

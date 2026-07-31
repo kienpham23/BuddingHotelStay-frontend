@@ -206,11 +206,30 @@ function toggleChat() {
 }
 
 function scrollToBottom() {
-  if (!messagesRef.value) return
-  messagesRef.value.scrollTo({ top: messagesRef.value.scrollHeight, behavior: 'smooth' })
+  const container = messagesRef.value
+  if (!container) return
+  
+  const msgWrappers = container.querySelectorAll('.msg-row-wrap')
+  if (msgWrappers.length > 0) {
+    const lastMsg = msgWrappers[msgWrappers.length - 1]
+    const containerHeight = container.clientHeight
+    const msgHeight = lastMsg.offsetHeight
+    const msgOffsetTop = lastMsg.offsetTop
+
+    // Nếu tin nhắn cuối cùng (bao gồm cả các card phòng gợi ý) cao hơn khung chat,
+    // cuộn sao cho phần đầu của tin nhắn đó hiển thị ngay trên đầu khung chat.
+    // Ngược lại, cuộn hết xuống dưới cùng như bình thường.
+    if (msgHeight > containerHeight) {
+      container.scrollTo({ top: msgOffsetTop - 10, behavior: 'smooth' })
+    } else {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+    }
+  } else {
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+  }
 }
 
-watch([messages, isTyping], () => { nextTick(scrollToBottom) }, { deep: true })
+watch([messages, isTyping, roomDetailsMap], () => { nextTick(scrollToBottom) }, { deep: true })
 
 function autoResize() {
   const el = inputRef.value
@@ -279,26 +298,37 @@ async function sendMessage() {
   isTyping.value = true
 
   try {
-    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088'
-    const response = await fetch(`${backendUrl}/api/chatbot/chat`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true'
-      },
-      body: JSON.stringify({ message: text, history, lang: locale.value })
+    const response = await axios.post('/chatbot/chat', {
+      message: text,
+      history,
+      lang: locale.value
     })
-    if (!response.ok) throw new Error('HTTP ' + response.status)
-    const data = await response.json()
-    if (data.reply && import.meta.env.VITE_API_BASE_URL) {
-      data.reply = data.reply.replaceAll('http://localhost:8088', import.meta.env.VITE_API_BASE_URL)
-    }
+    const data = response.data
     
-    // Extract room suggestions
-    const rids = extractRoomIds(data.reply)
+    // Trích xuất các ID phòng từ thẻ định dạng [IDS: 9, 1, 7] và làm sạch nội dung hiển thị
+    const ids = new Set()
+    let cleanReply = data.reply || ''
+    const idsRegex = /\[IDS:\s*([\d\s,]+)\]/i
+    const matchIds = idsRegex.exec(cleanReply)
+
+    if (matchIds) {
+      const numStr = matchIds[1]
+      numStr.split(',').forEach(s => {
+        const val = parseInt(s.trim())
+        if (!isNaN(val)) ids.add(val)
+      })
+      // Xoá thẻ [IDS: ...] khỏi câu trả lời hiển thị cho đẹp
+      cleanReply = cleanReply.replace(idsRegex, '').trim()
+    } else {
+      // Hỗ trợ dự phòng nếu model quên định dạng mới (quét qua regex cũ)
+      const rids = extractRoomIds(cleanReply)
+      rids.forEach(rid => ids.add(rid))
+    }
+
+    const rids = Array.from(ids)
     messages.value.push({ 
       role: 'model', 
-      content: data.reply,
+      content: cleanReply,
       roomIds: rids
     })
     
@@ -389,6 +419,7 @@ async function sendMessage() {
   flex:1; overflow-y:auto; padding:16px 14px;
   display:flex; flex-direction:column; gap:10px;
   background:linear-gradient(180deg,#f7f9ff 0%,#fff 60%);
+  position: relative;
 }
 .chat-messages::-webkit-scrollbar { width:4px; }
 .chat-messages::-webkit-scrollbar-thumb { background:#e4e6ea; border-radius:4px; }

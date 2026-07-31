@@ -75,7 +75,12 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
-        logout() {
+        async logout() {
+            try {
+                axios.post('/auth/logout')
+            } catch (e) {
+                console.error("Backend logout failed:", e)
+            }
             this.token = null
             this.user = null
             localStorage.removeItem('token')

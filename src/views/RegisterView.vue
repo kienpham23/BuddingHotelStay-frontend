@@ -166,7 +166,7 @@ const handleRegister = async () => {
 
 const redirectToGoogle = () => {
   const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088'
-  window.location.href = `${backendUrl}/oauth2/authorization/google`
+  window.location.href = `${backendUrl}/api/auth/oauth2/initiate?role=CUSTOMER`
 }
 </script>
 

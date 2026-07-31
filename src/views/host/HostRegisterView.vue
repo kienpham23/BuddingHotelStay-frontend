@@ -20,7 +20,14 @@
           </RouterLink>
           
           <div class="hero-text-group">
-            <h2 class="benefits-title">{{ locale === 'vi' ? 'Trở thành chủ nhà trên Building Hotel Stay' : 'Become a Host on Building Hotel Stay' }}</h2>
+            <h2 class="benefits-title">
+              <template v-if="locale === 'vi'">
+                Trở thành chủ nhà trên <span class="brand-blue">Building Hotel Stay</span>
+              </template>
+              <template v-else>
+                Become a Host on <span class="brand-blue">Building Hotel Stay</span>
+              </template>
+            </h2>
             <p class="benefits-subtitle">{{ locale === 'vi' ? 'Kiếm tiền từ không gian trống của bạn và kết nối với hàng triệu khách du lịch toàn cầu.' : 'Earn money from your spare space and connect with millions of global travelers.' }}</p>
           </div>
 
@@ -250,7 +257,7 @@ const handleRegister = async () => {
 
 const redirectToGoogle = () => {
   const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088'
-  window.location.href = `${backendUrl}/oauth2/authorization/google`
+  window.location.href = `${backendUrl}/api/auth/oauth2/initiate?role=HOST`
 }
 </script>
 
@@ -346,6 +353,11 @@ const redirectToGoogle = () => {
   font-weight: 800;
   line-height: 1.25;
   margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+.benefits-title .brand-blue {
+  color: #3b82f6;
 }
 
 .benefits-subtitle {

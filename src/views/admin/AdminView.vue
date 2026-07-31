@@ -7,7 +7,7 @@
     <!-- SIDEBAR -->
     <aside class="admin-sidebar">
       <div class="sidebar-logo">
-        <RouterLink to="/" class="logo">
+        <RouterLink to="/admin" class="logo" @click="activeTab = 'dashboard'">
           <svg class="logo-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
             <path d="M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h6M9 11h6M9 15h6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -94,7 +94,7 @@
 
       <!-- Sidebar Footer -->
       <div class="sidebar-footer">
-        <RouterLink to="/" class="sidebar-link">
+        <RouterLink to="/admin" class="sidebar-link" @click="activeTab = 'dashboard'">
           <Home :size="16" />
           <span>{{ $t('admin.back_home') }}</span>
         </RouterLink>
