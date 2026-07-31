@@ -26,12 +26,12 @@ html, body {
 .lang-dropdown-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   background: rgba(241, 245, 249, 0.85);
   border: 1px solid rgba(226, 232, 240, 0.8);
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 600;
   color: #334155;
   cursor: pointer;
@@ -51,14 +51,19 @@ html, body {
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
+.flag-icon svg {
+  width: 22px !important;
+  height: auto !important;
+}
+
 .lang-text-active {
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #475569;
 }
 
 .dropdown-chevron {
-  font-size: 8px;
+  font-size: 10px;
   color: #94a3b8;
   transition: transform 0.2s;
 }
@@ -72,14 +77,14 @@ html, body {
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 6px;
+  margin-top: 8px;
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   z-index: 100000;
-  min-width: 130px;
-  padding: 6px;
+  min-width: 150px;
+  padding: 8px;
 }
 
 .header-lang-selector-dropdown:hover .lang-dropdown-menu {
@@ -90,16 +95,22 @@ html, body {
   width: 100%;
   display: flex;
   align-items: center;
-  padding: 8px 10px;
+  padding: 10px 14px;
   background: none;
   border: none;
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
   color: #475569;
   cursor: pointer;
   text-align: left;
   border-radius: 8px;
   transition: all 0.15s ease;
+}
+
+.lang-dropdown-item svg {
+  width: 20px !important;
+  height: auto !important;
+  margin-right: 10px !important;
 }
 
 .lang-dropdown-item:hover {
