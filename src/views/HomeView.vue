@@ -97,13 +97,41 @@
         <template v-else>
           <div class="compact-search-bar">
             <!-- Destination field -->
-            <div class="compact-field dest-field">
+            <div 
+              class="compact-field dest-field" 
+              ref="compactCitySelectRef"
+              style="position: relative; display: flex; align-items: center;"
+            >
               <Search :size="16" class="compact-ico" />
               <input 
                 v-model="search.city" 
                 type="text" 
                 :placeholder="$t('search.placeholder')" 
+                @focus="compactCityDropdownOpen = true"
+                style="border: none; outline: none; background: transparent; font-size: 13.5px; font-weight: 600; color: #334155; width: 100%; height: 100%; padding: 0 4px 0 0;"
               />
+              <ChevronDown :size="14" class="compact-chevron" :class="{ open: compactCityDropdownOpen }" style="cursor: pointer;" @click.stop="compactCityDropdownOpen = !compactCityDropdownOpen" />
+              
+              <!-- Dropdown menu -->
+              <div v-if="compactCityDropdownOpen" class="compact-guest-dropdown" style="width: 220px; padding: 6px 0; top: calc(100% + 8px); left: 0; display: flex; flex-direction: column;" @click.stop>
+                <div 
+                  v-for="city in availableCities" 
+                  :key="city" 
+                  class="city-dropdown-item" 
+                  style="padding: 10px 16px; font-size: 13.5px; font-weight: 600; color: #475569; cursor: pointer; transition: background 0.2s; text-align: left;"
+                  :style="{ background: search.city === city ? '#f1f5f9' : 'transparent', color: search.city === city ? '#2563eb' : '#475569' }"
+                  @click="search.city = city; compactCityDropdownOpen = false"
+                >
+                  {{ city }}
+                </div>
+                <div 
+                  class="city-dropdown-item" 
+                  style="padding: 10px 16px; font-size: 13.5px; font-weight: 600; color: #94a3b8; border-top: 1px solid #f1f5f9; cursor: pointer; transition: background 0.2s; text-align: left;"
+                  @click="search.city = ''; compactCityDropdownOpen = false"
+                >
+                  {{ locale === 'en' ? 'All Locations' : 'Tất cả địa điểm' }}
+                </div>
+              </div>
             </div>
             
             <!-- Dates range field -->
@@ -253,17 +281,47 @@
 
             <!-- FIELDS GRID -->
             <div class="search-fields-grid">
-              <!-- Destination -->
-              <div class="field-item full-width" :class="{ focused: focus === 'city' }">
+              <!-- Destination Selector Dropdown -->
+              <div 
+                class="field-item full-width" 
+                :class="{ focused: cityDropdownOpen }"
+                ref="citySelectRef"
+                style="position: relative; display: flex; align-items: center;"
+              >
                 <Search :size="20" class="field-ico" />
-                <div class="field-input-wrap">
+                <div class="field-input-wrap" style="flex: 1; display: flex; flex-direction: column;">
+                  <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 2px;">{{ locale === 'en' ? 'Destination' : 'Địa điểm' }}</span>
                   <input
                       v-model="search.city"
                       type="text"
-                      :placeholder="$t('search.placeholder')"
-                      @focus="focus='city'"
-                      @blur="focus=''"
+                      :placeholder="locale === 'en' ? 'Enter tourist destination or city...' : 'Nhập điểm du lịch hoặc thành phố...'"
+                      @focus="cityDropdownOpen = true"
+                      style="border: none; outline: none; background: transparent; font-size: 14.5px; font-weight: 600; color: #1e293b; padding: 0; width: 100%;"
                   />
+                </div>
+                <ChevronDown :size="18" class="guest-chevron" :class="{ open: cityDropdownOpen }" style="color: #64748b; cursor: pointer;" @click.stop="cityDropdownOpen = !cityDropdownOpen" />
+                
+                <!-- DROPDOWN PANEL -->
+                <div v-if="cityDropdownOpen" class="guest-dropdown-panel" style="width: 100%; top: calc(100% + 8px); padding: 8px 0; z-index: 100;" @click.stop>
+                  <div 
+                    v-for="city in availableCities" 
+                    :key="city" 
+                    class="city-dropdown-item" 
+                    style="padding: 12px 20px; font-size: 14.5px; font-weight: 600; color: #475569; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px; text-align: left;"
+                    :style="{ background: search.city === city ? '#f1f5f9' : 'transparent', color: search.city === city ? '#3b82f6' : '#475569' }"
+                    @click="search.city = city; cityDropdownOpen = false"
+                  >
+                    <MapPin :size="16" :color="search.city === city ? '#3b82f6' : '#94a3b8'" />
+                    {{ city }}
+                  </div>
+                  <div 
+                    class="city-dropdown-item" 
+                    style="padding: 12px 20px; font-size: 14.5px; font-weight: 600; color: #94a3b8; border-top: 1px solid #f1f5f9; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px; text-align: left;"
+                    @click="search.city = ''; cityDropdownOpen = false"
+                  >
+                    <MapPin :size="16" color="#94a3b8" />
+                    {{ locale === 'en' ? 'All Locations' : 'Tất cả địa điểm' }}
+                  </div>
                 </div>
               </div>
 
@@ -590,6 +648,13 @@
       <!-- FILTER PANEL -->
       <div class="filter-panel" v-if="rooms.length > 0">
         <div class="filter-group">
+          <label>{{ locale === 'en' ? 'Location' : 'Địa điểm' }}</label>
+          <select v-model="filterCity">
+            <option value="all">{{ locale === 'en' ? 'All locations' : 'Tất cả địa điểm' }}</option>
+            <option v-for="city in availableCities" :key="city" :value="city">{{ city }}</option>
+          </select>
+        </div>
+        <div class="filter-group">
           <label>{{ $t('filter.price') }}</label>
           <select v-model="filterPrice">
             <option value="all">{{ $t('filter.price_all') }}</option>
@@ -832,6 +897,12 @@ const destTrackRef  = ref(null)
 const compactGuestDropdownOpen = ref(false)
 const compactGuestSelectRef = ref(null)
 
+const cityDropdownOpen = ref(false)
+const compactCityDropdownOpen = ref(false)
+const citySelectRef = ref(null)
+const compactCitySelectRef = ref(null)
+const availableCities = ['Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Phú Quốc', 'Đà Lạt', 'Nha Trang', 'Vũng Tàu']
+
 // Ngày mặc định: hôm nay và ngày mai
 const formatDate = (d) => d.toISOString().split('T')[0]
 const today    = new Date()
@@ -868,6 +939,12 @@ const handleOutsideClick = (e) => {
   if (compactGuestSelectRef.value && !compactGuestSelectRef.value.contains(e.target)) {
     compactGuestDropdownOpen.value = false
   }
+  if (citySelectRef.value && !citySelectRef.value.contains(e.target)) {
+    cityDropdownOpen.value = false
+  }
+  if (compactCitySelectRef.value && !compactCitySelectRef.value.contains(e.target)) {
+    compactCityDropdownOpen.value = false
+  }
 }
 
 const adjustGuest = (field, delta) => {
@@ -885,12 +962,14 @@ const filterPrice  = ref('all')
 const filterRating = ref(0)
 const filterType   = ref('all')
 const sortBy       = ref('default')
+const filterCity   = ref('all')
 
 const clearFilters = () => {
   filterPrice.value  = 'all'
   filterRating.value = 0
   filterType.value   = 'all'
   sortBy.value       = 'default'
+  filterCity.value   = 'all'
 }
 
 const filteredRooms = computed(() => {
@@ -900,6 +979,10 @@ const filteredRooms = computed(() => {
       const type = r.roomTypeName?.toLowerCase() ?? ''
       return type.includes('căn hộ') || type.includes('nhà') || type.includes('villa') || type.includes('studio')
     })
+  }
+  // Lọc theo địa điểm
+  if (filterCity.value !== 'all') {
+    list = list.filter(r => r.city?.toLowerCase() === filterCity.value.toLowerCase())
   }
   // Lọc theo giá
   if (filterPrice.value === 'under1m') {
@@ -962,7 +1045,7 @@ const searchPageNumbers = computed(() => {
 })
 
 // Reset trang khi filter / sort thay đổi
-watch([filterPrice, filterRating, filterType, sortBy], () => { searchPage.value = 1 })
+watch([filterPrice, filterRating, filterType, sortBy, filterCity], () => { searchPage.value = 1 })
 
 // ===== CATEGORIES & DESTINATIONS =====
 const categories = [
