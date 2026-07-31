@@ -196,9 +196,20 @@
           {{ $t(`search.${cat.id}`) }}
         </a>
         <div class="mobile-divider"></div>
-        <RouterLink to="/host/register" class="mobile-btn-outline" style="margin-bottom: 8px;" @click="mobileMenuOpen = false">{{ $t('nav.become_host') }}</RouterLink>
-        <button class="mobile-btn-filled" @click="authInitialTab = 'login'; showAuth = true; mobileMenuOpen = false">{{ $t('nav.login') }}</button>
-        <button class="mobile-btn-outline" @click="authInitialTab = 'register'; showAuth = true; mobileMenuOpen = false">{{ $t('nav.register') }}</button>
+        <template v-if="authStore.isLoggedIn">
+          <div class="mobile-welcome-text" style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 12px; text-align: center;">
+            {{ $t('auth.login_success_toast_title', { name: authStore.user?.fullName || '' }) }}
+          </div>
+          <RouterLink v-if="authStore.role === 'HOST'" to="/host/rooms" class="mobile-btn-filled" style="margin-bottom: 8px;" @click="mobileMenuOpen = false">{{ $t('nav.manage_rooms') }}</RouterLink>
+          <RouterLink v-if="authStore.role === 'ADMIN'" to="/admin" class="mobile-btn-filled" style="margin-bottom: 8px;" @click="mobileMenuOpen = false">{{ $t('nav.admin') }}</RouterLink>
+          <RouterLink v-if="authStore.role === 'CUSTOMER'" to="/bookings" class="mobile-btn-filled" style="margin-bottom: 8px;" @click="mobileMenuOpen = false">{{ $t('nav.my_bookings') }}</RouterLink>
+          <button class="mobile-btn-outline" @click="handleLogout(); mobileMenuOpen = false">{{ $t('nav.logout') }}</button>
+        </template>
+        <template v-else>
+          <RouterLink to="/host/register" class="mobile-btn-outline" style="margin-bottom: 8px;" @click="mobileMenuOpen = false">{{ $t('nav.become_host') }}</RouterLink>
+          <button class="mobile-btn-filled" style="margin-bottom: 8px;" @click="authInitialTab = 'login'; showAuth = true; mobileMenuOpen = false">{{ $t('nav.login') }}</button>
+          <button class="mobile-btn-outline" @click="authInitialTab = 'register'; showAuth = true; mobileMenuOpen = false">{{ $t('nav.register') }}</button>
+        </template>
       </nav>
     </div>
     <div class="mobile-overlay" v-if="mobileMenuOpen" @click="mobileMenuOpen = false"></div>
@@ -2438,5 +2449,31 @@ const onRegister = () => {
 .lang-divider-header {
   font-size: 10px;
   color: #cbd5e1;
+}
+
+/* Responsive header styles */
+@media (max-width: 768px) {
+  .desktop-nav {
+    display: none !important;
+  }
+  
+  .header-right .header-lang-selector-dropdown,
+  .header-right .welcome-text,
+  .header-right .nav-link-btn,
+  .header-right .btn-outline,
+  .header-right .btn-filled {
+    display: none !important;
+  }
+  
+  .mobile-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: white !important;
+  }
+  
+  .header.scrolled .mobile-menu-btn {
+    color: var(--dark) !important;
+  }
 }
 </style>
