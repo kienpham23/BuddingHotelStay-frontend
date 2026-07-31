@@ -774,13 +774,6 @@
               >
                 <Smartphone :size="16" /> {{ $t('home.reg_now') }}
               </button>
-              <button 
-                v-else
-                class="deals-btn-white" 
-                @click="scrollToTop"
-              >
-                <Hotel :size="16" /> {{ locale === 'vi' ? 'Tìm phòng nghỉ ngay' : 'Tìm phòng ngay' }}
-              </button>
               <button class="deals-btn-outline">{{ $t('home.learn_more') }}</button>
             </div>
           </div>
