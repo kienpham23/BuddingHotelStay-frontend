@@ -696,21 +696,40 @@
       </div>
 
       <div class="room-grid" v-if="paginatedRooms.length > 0">
-        <div class="room-card" v-for="room in paginatedRooms" :key="room.id" @click="goToDetail(room.id)">
+        <div class="room-card" v-for="room in paginatedRooms" :key="room.id" @click="goToDetail(room.id)" style="display: flex; flex-direction: column;">
           <div class="room-img-wrap">
             <img v-if="room.imageUrls?.length" :src="room.imageUrls[0]" class="room-img" alt="room" />
             <div v-else class="room-no-img"><Building2 :size="48" color="#94a3b8" /></div>
             <div class="room-badge">{{ room.roomTypeName }}</div>
           </div>
-          <div class="room-info">
-            <h3>{{ room.name }}</h3>
-            <p class="room-city"><MapPin :size="13" /> {{ room.city }}</p>
-            <p class="room-addr">{{ room.address }}</p>
-            <div class="room-footer">
-              <span class="room-rating" v-if="room.avgRating">
-                <Star :size="13" fill="#ffb703" color="#ffb703" /> {{ room.avgRating?.toFixed(1) }}
-              </span>
-              <span class="room-price">{{ formatPrice(room.pricePerNight) }}<small>/{{ $t('search.rooms') }}</small></span>
+          <div class="room-info" style="display: flex; flex-direction: column; justify-content: space-between; flex: 1; padding: 16px;">
+            <div>
+              <h3 style="margin-top: 0; font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 6px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4; min-height: 42px;">{{ room.name }}</h3>
+              <p class="room-city" style="margin-bottom: 4px; font-size: 13px; color: #64748b; display: flex; align-items: center; gap: 4px;"><MapPin :size="13" /> {{ room.city }}</p>
+              <p class="room-addr" style="font-size: 12px; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 12px;">{{ room.address }}</p>
+            </div>
+            
+            <div>
+              <div style="margin-bottom: 10px; text-align: left;">
+                <span style="font-size: 12px; color: #64748b; font-weight: 500; display: block; margin-bottom: 2px;">{{ locale === 'vi' ? 'Giá mỗi đêm' : 'Price per night' }}</span>
+                <strong style="font-size: 15.5px; color: #2563eb; font-weight: 800;">{{ formatPrice(room.pricePerNight) }}</strong>
+              </div>
+              
+              <div class="room-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px; width: 100%;">
+                <span class="room-rating" v-if="room.avgRating" style="display: inline-flex; align-items: center; gap: 4px; font-weight: 700; color: #1e293b; font-size: 13px;">
+                  <Star :size="13" fill="#ffb703" color="#ffb703" /> {{ room.avgRating?.toFixed(1) }}
+                </span>
+                <span class="room-rating-none" v-else style="color: #94a3b8; font-size: 12px; font-weight: 500;">
+                  {{ locale === 'vi' ? 'Chưa có đánh giá' : 'No reviews' }}
+                </span>
+                <button 
+                  class="btn-view-detail" 
+                  @click.stop="openQuickView(room)" 
+                  style="padding: 6px 14px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 700; font-size: 12.5px; cursor: pointer; transition: all 0.2s;"
+                >
+                  {{ locale === 'vi' ? 'Xem thông tin' : 'Details' }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -833,6 +852,111 @@
 
   <!-- AUTH MODAL -->
   <AuthModal v-model="showAuth" :initial-tab="authInitialTab" @login-success="onLogin" @register-success="onRegister" />
+
+  <!-- QUICK VIEW ROOM DETAILS & REVIEWS MODAL -->
+  <div class="modal-backdrop" v-if="showQuickViewModal" @click.self="showQuickViewModal = false">
+    <div class="room-modal quick-view-modal" style="max-width: 700px; width: 90%;">
+      <div class="modal-header">
+        <h2>{{ selectedQuickViewRoom?.name }}</h2>
+        <button class="btn-close" @click="showQuickViewModal = false">×</button>
+      </div>
+      <div class="modal-form quick-view-body" style="padding: 20px; max-height: 75vh; overflow-y: auto; text-align: left;">
+        
+        <!-- Image Gallery / Slider -->
+        <div class="quick-gallery" style="margin-bottom: 20px; border-radius: 12px; overflow: hidden; display: flex; gap: 8px; max-height: 240px;">
+          <div style="flex: 2; height: 240px;">
+            <img :src="selectedQuickViewRoom?.imageUrls?.[0] || 'https://images.unsplash.com/photo-1611891487122-2075b96244e1?q=80&w=800&auto=format&fit=crop'" style="width: 100%; height: 100%; object-fit: cover;" />
+          </div>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; height: 240px;">
+            <img :src="selectedQuickViewRoom?.imageUrls?.[1] || 'https://images.unsplash.com/photo-1540518614846-7eded433c457?q=80&w=600&auto=format&fit=crop'" style="width: 100%; flex: 1; object-fit: cover;" />
+            <img :src="selectedQuickViewRoom?.imageUrls?.[2] || 'https://images.unsplash.com/photo-1582719508461-905c673771fd?q=80&w=600&auto=format&fit=crop'" style="width: 100%; flex: 1; object-fit: cover;" />
+          </div>
+        </div>
+
+        <!-- Room Highlights -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <p style="font-size: 13.5px; color: #64748b; font-weight: 600; margin-bottom: 4px;">{{ selectedQuickViewRoom?.roomTypeName }} · {{ selectedQuickViewRoom?.city }}</p>
+            <h3 style="font-size: 16px; font-weight: 700; color: #1e293b; margin: 0;">{{ selectedQuickViewRoom?.address }}</h3>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 6px 12px; border-radius: 8px;">
+            <Star :size="16" fill="#ffb703" color="#ffb703" />
+            <span style="font-weight: 700; color: #0f172a; font-size: 15px;">{{ selectedQuickViewRoom?.avgRating ? selectedQuickViewRoom.avgRating.toFixed(1) : 'N/A' }}</span>
+            <span style="font-size: 13px; color: #64748b; font-weight: 500;">({{ selectedQuickViewRoom?.ratingCount || 0 }} {{ locale === 'vi' ? 'đánh giá' : 'reviews' }})</span>
+          </div>
+        </div>
+
+        <!-- Room Description -->
+        <div style="margin-bottom: 24px;">
+          <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">{{ locale === 'vi' ? 'Giới thiệu về chỗ nghỉ' : 'About this property' }}</h4>
+          <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0; white-space: pre-line;">{{ selectedQuickViewRoom?.description }}</p>
+        </div>
+
+        <!-- Amenities -->
+        <div style="margin-bottom: 24px;" v-if="selectedQuickViewRoom?.amenities">
+          <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">{{ locale === 'vi' ? 'Tiện nghi có sẵn' : 'Amenities' }}</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <span 
+              v-for="amenity in selectedQuickViewRoom.amenities.split(',')" 
+              :key="amenity"
+              style="padding: 6px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-weight: 600; color: #475569;"
+            >
+              {{ amenity.trim() }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div>
+          <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">{{ locale === 'vi' ? 'Đánh giá từ khách đi trước' : 'Guest Reviews' }}</h4>
+          
+          <div v-if="quickViewReviews.length > 0" style="display: flex; flex-direction: column; gap: 12px;">
+            <div 
+              v-for="rev in quickViewReviews" 
+              :key="rev.id"
+              style="background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 14px;"
+            >
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="width: 32px; height: 32px; background: #3b82f6; color: white; font-weight: 700; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                    {{ (rev.customerName || 'K').charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <h5 style="margin: 0; font-size: 13.5px; font-weight: 700; color: #1e293b;">{{ rev.customerName }}</h5>
+                    <small style="color: #64748b; font-weight: 500;">{{ formatDate(rev.createdAt) }}</small>
+                  </div>
+                </div>
+                <div style="display: inline-flex; align-items: center; gap: 4px; background: #fef3c7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; color: #b45309;">
+                  <Star :size="12" fill="#b45309" color="#b45309" /> {{ rev.rating }}.0
+                </div>
+              </div>
+              <p style="margin: 0; font-size: 13.5px; color: #475569; line-height: 1.5; font-style: italic;">"{{ rev.comment }}"</p>
+            </div>
+          </div>
+          <div v-else style="background: #f8fafc; padding: 16px; border-radius: 12px; text-align: center; color: #94a3b8; font-size: 13.5px; font-weight: 600;">
+            {{ locale === 'vi' ? 'Chưa có đánh giá nào cho chỗ nghỉ này.' : 'No reviews yet for this property.' }}
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <span style="font-size: 13px; color: #64748b; font-weight: 600; display: block; margin-bottom: 2px;">{{ locale === 'vi' ? 'Giá phòng / đêm' : 'Price per night' }}</span>
+          <strong style="font-size: 18px; color: #3b82f6; font-weight: 800;">{{ formatPrice(selectedQuickViewRoom?.pricePerNight || 0) }}</strong>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-cancel" @click="showQuickViewModal = false" style="font-weight: 600;">{{ locale === 'vi' ? 'Đóng' : 'Close' }}</button>
+          <button 
+            class="btn-submit" 
+            style="padding: 10px 20px; font-weight: 700; border-radius: 8px; background: #3b82f6; color: white; border: none; cursor: pointer; transition: all 0.2s;"
+            @click="confirmBookingFromQuickView(selectedQuickViewRoom?.id)"
+          >
+            {{ locale === 'vi' ? 'Đặt phòng ngay' : 'Book Now' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -1290,6 +1414,29 @@ const quickSearch = (city) => {
 
 // ===== NAVIGATION =====
 const goToDetail = (id) => router.push(`/rooms/${id}`)
+
+// Quick View Room Details & Reviews State & Methods
+const showQuickViewModal = ref(false)
+const selectedQuickViewRoom = ref(null)
+const quickViewReviews = ref([])
+
+const openQuickView = async (roomItem) => {
+  selectedQuickViewRoom.value = roomItem
+  quickViewReviews.value = []
+  showQuickViewModal.value = true
+  
+  try {
+    const res = await axios.get(`/reviews/room/${roomItem.id}`)
+    quickViewReviews.value = Array.isArray(res.data) ? res.data : []
+  } catch (err) {
+    console.error('Lỗi khi lấy đánh giá xem nhanh:', err)
+  }
+}
+
+const confirmBookingFromQuickView = (id) => {
+  showQuickViewModal.value = false
+  router.push(`/rooms/${id}`)
+}
 
 const handleLogout = () => {
   authStore.logout()
