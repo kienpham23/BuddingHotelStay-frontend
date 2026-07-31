@@ -76,16 +76,41 @@
 
     <main class="container main-content">
       <!-- TITLE AND FILTER ROW -->
-      <div class="title-row">
+      <div class="title-row" style="align-items: flex-end;">
         <div class="title-info">
           <h1>{{ $t('host.revenue.analysis_title') }}</h1>
           <p class="subtitle">{{ $t('host.revenue.analysis_subtitle') }}</p>
         </div>
-        <div class="filter-box">
-          <label for="year-select">{{ $t('host.revenue.year_select') }}</label>
-          <select id="year-select" v-model="selectedYear" @change="fetchRevenueData" class="select-input">
-            <option v-for="year in availableYears" :key="year" :value="year">{{ $t('host.revenue.year_format', { year: year }) }}</option>
-          </select>
+        <div class="filter-box-row" style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+          <!-- Filter Mode Selector -->
+          <div class="filter-box">
+            <label for="mode-select" style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">{{ locale === 'vi' ? 'Kiểu báo cáo' : 'Report Type' }}</label>
+            <select id="mode-select" v-model="filterMode" @change="handleModeChange" class="select-input" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; color: #334155;">
+              <option value="ALL_TIME">{{ locale === 'vi' ? 'Từ xưa đến nay' : 'All-time' }}</option>
+              <option value="BY_YEAR">{{ locale === 'vi' ? 'Theo năm' : 'By Year' }}</option>
+              <option value="CUSTOM_RANGE">{{ locale === 'vi' ? 'Khoảng thời gian tự chọn' : 'Custom Range' }}</option>
+            </select>
+          </div>
+
+          <!-- Year Selector (visible if mode is BY_YEAR) -->
+          <div class="filter-box" v-if="filterMode === 'BY_YEAR'">
+            <label for="year-select" style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">{{ $t('host.revenue.year_select') }}</label>
+            <select id="year-select" v-model="selectedYear" @change="fetchRevenueData" class="select-input" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; color: #334155;">
+              <option v-for="year in availableYears" :key="year" :value="year">{{ $t('host.revenue.year_format', { year: year }) }}</option>
+            </select>
+          </div>
+
+          <!-- Custom Date Range (visible if mode is CUSTOM_RANGE) -->
+          <div class="filter-box" v-if="filterMode === 'CUSTOM_RANGE'" style="display: flex; gap: 12px; align-items: center;">
+            <div>
+              <label for="start-date" style="display: block; margin-bottom: 4px; font-size: 11px; font-weight: 600; color: #64748b;">{{ locale === 'vi' ? 'Từ ngày' : 'Start Date' }}</label>
+              <input type="date" id="start-date" v-model="customStartDate" @change="fetchRevenueData" class="date-input-sm" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; color: #334155; font-weight: 600;" />
+            </div>
+            <div>
+              <label for="end-date" style="display: block; margin-bottom: 4px; font-size: 11px; font-weight: 600; color: #64748b;">{{ locale === 'vi' ? 'Đến ngày' : 'End Date' }}</label>
+              <input type="date" id="end-date" v-model="customEndDate" @change="fetchRevenueData" class="date-input-sm" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; color: #334155; font-weight: 600;" />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -225,35 +250,70 @@
           </div>
         </div>
 
-        <!-- TOP ROOMS TABLE -->
-        <div class="card table-card">
-          <h3 class="card-title"><Award :size="20" /> {{ $t('host.revenue.table_title') }}</h3>
-          <div class="table-responsive">
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th>{{ $t('host.revenue.table_rank') }}</th>
-                  <th>{{ $t('host.revenue.table_name') }}</th>
-                  <th>{{ $t('host.revenue.table_city') }}</th>
-                  <th class="text-right">{{ $t('host.revenue.table_bookings') }}</th>
-                  <th class="text-right">{{ $t('host.revenue.table_revenue') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(room, index) in data.topRooms" :key="room.roomId">
-                  <td>
-                    <span class="rank-badge" :class="`rank-${index + 1}`">{{ index + 1 }}</span>
-                  </td>
-                  <td><strong>{{ room.roomName }}</strong></td>
-                  <td>{{ translateCity(room.city) }}</td>
-                  <td class="text-right">{{ $t('host.revenue.table_bookings_unit', { count: room.bookingCount }) }}</td>
-                  <td class="text-right highlight-price"><strong>{{ formatPrice(room.totalRevenue) }}</strong></td>
-                </tr>
-                <tr v-if="!data.topRooms || data.topRooms.length === 0">
-                  <td colspan="5" class="text-center empty-row">{{ $t('host.revenue.table_empty') }}</td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- ROOM REVENUE TABLES ROW -->
+        <div class="rooms-tables-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+          <!-- TOP ROOMS TABLE -->
+          <div class="card table-card" style="margin-top: 0;">
+            <h3 class="card-title" style="color: #22c55e;"><Award :size="20" /> {{ locale === 'vi' ? 'Top 5 Phòng Nghỉ Doanh Thu Cao Nhất' : 'Top 5 Highest Revenue Rooms' }}</h3>
+            <div class="table-responsive">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>{{ $t('host.revenue.table_rank') }}</th>
+                    <th>{{ $t('host.revenue.table_name') }}</th>
+                    <th>{{ $t('host.revenue.table_city') }}</th>
+                    <th class="text-right">{{ $t('host.revenue.table_bookings') }}</th>
+                    <th class="text-right">{{ $t('host.revenue.table_revenue') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(room, index) in data.topRooms" :key="room.roomId">
+                    <td>
+                      <span class="rank-badge" :class="`rank-${index + 1}`">{{ index + 1 }}</span>
+                    </td>
+                    <td><strong>{{ room.roomName }}</strong></td>
+                    <td>{{ translateCity(room.city) }}</td>
+                    <td class="text-right">{{ $t('host.revenue.table_bookings_unit', { count: room.bookingCount }) }}</td>
+                    <td class="text-right highlight-price"><strong>{{ formatPrice(room.totalRevenue) }}</strong></td>
+                  </tr>
+                  <tr v-if="!data.topRooms || data.topRooms.length === 0">
+                    <td colspan="5" class="text-center empty-row">{{ $t('host.revenue.table_empty') }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- BOTTOM ROOMS TABLE -->
+          <div class="card table-card" style="margin-top: 0;">
+            <h3 class="card-title" style="color: #ef4444;"><Award :size="20" style="transform: rotate(180deg);" /> {{ locale === 'vi' ? 'Top 5 Phòng Nghỉ Doanh Thu Thấp Nhất' : 'Top 5 Lowest Revenue Rooms' }}</h3>
+            <div class="table-responsive">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>{{ $t('host.revenue.table_rank') }}</th>
+                    <th>{{ $t('host.revenue.table_name') }}</th>
+                    <th>{{ $t('host.revenue.table_city') }}</th>
+                    <th class="text-right">{{ $t('host.revenue.table_bookings') }}</th>
+                    <th class="text-right">{{ $t('host.revenue.table_revenue') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(room, index) in data.bottomRooms" :key="room.roomId">
+                    <td>
+                      <span class="rank-badge rank-bottom" style="background: #fee2e2; color: #ef4444; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">{{ index + 1 }}</span>
+                    </td>
+                    <td><strong>{{ room.roomName }}</strong></td>
+                    <td>{{ translateCity(room.city) }}</td>
+                    <td class="text-right">{{ $t('host.revenue.table_bookings_unit', { count: room.bookingCount }) }}</td>
+                    <td class="text-right highlight-price-red" style="color: #ef4444;"><strong>{{ formatPrice(room.totalRevenue) }}</strong></td>
+                  </tr>
+                  <tr v-if="!data.bottomRooms || data.bottomRooms.length === 0">
+                    <td colspan="5" class="text-center empty-row">{{ $t('host.revenue.table_empty') }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -337,11 +397,18 @@ const authStore = useAuthStore()
 
 const selectedYear = ref(2026)
 const availableYears = [2026, 2025, 2024]
+const filterMode = ref('BY_YEAR') // 'ALL_TIME' | 'BY_YEAR' | 'CUSTOM_RANGE'
+const customStartDate = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+const customEndDate = ref(new Date().toISOString().split('T')[0])
 const loading = ref(false)
 const error = ref('')
 const data = ref(null)
 const invoices = ref([])
 const payLoading = ref(null)
+
+const handleModeChange = () => {
+  fetchRevenueData()
+}
 
 const formatPrice = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0)
@@ -412,7 +479,14 @@ const fetchRevenueData = async () => {
   loading.value = true
   error.value = ''
   try {
-    const response = await axios.get(`/revenue/host?year=${selectedYear.value}`)
+    const params = {}
+    if (filterMode.value === 'BY_YEAR') {
+      params.year = selectedYear.value
+    } else if (filterMode.value === 'CUSTOM_RANGE') {
+      params.startDate = customStartDate.value
+      params.endDate = customEndDate.value
+    }
+    const response = await axios.get('/revenue/host', { params })
     data.value = response.data
   } catch (err) {
     console.error('Lấy doanh thu host thất bại:', err)
@@ -451,6 +525,10 @@ const useFallbackMockup = () => {
       { roomId: 2, roomName: "Phòng Deluxe Hướng Biển - Vinpearl Resort", city: "Đà Nẵng", totalRevenue: 38000000, bookingCount: 18 },
       { roomId: 4, roomName: "Căn Hộ Studio Hiện Đại Trung Tâm Quận 1", city: "Hồ Chí Minh", totalRevenue: 28000000, bookingCount: 20 },
       { roomId: 5, roomName: "Bungalow Gió Biển Ngắm Hoàng Hôn", city: "Phú Quốc", totalRevenue: 22000000, bookingCount: 12 }
+    ],
+    bottomRooms: [
+      { roomId: 10, roomName: "Villa Riêng Biển Non Nước", city: "Đà Nẵng", totalRevenue: 3500000, bookingCount: 1 },
+      { roomId: 9, roomName: "Standard Gần Cầu Rồng", city: "Đà Nẵng", totalRevenue: 4000000, bookingCount: 2 }
     ]
   }
 }
@@ -1225,5 +1303,21 @@ onMounted(() => {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   display: inline-block;
+}
+
+.highlight-price-red {
+  color: #ef4444;
+}
+
+.rank-badge.rank-bottom {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+@media (max-width: 992px) {
+  .rooms-tables-row {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
 }
 </style>
