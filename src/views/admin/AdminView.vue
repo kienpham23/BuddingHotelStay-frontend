@@ -450,7 +450,12 @@
             <tr v-for="usr in filteredUsers" :key="usr.id">
               <td>#{{ usr.id }}</td>
               <td><strong>{{ usr.fullName }}</strong></td>
-              <td>{{ usr.email }}</td>
+              <td>
+                <div>{{ usr.email }}</div>
+                <small v-if="usr.phone" style="display: block; color: #64748b; margin-top: 4px; font-weight: 500;">
+                  {{ usr.phone }}
+                </small>
+              </td>
               <td>
                 <span class="role-badge" :class="usr.role.toLowerCase()">
                   {{ usr.role === 'CUSTOMER' ? $t('admin.role_customer') : usr.role === 'HOST' ? $t('admin.role_host') : $t('admin.role_admin') }}
