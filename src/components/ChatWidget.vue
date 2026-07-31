@@ -615,6 +615,7 @@ async function sendMessage() {
 /* Mobile */
 @media (max-width:480px) {
   .chat-fab { bottom:18px; right:16px; width:52px; height:52px; }
+  .chat-fab.is-open { display: none !important; }
   .chat-widget { bottom:0; right:0; left:0; width:100%; height:92dvh; border-radius:20px 20px 0 0; border:none; border-top:1px solid rgba(83,146,249,.14); }
 }
 </style>
