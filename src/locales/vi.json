@@ -10,7 +10,7 @@
     "forgot_password_link": "Quên mật khẩu?",
     "or_divider": "Hoặc",
     "email_label": "EMAIL",
-    "email_placeholder": "email@example.com",
+    "email_placeholder": "email{'@'}example.com",
     "password_label": "MẬT KHẨU",
     "password_placeholder": "••••••••",
     "show_pwd": "Hiện",

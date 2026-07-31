@@ -10,7 +10,7 @@
     "forgot_password_link": "Forgot password?",
     "or_divider": "Or",
     "email_label": "EMAIL",
-    "email_placeholder": "email@example.com",
+    "email_placeholder": "email{'@'}example.com",
     "password_label": "PASSWORD",
     "password_placeholder": "••••••••",
     "show_pwd": "Show",
