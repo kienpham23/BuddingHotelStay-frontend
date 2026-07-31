@@ -88,6 +88,7 @@
             <select id="mode-select" v-model="filterMode" @change="handleModeChange" class="select-input" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; color: #334155;">
               <option value="ALL_TIME">{{ locale === 'vi' ? 'Từ trước đến nay' : 'All-time' }}</option>
               <option value="BY_YEAR">{{ locale === 'vi' ? 'Theo năm' : 'By Year' }}</option>
+              <option value="BY_QUARTER">{{ locale === 'vi' ? 'Theo quý' : 'By Quarter' }}</option>
               <option value="CUSTOM_RANGE">{{ locale === 'vi' ? 'Khoảng thời gian tùy chọn' : 'Custom Range' }}</option>
             </select>
           </div>
@@ -98,6 +99,25 @@
             <select id="year-select" v-model="selectedYear" @change="fetchRevenueData" class="select-input" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; color: #334155;">
               <option v-for="year in availableYears" :key="year" :value="year">{{ $t('host.revenue.year_format', { year: year }) }}</option>
             </select>
+          </div>
+
+          <!-- Quarter Selector (visible if mode is BY_QUARTER) -->
+          <div class="filter-box" v-if="filterMode === 'BY_QUARTER'" style="display: flex; gap: 8px;">
+            <div>
+              <label for="quarter-year-select" style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">{{ $t('host.revenue.year_select') }}</label>
+              <select id="quarter-year-select" v-model="selectedYear" @change="fetchRevenueData" class="select-input" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; color: #334155;">
+                <option v-for="year in availableYears" :key="year" :value="year">{{ $t('host.revenue.year_format', { year: year }) }}</option>
+              </select>
+            </div>
+            <div>
+              <label for="quarter-select" style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">{{ locale === 'vi' ? 'Chọn Quý' : 'Select Quarter' }}</label>
+              <select id="quarter-select" v-model="selectedQuarter" @change="fetchRevenueData" class="select-input" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: 600; color: #334155;">
+                <option value="1">{{ locale === 'vi' ? 'Quý 1 (T1 - T3)' : 'Q1 (Jan - Mar)' }}</option>
+                <option value="2">{{ locale === 'vi' ? 'Quý 2 (T4 - T6)' : 'Q2 (Apr - Jun)' }}</option>
+                <option value="3">{{ locale === 'vi' ? 'Quý 3 (T7 - T9)' : 'Q3 (Jul - Sep)' }}</option>
+                <option value="4">{{ locale === 'vi' ? 'Quý 4 (T10 - T12)' : 'Q4 (Oct - Dec)' }}</option>
+              </select>
+            </div>
           </div>
 
           <!-- Custom Date Range (visible if mode is CUSTOM_RANGE) -->
@@ -397,7 +417,8 @@ const authStore = useAuthStore()
 
 const selectedYear = ref(2026)
 const availableYears = [2026, 2025, 2024]
-const filterMode = ref('BY_YEAR') // 'ALL_TIME' | 'BY_YEAR' | 'CUSTOM_RANGE'
+const filterMode = ref('BY_YEAR') // 'ALL_TIME' | 'BY_YEAR' | 'BY_QUARTER' | 'CUSTOM_RANGE'
+const selectedQuarter = ref('1') // '1' | '2' | '3' | '4'
 const customStartDate = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
 const customEndDate = ref(new Date().toISOString().split('T')[0])
 const loading = ref(false)
@@ -482,6 +503,22 @@ const fetchRevenueData = async () => {
     const params = {}
     if (filterMode.value === 'BY_YEAR') {
       params.year = selectedYear.value
+    } else if (filterMode.value === 'BY_QUARTER') {
+      params.year = selectedYear.value
+      const y = selectedYear.value
+      if (selectedQuarter.value === '1') {
+        params.startDate = `${y}-01-01`
+        params.endDate = `${y}-03-31`
+      } else if (selectedQuarter.value === '2') {
+        params.startDate = `${y}-04-01`
+        params.endDate = `${y}-06-30`
+      } else if (selectedQuarter.value === '3') {
+        params.startDate = `${y}-07-01`
+        params.endDate = `${y}-09-30`
+      } else if (selectedQuarter.value === '4') {
+        params.startDate = `${y}-10-01`
+        params.endDate = `${y}-12-31`
+      }
     } else if (filterMode.value === 'CUSTOM_RANGE') {
       params.startDate = customStartDate.value
       params.endDate = customEndDate.value
