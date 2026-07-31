@@ -767,8 +767,19 @@
             <h2>{{ $t('home.early_bird_title') }}</h2>
             <p>{{ $t('home.early_bird_desc') }}</p>
             <div class="deals-btns">
-              <button class="deals-btn-white" @click="showAuth = true">
+              <button 
+                v-if="!authStore.isLoggedIn"
+                class="deals-btn-white" 
+                @click="showAuth = true"
+              >
                 <Smartphone :size="16" /> {{ $t('home.reg_now') }}
+              </button>
+              <button 
+                v-else
+                class="deals-btn-white" 
+                @click="scrollToTop"
+              >
+                <Hotel :size="16" /> {{ locale === 'vi' ? 'Tìm phòng nghỉ ngay' : 'Tìm phòng ngay' }}
               </button>
               <button class="deals-btn-outline">{{ $t('home.learn_more') }}</button>
             </div>
