@@ -131,6 +131,20 @@
               <input type="date" id="end-date" v-model="customEndDate" @change="fetchRevenueData" class="date-input-sm" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; color: #334155; font-weight: 600;" />
             </div>
           </div>
+
+          <!-- Export Button -->
+          <div class="filter-box" style="align-self: flex-end;">
+            <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: transparent; user-select: none;">Export</label>
+            <button 
+              type="button" 
+              class="btn-primary" 
+              style="padding: 7px 16px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; height: 38px; background: #22c55e; border: none; color: white;"
+              @click="exportToExcel"
+            >
+              <Download :size="16" />
+              {{ locale === 'vi' ? 'Xuất Excel Doanh Thu' : 'Export Excel' }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -457,7 +471,7 @@ import { useI18n } from 'vue-i18n'
 import {
   DollarSign, FileText, Users, Hotel,
   BarChart3, PieChart, Award, Percent, Wallet,
-  Edit2, Check, X, CheckCircle, AlertCircle
+  Edit2, Check, X, CheckCircle, AlertCircle, Download
 } from 'lucide-vue-next'
 import { getAllInvoicesAdmin, generateInvoicesAdmin } from '../../api/invoices'
 
@@ -701,6 +715,75 @@ const useFallbackMockup = () => {
       { roomId: 6, roomName: "Phòng đơn view vườn", city: "Nha Trang", totalRevenue: 8500000, bookingCount: 5 }
     ]
   }
+}
+
+const exportToExcel = () => {
+  if (!data.value) return
+
+  let csvContent = '\uFEFF' // UTF-8 BOM for Vietnamese character support in Excel
+
+  // 1. Header & General Stats
+  csvContent += 'BÁO CÁO DOANH THU & HIỆU SUẤT HỆ THỐNG\n'
+  csvContent += `Kiểu báo cáo: ,${filterMode.value === 'ALL_TIME' ? 'Từ trước đến nay' : filterMode.value === 'BY_YEAR' ? 'Theo năm ' + selectedYear.value : filterMode.value === 'BY_QUARTER' ? 'Theo quý ' + selectedQuarter.value + ' năm ' + selectedYear.value : 'Khoảng thời gian tùy chọn (' + customStartDate.value + ' đến ' + customEndDate.value + ')'}\n`
+  csvContent += `Ngày xuất báo cáo: ,${new Date().toLocaleString('vi-VN')}\n\n`
+
+  csvContent += 'TỔNG QUAN HỆ THỐNG\n'
+  csvContent += `Tổng doanh thu,${data.value.totalRevenue || 0} ₫\n`
+  csvContent += `Hoa hồng sàn thu (${systemRate.value}%),${data.value.totalCommission || 0} ₫\n`
+  csvContent += `Thực nhận của Host,${(data.value.totalRevenue - (data.value.totalCommission || 0)) || 0} ₫\n`
+  csvContent += `Tổng lượt đặt phòng,${data.value.totalBookings || 0} giao dịch\n`
+  csvContent += `Tổng số người dùng,${data.value.totalUsers || 0} thành viên\n`
+  csvContent += `Tổng số phòng nghỉ,${data.value.totalRooms || 0} phòng\n\n`
+
+  // 2. Monthly Revenue
+  csvContent += 'DOANH THU THEO TỪNG THÁNG (Trong năm)\n'
+  csvContent += 'Tháng,Doanh thu (VND),Số lượt đặt\n'
+  fullYearRevenues.value.forEach(item => {
+    csvContent += `Tháng ${item.month},${item.revenue},${item.bookingCount}\n`
+  })
+  csvContent += '\n'
+
+  // 3. Top Rooms Highest
+  csvContent += 'TOP 5 PHÒNG NGHỈ DOANH THU CAO NHẤT\n'
+  csvContent += 'Xếp hạng,Tên phòng,Thành phố,Số lượt đặt,Doanh số toàn hệ thống\n'
+  if (data.value.topRooms && data.value.topRooms.length > 0) {
+    data.value.topRooms.forEach((room, idx) => {
+      csvContent += `${idx + 1},"${room.roomName.replace(/"/g, '""')}",${room.city},${room.bookingCount},${room.totalRevenue} ₫\n`
+    })
+  } else {
+    csvContent += '-,Không có dữ liệu,,,\n'
+  }
+  csvContent += '\n'
+
+  // 4. Top Rooms Lowest
+  csvContent += 'TOP 5 PHÒNG NGHỈ DOANH THU THẤP NHẤT\n'
+  csvContent += 'Xếp hạng,Tên phòng,Thành phố,Số lượt đặt,Doanh số toàn hệ thống\n'
+  if (data.value.bottomRooms && data.value.bottomRooms.length > 0) {
+    data.value.bottomRooms.forEach((room, idx) => {
+      csvContent += `${idx + 1},"${room.roomName.replace(/"/g, '""')}",${room.city},${room.bookingCount},${room.totalRevenue} ₫\n`
+    })
+  } else {
+    csvContent += '-,Không có dữ liệu,,,\n'
+  }
+
+  // Create blob and download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  
+  let fileName = 'Bao_cao_doanh_thu_admin'
+  if (filterMode.value === 'BY_YEAR') fileName += `_nam_${selectedYear.value}`
+  else if (filterMode.value === 'BY_QUARTER') fileName += `_quy_${selectedQuarter.value}_nam_${selectedYear.value}`
+  else if (filterMode.value === 'CUSTOM_RANGE') fileName += `_tu_${customStartDate.value}_den_${customEndDate.value}`
+  else fileName += '_tat_ca_thoi_gian'
+  
+  link.setAttribute('download', `${fileName}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  showToast('Đã xuất báo cáo Excel (CSV) thành công!', 'success')
 }
 
 const fetchInvoices = async () => {

@@ -131,6 +131,20 @@
               <input type="date" id="end-date" v-model="customEndDate" @change="fetchRevenueData" class="date-input-sm" style="padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; color: #334155; font-weight: 600;" />
             </div>
           </div>
+
+          <!-- Export Button -->
+          <div class="filter-box" style="align-self: flex-end;">
+            <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: transparent; user-select: none;">Export</label>
+            <button 
+              type="button" 
+              class="btn-primary" 
+              style="padding: 7px 16px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; height: 38px; background: #22c55e; border: none; color: white;"
+              @click="exportToExcel"
+            >
+              <Download :size="16" />
+              {{ locale === 'vi' ? 'Xuất Excel Doanh Thu' : 'Export Excel' }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -403,7 +417,7 @@ import { useI18n } from 'vue-i18n'
 import axios from '../../api/axios'
 import {
   DollarSign, FileText, Hotel,
-  BarChart3, PieChart, Award, Wallet
+  BarChart3, PieChart, Award, Wallet, Download
 } from 'lucide-vue-next'
 import { getMyInvoices, payInvoice } from '../../api/invoices'
 
@@ -568,6 +582,81 @@ const useFallbackMockup = () => {
       { roomId: 9, roomName: "Standard Gần Cầu Rồng", city: "Đà Nẵng", totalRevenue: 4000000, bookingCount: 2 }
     ]
   }
+}
+
+const exportToExcel = () => {
+  if (!data.value) return
+
+  let csvContent = '\uFEFF' // UTF-8 BOM for Vietnamese character support in Excel
+
+  // 1. Header & General Stats
+  csvContent += 'BÁO CÁO DOANH THU CHỦ NHÀ (HOST)\n'
+  csvContent += `Chủ nhà: ,${authStore.user?.fullName || ''} (${authStore.user?.email || ''})\n`
+  csvContent += `Kiểu báo cáo: ,${filterMode.value === 'ALL_TIME' ? 'Từ trước đến nay' : filterMode.value === 'BY_YEAR' ? 'Theo năm ' + selectedYear.value : filterMode.value === 'BY_QUARTER' ? 'Theo quý ' + selectedQuarter.value + ' năm ' + selectedYear.value : 'Khoảng thời gian tùy chọn (' + customStartDate.value + ' đến ' + customEndDate.value + ')'}\n`
+  csvContent += `Ngày xuất báo cáo: ,${new Date().toLocaleString('vi-VN')}\n\n`
+
+  csvContent += 'TỔNG QUAN HIỆU SUẤT\n'
+  csvContent += `Doanh thu thô (Gross Revenue),${data.value.totalRevenue || 0} ₫\n`
+  csvContent += `Thực nhận của Host (Net Revenue),${data.value.totalHostEarning || 0} ₫\n`
+  csvContent += `Khấu trừ hoa hồng (Ước tính),${((data.value.totalRevenue || 0) - (data.value.totalHostEarning || 0)) || 0} ₫ (${getCommissionPercentage.value})\n`
+  csvContent += `Tổng lượt đặt phòng,${data.value.totalBookings || 0} giao dịch\n`
+  csvContent += `Tổng số phòng nghỉ đang quản lý,${data.value.totalRooms || 0} phòng\n\n`
+
+  // 2. Monthly Revenue
+  csvContent += 'DOANH THU THEO TỪNG THÁNG (Trong năm)\n'
+  csvContent += 'Tháng,Doanh thu (VND),Số lượt đặt\n'
+  fullYearRevenues.value.forEach(item => {
+    csvContent += `Tháng ${item.month},${item.revenue},${item.bookingCount}\n`
+  })
+  csvContent += '\n'
+
+  // 3. Top Rooms Highest
+  csvContent += 'TOP 5 PHÒNG NGHỈ DOANH THU CAO NHẤT\n'
+  csvContent += 'Xếp hạng,Tên phòng,Thành phố,Số lượt đặt,Doanh thu\n'
+  if (data.value.topRooms && data.value.topRooms.length > 0) {
+    data.value.topRooms.forEach((room, idx) => {
+      csvContent += `${idx + 1},"${room.roomName.replace(/"/g, '""')}",${room.city},${room.bookingCount},${room.totalRevenue} ₫\n`
+    })
+  } else {
+    csvContent += '-,Không có dữ liệu,,,\n'
+  }
+  csvContent += '\n'
+
+  // 4. Top Rooms Lowest
+  csvContent += 'TOP 5 PHÒNG NGHỈ DOANH THU THẤP NHẤT\n'
+  csvContent += 'Xếp hạng,Tên phòng,Thành phố,Số lượt đặt,Doanh thu\n'
+  if (data.value.bottomRooms && data.value.bottomRooms.length > 0) {
+    data.value.bottomRooms.forEach((room, idx) => {
+      csvContent += `${idx + 1},"${room.roomName.replace(/"/g, '""')}",${room.city},${room.bookingCount},${room.totalRevenue} ₫\n`
+    })
+  } else {
+    csvContent += '-,Không có dữ liệu,,,\n'
+  }
+
+  // Create blob and download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  
+  let fileName = 'Bao_cao_doanh_thu_host'
+  if (filterMode.value === 'BY_YEAR') fileName += `_nam_${selectedYear.value}`
+  else if (filterMode.value === 'BY_QUARTER') fileName += `_quy_${selectedQuarter.value}_nam_${selectedYear.value}`
+  else if (filterMode.value === 'CUSTOM_RANGE') fileName += `_tu_${customStartDate.value}_den_${customEndDate.value}`
+  else fileName += '_tat_ca_thoi_gian'
+  
+  link.setAttribute('download', `${fileName}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  
+  // Show toast notification
+  // Since HostRevenueView doesn't have local showToast/toast defined in script setup, let's just trigger a native alert or create a fallback.
+  // Wait, let's check if HostRevenueView has toast setup. It doesn't seem to have one in lines 413-432.
+  // Let's use window.alert or add a simple window.confirm, or just let the download happen. Actually, a download alert/native console.log or native alert is fine, or we can just run download quietly. 
+  // Let's use a native alert for now or simply run the download. Quiet download is great. Let's do alert in Vietnamese:
+  alert('Đã xuất báo cáo doanh thu Excel (CSV) thành công!');
 }
 
 const fetchInvoices = async () => {
