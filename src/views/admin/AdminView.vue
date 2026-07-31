@@ -224,15 +224,47 @@
             <h2>{{ $t('admin.bookings_tab_title') }}</h2>
           </div>
 
-          <!-- Transaction Search Bar -->
-          <div class="search-bar-row" style="margin-bottom: 20px; display: flex; gap: 12px; align-items: center;">
-            <input 
-              type="text" 
-              v-model="bookingSearchQuery" 
-              :placeholder="locale === 'en' ? 'Search by ID, guest, room, status...' : 'Tìm kiếm theo Mã đơn, tên khách, tên phòng, trạng thái...'" 
-              class="search-input" 
-              style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; width: 100%; max-width: 420px; font-weight: 500; outline: none; transition: border 0.2s;"
-            />
+          <!-- Transaction Search & Date Filter Bar -->
+          <div class="search-bar-row" style="margin-bottom: 20px; display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 250px; max-width: 420px;">
+              <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">{{ locale === 'en' ? 'Search Keywords' : 'Từ khóa tìm kiếm' }}</label>
+              <input 
+                type="text" 
+                v-model="bookingSearchQuery" 
+                :placeholder="locale === 'en' ? 'Search by ID, guest, room, status...' : 'Tìm kiếm theo Mã đơn, tên khách, tên phòng, trạng thái...'" 
+                class="search-input" 
+                style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; width: 100%; font-weight: 500; outline: none; transition: border 0.2s; height: 38px;"
+              />
+            </div>
+            
+            <div>
+              <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">{{ locale === 'en' ? 'From Booking Date' : 'Từ ngày đặt' }}</label>
+              <input 
+                type="date" 
+                v-model="bookingStartDate" 
+                class="date-input" 
+                style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; width: 150px;"
+              />
+            </div>
+            
+            <div>
+              <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">{{ locale === 'en' ? 'To Booking Date' : 'Đến ngày đặt' }}</label>
+              <input 
+                type="date" 
+                v-model="bookingEndDate" 
+                class="date-input" 
+                style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; width: 150px;"
+              />
+            </div>
+
+            <button 
+              type="button" 
+              class="btn-secondary" 
+              style="padding: 8px 16px; border-radius: 8px; font-weight: 600; height: 38px; cursor: pointer; border: 1px solid #cbd5e1; background: white; color: #475569; transition: all 0.2s;"
+              @click="resetBookingFilters"
+            >
+              {{ locale === 'en' ? 'Reset' : 'Đặt lại' }}
+            </button>
           </div>
 
         <div class="table-container" v-if="filteredBookings.length > 0">
@@ -976,24 +1008,56 @@ const resetCommission = async (usr) => {
 const stats = ref(null)
 const allBookings = ref([])
 const bookingSearchQuery = ref('')
+const bookingStartDate = ref('')
+const bookingEndDate = ref('')
 const usersList = ref([])
 const roomsList = ref([])
 const paymentsList = ref([])
 const reviewsList = ref([])
 const activeTab = ref('dashboard')
 
+const resetBookingFilters = () => {
+  bookingSearchQuery.value = ''
+  bookingStartDate.value = ''
+  bookingEndDate.value = ''
+}
+
 const filteredBookings = computed(() => {
-  if (!bookingSearchQuery.value || bookingSearchQuery.value.trim() === '') {
-    return allBookings.value
+  let list = allBookings.value
+
+  // 1. Filter by search query
+  if (bookingSearchQuery.value && bookingSearchQuery.value.trim() !== '') {
+    const query = bookingSearchQuery.value.toLowerCase().trim()
+    list = list.filter(bk => {
+      const idMatch = bk.id?.toString().includes(query)
+      const guestMatch = bk.guestName?.toLowerCase().includes(query) || bk.guestEmail?.toLowerCase().includes(query) || bk.guestPhone?.includes(query)
+      const roomMatch = bk.roomName?.toLowerCase().includes(query) || bk.city?.toLowerCase().includes(query)
+      const statusMatch = getStatusLabel(bk.status)?.toLowerCase().includes(query) || bk.status?.toLowerCase().includes(query)
+      return idMatch || guestMatch || roomMatch || statusMatch
+    })
   }
-  const query = bookingSearchQuery.value.toLowerCase().trim()
-  return allBookings.value.filter(bk => {
-    const idMatch = bk.id?.toString().includes(query)
-    const guestMatch = bk.guestName?.toLowerCase().includes(query) || bk.guestEmail?.toLowerCase().includes(query) || bk.guestPhone?.includes(query)
-    const roomMatch = bk.roomName?.toLowerCase().includes(query) || bk.city?.toLowerCase().includes(query)
-    const statusMatch = getStatusLabel(bk.status)?.toLowerCase().includes(query) || bk.status?.toLowerCase().includes(query)
-    return idMatch || guestMatch || roomMatch || statusMatch
-  })
+
+  // 2. Filter by start booking date
+  if (bookingStartDate.value) {
+    const startVal = new Date(bookingStartDate.value).setHours(0, 0, 0, 0)
+    list = list.filter(bk => {
+      if (!bk.createdAt) return false
+      const bDate = new Date(bk.createdAt).getTime()
+      return bDate >= startVal
+    })
+  }
+
+  // 3. Filter by end booking date
+  if (bookingEndDate.value) {
+    const endVal = new Date(bookingEndDate.value).setHours(23, 59, 59, 999)
+    list = list.filter(bk => {
+      if (!bk.createdAt) return false
+      const bDate = new Date(bk.createdAt).getTime()
+      return bDate <= endVal
+    })
+  }
+
+  return list
 })
 
 const todayDateLabel = computed(() => {
