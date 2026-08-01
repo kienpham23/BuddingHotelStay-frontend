@@ -302,11 +302,13 @@
               <div class="radio-group">
                 <label class="radio-item" :class="{ 'radio-selected': form.discountType === 'PERCENT' }">
                   <input type="radio" v-model="form.discountType" value="PERCENT" />
+                  <span class="radio-circle"></span>
                   <Percent :size="16" />
                   <span>{{ $t('admin.discount_percent_label') }}</span>
                 </label>
                 <label class="radio-item" :class="{ 'radio-selected': form.discountType === 'FIXED' }">
                   <input type="radio" v-model="form.discountType" value="FIXED" />
+                  <span class="radio-circle"></span>
                   <Banknote :size="16" />
                   <span>{{ $t('admin.discount_fixed_label') }}</span>
                 </label>
@@ -1377,7 +1379,32 @@ const handleLogout = () => {
   background: #f9fafb;
 }
 .radio-item input { display: none; }
+.radio-circle {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  transition: all 0.2s ease;
+  background: white;
+  flex-shrink: 0;
+}
 .radio-selected { border-color: #5392f9; background: rgba(83,146,249,.05); color: #5392f9; }
+.radio-selected .radio-circle {
+  border-color: #5392f9;
+}
+.radio-selected .radio-circle::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #5392f9;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 .radio-item:hover { border-color: rgba(83,146,249,.5); }
 
 /* Toggle switch */
