@@ -299,24 +299,18 @@
             <!-- Discount type -->
             <div class="fgroup">
               <label>{{ $t('admin.col_discount_type') }} <span class="req">*</span></label>
-              <div class="radio-group">
-                <label class="radio-item" :class="{ 'radio-selected': form.discountType === 'PERCENT' }">
-                  <input type="radio" v-model="form.discountType" value="PERCENT" />
-                  <span class="radio-circle"></span>
-                  <Percent :size="16" />
-                  <span>{{ $t('admin.discount_percent_label') }}</span>
-                </label>
-                <label class="radio-item" :class="{ 'radio-selected': form.discountType === 'FIXED' }">
-                  <input type="radio" v-model="form.discountType" value="FIXED" />
-                  <span class="radio-circle"></span>
-                  <Banknote :size="16" />
-                  <span>{{ $t('admin.discount_fixed_label') }}</span>
-                </label>
-              </div>
+              <select 
+                v-model="form.discountType" 
+                @change="handleDiscountTypeChange"
+                style="padding: 8px 12px; border: 1.5px solid #dde1e9; border-radius: 10px; font-size: 14px; font-weight: 600; height: 42px; outline: none; color: #1e293b; background: white; width: 100%; transition: all 0.2s;"
+              >
+                <option value="PERCENT">{{ locale === 'en' ? 'Percentage (%)' : 'Giảm theo Phần trăm (%)' }}</option>
+                <option value="FIXED">{{ locale === 'en' ? 'Fixed Amount (VNĐ)' : 'Giảm theo Số tiền cố định (VNĐ)' }}</option>
+              </select>
             </div>
 
-            <!-- Discount value + max discount (conditional) -->
-            <div class="form-row-2">
+            <!-- Discount value + max discount (conditional grid/full layout) -->
+            <div :class="{ 'form-row-2': form.discountType === 'PERCENT' }">
               <div class="fgroup" :class="{ ferr: formErr.discountValue }">
                 <label>
                   {{ locale === 'en' ? (form.discountType === 'PERCENT' ? 'Discount Value (%)' : 'Discount Value (VNĐ)') : (form.discountType === 'PERCENT' ? 'Giá trị giảm (%)' : 'Giá trị giảm (VNĐ)') }}
@@ -550,6 +544,15 @@ const fetchPromotions = async () => {
 onMounted(fetchPromotions)
 
 // ─── Formatters
+const handleDiscountTypeChange = () => {
+  if (formErr.value.discountValue) delete formErr.value.discountValue
+  if (formErr.value.maxDiscountAmount) delete formErr.value.maxDiscountAmount
+  
+  if (form.value.discountType === 'FIXED') {
+    form.value.maxDiscountAmount = null
+  }
+}
+
 const formatMoney = (val) => {
   if (val === null || val === undefined || val === '') return ''
   const num = parseInt(String(val).replace(/\D/g, ''), 10)
