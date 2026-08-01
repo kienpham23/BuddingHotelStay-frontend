@@ -611,7 +611,58 @@
           <h2>{{ $t('admin.payments_tab_title') }}</h2>
         </div>
 
-        <div class="table-container" v-if="paymentsList.length > 0">
+        <!-- Filter Bar -->
+        <div class="search-bar-row" style="margin-bottom: 20px; display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;" v-if="paymentsList.length > 0">
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">
+              {{ locale === 'en' ? 'Payment Status' : 'Trạng thái giao dịch' }}
+            </label>
+            <select 
+              v-model="paymentStatusFilter" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; min-width: 160px; background: white;"
+            >
+              <option value="ALL">{{ locale === 'en' ? 'All Statuses' : 'Tất cả trạng thái' }}</option>
+              <option value="SUCCESS">{{ locale === 'en' ? 'Success' : 'Thành công' }}</option>
+              <option value="PENDING">{{ locale === 'en' ? 'Pending' : 'Chờ xử lý' }}</option>
+              <option value="FAILED">{{ locale === 'en' ? 'Failed' : 'Thất bại' }}</option>
+            </select>
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">
+              {{ locale === 'en' ? 'From Transaction Date' : 'Từ ngày giao dịch' }}
+            </label>
+            <input 
+              type="date" 
+              v-model="paymentStartDate" 
+              class="date-input" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; width: 160px;"
+            />
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">
+              {{ locale === 'en' ? 'To Transaction Date' : 'Đến ngày giao dịch' }}
+            </label>
+            <input 
+              type="date" 
+              v-model="paymentEndDate" 
+              class="date-input" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; width: 160px;"
+            />
+          </div>
+          
+          <button 
+            type="button" 
+            class="btn-secondary" 
+            style="padding: 8px 16px; border-radius: 8px; font-weight: 600; height: 38px; cursor: pointer; border: 1px solid #cbd5e1; background: white; color: #475569; transition: all 0.2s;"
+            @click="resetPaymentFilters"
+          >
+            {{ locale === 'en' ? 'Reset' : 'Đặt lại' }}
+          </button>
+        </div>
+
+        <div class="table-container" v-if="filteredPayments.length > 0">
           <table class="admin-table">
             <thead>
             <tr>
@@ -625,7 +676,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr v-for="pm in paymentsList" :key="pm.id">
+            <tr v-for="pm in filteredPayments" :key="pm.id">
               <td><strong>#{{ pm.id }}</strong></td>
               <td><strong>#{{ pm.bookingId }}</strong></td>
               <td>
@@ -643,6 +694,12 @@
             </tr>
             </tbody>
           </table>
+        </div>
+
+        <div class="empty-state" v-else-if="paymentsList.length > 0">
+          <CreditCard :size="48" class="color-gray" />
+          <h3>{{ locale === 'en' ? 'No matching transactions found' : 'Không tìm thấy giao dịch phù hợp' }}</h3>
+          <p>{{ locale === 'en' ? 'Try adjusting your filters.' : 'Vui lòng thử thay đổi bộ lọc ngày hoặc trạng thái.' }}</p>
         </div>
 
         <div class="empty-state" v-else>
@@ -1208,6 +1265,44 @@ const usersList = ref([])
 const userRoleFilter = ref('ALL') // 'ALL' | 'CUSTOMER' | 'HOST' | 'ADMIN'
 const roomsList = ref([])
 const paymentsList = ref([])
+const paymentStatusFilter = ref('ALL') // 'ALL' | 'SUCCESS' | 'PENDING' | 'FAILED'
+const paymentStartDate = ref('')
+const paymentEndDate = ref('')
+
+const resetPaymentFilters = () => {
+  paymentStatusFilter.value = 'ALL'
+  paymentStartDate.value = ''
+  paymentEndDate.value = ''
+}
+
+const filteredPayments = computed(() => {
+  let list = paymentsList.value
+
+  if (paymentStatusFilter.value !== 'ALL') {
+    list = list.filter(pm => pm.status === paymentStatusFilter.value)
+  }
+
+  if (paymentStartDate.value) {
+    const startVal = new Date(paymentStartDate.value).setHours(0, 0, 0, 0)
+    list = list.filter(pm => {
+      if (!pm.createdAt) return false
+      const pmDate = new Date(pm.createdAt).getTime()
+      return pmDate >= startVal
+    })
+  }
+
+  if (paymentEndDate.value) {
+    const endVal = new Date(paymentEndDate.value).setHours(23, 59, 59, 999)
+    list = list.filter(pm => {
+      if (!pm.createdAt) return false
+      const pmDate = new Date(pm.createdAt).getTime()
+      return pmDate <= endVal
+    })
+  }
+
+  return list
+})
+
 const reviewsList = ref([])
 const starFilter = ref('ALL') // 'ALL' | 5 | 4 | 3 | 2 | 1
 const activeTab = ref('dashboard')
