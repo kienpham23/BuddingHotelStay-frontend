@@ -690,10 +690,10 @@
     "nhatrang": "Nha Trang"
   },
   "chatbot": {
-    "welcome": "Xin chào! Tôi là trợ lý ảo HotelStay, tôi có thể giúp gì cho bạn? 🏨",
+    "welcome": "Xin chào! Tôi là trợ lý ảo của Building HotelStay, tôi có thể giúp gì cho bạn? 🏨",
     "placeholder": "Nhập tin nhắn...",
     "hint": "Enter để gửi • Shift+Enter xuống dòng",
-    "title": "Trợ lý HotelStay",
+    "title": "Trợ lý Building HotelStay",
     "status_online": "Trực tuyến",
     "aria_open": "Mở trợ lý HotelStay",
     "aria_close": "Đóng chat",

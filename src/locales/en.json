@@ -690,10 +690,10 @@
     "nhatrang": "Nha Trang"
   },
   "chatbot": {
-    "welcome": "Hello! I am HotelStay virtual assistant, how can I help you? 🏨",
+    "welcome": "Hello! I am Building HotelStay virtual assistant, how can I help you? 🏨",
     "placeholder": "Type a message...",
     "hint": "Enter to send • Shift+Enter for new line",
-    "title": "HotelStay Assistant",
+    "title": "Building HotelStay Assistant",
     "status_online": "Online",
     "aria_open": "Open HotelStay assistant",
     "aria_close": "Close chat",
