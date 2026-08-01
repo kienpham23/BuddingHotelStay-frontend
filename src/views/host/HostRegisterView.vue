@@ -180,7 +180,23 @@
 
             <div v-if="error" class="error-msg">{{ error }}</div>
 
-            <button type="submit" class="btn-primary" :disabled="loading || pwdMismatch">
+            <div class="field-group terms-group" style="display: flex; align-items: flex-start; gap: 10px; margin: 16px 0; cursor: pointer; user-select: none; border: none; padding: 0;">
+              <input 
+                type="checkbox" 
+                v-model="acceptTerms" 
+                id="accept-terms" 
+                style="margin-top: 4px; cursor: pointer; width: auto; height: auto;"
+              />
+              <label for="accept-terms" style="font-size: 13.5px; font-weight: 500; color: #475569; cursor: pointer; text-transform: none; display: inline;">
+                {{ locale === 'vi' ? 'Tôi đồng ý với ' : 'I agree to the ' }}
+                <a href="#" @click.prevent="showTermsModal = true" style="color: #1a6cf7; text-decoration: underline; font-weight: 700;">
+                  {{ locale === 'vi' ? 'Điều khoản hợp tác chủ nhà' : 'Host Partnership Terms' }}
+                </a>
+                {{ locale === 'vi' ? ' và chính sách hoa hồng.' : ' and commission policy.' }}
+              </label>
+            </div>
+
+            <button type="submit" class="btn-primary" :disabled="loading || pwdMismatch || !acceptTerms">
               <span v-if="!loading">{{ locale === 'vi' ? 'Đăng ký làm Chủ Nhà' : 'Register as Host' }}</span>
               <span v-else class="spinner"></span>
             </button>
@@ -209,6 +225,46 @@
       </div>
 
     </div>
+
+    <!-- TERMS AND BENEFITS MODAL -->
+    <div class="modal-backdrop-terms" v-if="showTermsModal" @click.self="showTermsModal = false" style="position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+      <div style="background: white; border-radius: 18px; max-width: 550px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
+        <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 1.15rem; font-weight: 800; color: #1f2937; margin: 0;">
+            {{ locale === 'vi' ? 'Điều khoản Hợp tác & Lợi ích Chủ nhà' : 'Host Partnership Terms & Benefits' }}
+          </h2>
+          <button @click="showTermsModal = false" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #9ca3af; line-height: 1;">×</button>
+        </div>
+        <div style="padding: 20px; overflow-y: auto; font-size: 14px; line-height: 1.6; color: #4b5563; text-align: left;">
+          <h3 style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 8px;">1. {{ locale === 'vi' ? 'Chính sách Doanh thu & Hoa hồng' : 'Revenue & Commission Policy' }}</h3>
+          <p style="margin-bottom: 12px;">
+            {{ locale === 'vi' ? 'Building Hotel Stay cung cấp dịch vụ đăng tin miễn phí hoàn toàn. Chúng tôi chỉ thu phí hoa hồng cố định của hệ thống là 10% (hoặc tỷ lệ được thỏa thuận riêng) trên mỗi giao dịch đặt phòng thành công. Không có bất kỳ phí ẩn hay phí duy trì tài khoản nào.' : 'Building Hotel Stay offers completely free listing services. We only collect a standard system commission rate of 10% (or custom agreed rate) on successful bookings. No hidden fees or monthly subscription fees.' }}
+          </p>
+          
+          <h3 style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 8px;">2. {{ locale === 'vi' ? 'Chu kỳ Đối soát & Thanh toán' : 'Payouts & Settlement Cycle' }}</h3>
+          <p style="margin-bottom: 12px;">
+            {{ locale === 'vi' ? 'Doanh thu từ các đơn đặt phòng online (VNPay/Momo) sẽ được đối soát tự động hàng tháng. Chủ nhà có thể theo dõi báo cáo doanh thu trực quan, minh bạch trên Dashboard và nhận tiền về tài khoản ngân hàng liên kết một cách nhanh chóng và an toàn.' : 'Revenues from online bookings (VNPay/Momo) are settled automatically each month. Hosts can track clear, transparent revenue reports on the Dashboard and receive payouts safely to their linked bank accounts.' }}
+          </p>
+
+          <h3 style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 8px;">3. {{ locale === 'vi' ? 'Quyền lợi & Lợi ích khi Hợp tác' : 'Benefits & Privileges of Partnership' }}</h3>
+          <ul style="margin-bottom: 12px; padding-left: 20px; list-style-type: disc;">
+            <li>{{ locale === 'vi' ? 'Tiếp cận hàng triệu khách du lịch toàn cầu và tối ưu hóa công suất phòng lên đến 45%.' : 'Reach millions of global travelers and maximize room occupancy by up to 45%.' }}</li>
+            <li>{{ locale === 'vi' ? 'Sử dụng miễn phí bộ công cụ quản lý phòng, lịch đặt phòng thông minh, khuyến mãi và báo cáo thống kê.' : 'Free access to professional room management, booking calendar, promo codes, and reports.' }}</li>
+            <li>{{ locale === 'vi' ? 'Đội ngũ hỗ trợ kỹ thuật và chăm sóc khách hàng hoạt động 24/7.' : '24/7 customer and technical support team at your service.' }}</li>
+          </ul>
+
+          <h3 style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 8px;">4. {{ locale === 'vi' ? 'Trách nhiệm của Chủ khách sạn' : 'Host Responsibilities' }}</h3>
+          <p>
+            {{ locale === 'vi' ? 'Chủ khách sạn có trách nhiệm duy trì thông tin phòng nghỉ, giá cả và lịch phòng trống chính xác trên hệ thống. Đảm bảo chất lượng dịch vụ lưu trú đúng như mô tả và chào đón khách hàng theo quy định.' : 'Hosts are responsible for maintaining accurate room details, prices, and calendar availabilities on the platform. Provide hospitality service quality as described and welcome guests in accordance with regulations.' }}
+          </p>
+        </div>
+        <div style="padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; background: #f9fafb;">
+          <button type="button" @click="showTermsModal = false" style="padding: 8px 20px; border-radius: 8px; background: #1a6cf7; color: white; border: none; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 13px;">
+            {{ locale === 'vi' ? 'Tôi đã hiểu' : 'I Understand' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -229,6 +285,8 @@ const confirmPassword = ref('')
 const showPwd = ref(false)
 const loading = ref(false)
 const error = ref('')
+const acceptTerms = ref(false)
+const showTermsModal = ref(false)
 
 const pwdMismatch = computed(() => {
   return confirmPassword.value.length > 0 && password.value !== confirmPassword.value
