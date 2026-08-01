@@ -465,7 +465,7 @@
     "start_date_label": "Start Date",
     "end_date_label": "End Date",
     "btn_save_changes": "Save Changes",
-    "btn_create": "Create",
+    "btn_create": "Create Promotion",
     "confirm_delete_promo_title": "Confirm promotion deletion?",
     "btn_cancel_deletion": "Cancel",
     "btn_delete_permanently": "Delete Permanently"

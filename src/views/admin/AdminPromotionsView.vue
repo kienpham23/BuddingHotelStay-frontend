@@ -269,32 +269,20 @@
 
           <form @submit.prevent="savePromo" class="modal-form" id="promo-form">
 
-            <!-- Code + Active row -->
-            <div class="form-row-2">
-              <div class="fgroup" :class="{ ferr: formErr.code }">
-                <label>{{ $t('admin.col_promo_code') }} <span class="req">*</span></label>
-                <div class="inp-wrap">
-                  <Tag :size="15" class="inp-ico" />
-                  <input
-                    v-model="form.code"
-                    type="text"
-                    placeholder="VD: SUMMER2026"
-                    @input="form.code = form.code.toUpperCase()"
-                    id="input-promo-code"
-                  />
-                </div>
-                <span class="emsg" v-if="formErr.code">{{ formErr.code }}</span>
+            <!-- Code row (full width) -->
+            <div class="fgroup" :class="{ ferr: formErr.code }">
+              <label>{{ locale === 'en' ? 'Promo Code' : 'Mã khuyến mãi' }} <span class="req">*</span></label>
+              <div class="inp-wrap">
+                <Tag :size="15" class="inp-ico" />
+                <input
+                  v-model="form.code"
+                  type="text"
+                  placeholder="VD: SUMMER2026"
+                  @input="form.code = form.code.toUpperCase()"
+                  id="input-promo-code"
+                />
               </div>
-              <div class="fgroup">
-                <label>{{ $t('admin.col_status') }}</label>
-                <label class="toggle-label">
-                  <input type="checkbox" v-model="form.active" class="toggle-checkbox" />
-                  <span class="toggle-track">
-                    <span class="toggle-thumb"></span>
-                  </span>
-                  <span class="toggle-text">{{ form.active ? $t('admin.status_active_toggle') : $t('admin.status_inactive_toggle') }}</span>
-                </label>
-              </div>
+              <span class="emsg" v-if="formErr.code">{{ formErr.code }}</span>
             </div>
 
             <!-- Description -->
@@ -329,8 +317,7 @@
             <div class="form-row-2">
               <div class="fgroup" :class="{ ferr: formErr.discountValue }">
                 <label>
-                  {{ $t('admin.discount_value_label') }}
-                  <span class="unit-hint">{{ form.discountType === 'PERCENT' ? '(%)' : '(VND)' }}</span>
+                  {{ locale === 'en' ? (form.discountType === 'PERCENT' ? 'Discount Value (%)' : 'Discount Value (VNĐ)') : (form.discountType === 'PERCENT' ? 'Giá trị giảm (%)' : 'Giá trị giảm (VNĐ)') }}
                   <span class="req">*</span>
                 </label>
                 <input
@@ -338,12 +325,12 @@
                   @input="handleDiscountValueInput"
                   type="text"
                   inputmode="numeric"
-                  placeholder="VD: 10"
+                  :placeholder="form.discountType === 'PERCENT' ? 'VD: 10' : 'VD: 100.000'"
                 />
                 <span class="emsg" v-if="formErr.discountValue">{{ formErr.discountValue }}</span>
               </div>
               <Transition name="field-slide">
-                <div class="fgroup" v-if="form.discountType === 'PERCENT'">
+                <div class="fgroup" v-if="form.discountType === 'PERCENT'" :class="{ ferr: formErr.maxDiscountAmount }">
                   <label>{{ $t('admin.max_discount_label') }}</label>
                   <input
                     :value="formatMoney(form.maxDiscountAmount)"
@@ -352,13 +339,17 @@
                     inputmode="numeric"
                     :placeholder="$t('admin.max_discount_placeholder')"
                   />
+                  <span class="hint-text" style="color: #64748b; font-size: 11px; margin-top: 4px; display: block;">
+                    {{ locale === 'en' ? 'Leave empty = Unlimited' : 'Để trống = Không giới hạn' }}
+                  </span>
+                  <span class="emsg" v-if="formErr.maxDiscountAmount">{{ formErr.maxDiscountAmount }}</span>
                 </div>
               </Transition>
             </div>
 
             <!-- Min order + usage limit -->
             <div class="form-row-2">
-              <div class="fgroup">
+              <div class="fgroup" :class="{ ferr: formErr.minOrderAmount }">
                 <label>{{ $t('admin.min_order_label') }}</label>
                 <input
                   :value="formatMoney(form.minOrderAmount)"
@@ -367,6 +358,7 @@
                   inputmode="numeric"
                   placeholder="VD: 500.000"
                 />
+                <span class="emsg" v-if="formErr.minOrderAmount">{{ formErr.minOrderAmount }}</span>
               </div>
               <div class="fgroup">
                 <label>{{ $t('admin.usage_limit_label') }}</label>
@@ -386,7 +378,7 @@
                 <label>{{ $t('admin.start_date_label') }} <span class="req">*</span></label>
                 <div class="inp-wrap">
                   <Calendar :size="15" class="inp-ico" />
-                  <input v-model="form.startDate" type="date" />
+                  <input v-model="form.startDate" type="date" :max="form.endDate || undefined" />
                 </div>
                 <span class="emsg" v-if="formErr.startDate">{{ formErr.startDate }}</span>
               </div>
@@ -394,9 +386,47 @@
                 <label>{{ $t('admin.end_date_label') }} <span class="req">*</span></label>
                 <div class="inp-wrap">
                   <Calendar :size="15" class="inp-ico" />
-                  <input v-model="form.endDate" type="date" />
+                  <input v-model="form.endDate" type="date" :min="form.startDate || undefined" />
                 </div>
                 <span class="emsg" v-if="formErr.endDate">{{ formErr.endDate }}</span>
+              </div>
+            </div>
+
+            <!-- LIVE PREVIEW CARD -->
+            <div class="promo-preview-section" style="margin-top: 15px; margin-bottom: 5px;">
+              <label style="display: block; margin-bottom: 6px; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">
+                {{ locale === 'en' ? 'Live Preview' : 'Xem trước hiển thị' }}
+              </label>
+              <div class="promo-preview-card" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1.5px dashed #3b82f6; border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+                <div style="flex: 1; text-align: left;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-family: monospace; font-size: 13px; font-weight: 800; background: #3b82f6; color: white; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.5px;">
+                      {{ form.code || 'CODE' }}
+                    </span>
+                    <span style="font-size: 13.5px; font-weight: 700; color: #1e3a8a;">
+                      {{ form.discountType === 'PERCENT' ? (locale === 'en' ? 'Discount' : 'Giảm') + ' ' + (form.discountValue || '0') + '%' : (locale === 'en' ? 'Discount' : 'Giảm') + ' ' + (formatMoney(form.discountValue) || '0đ') }}
+                    </span>
+                  </div>
+                  <p style="font-size: 12px; font-weight: 500; color: #4b5563; margin-top: 6px; line-height: 1.4;">
+                    {{ form.description || (locale === 'en' ? 'No description yet.' : 'Chưa có mô tả.') }}
+                  </p>
+                  <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap;">
+                    <span v-if="form.discountType === 'PERCENT' && form.maxDiscountAmount">
+                      • {{ locale === 'en' ? 'Max discount:' : 'Giảm tối đa:' }} <strong>{{ formatMoney(form.maxDiscountAmount) }}đ</strong>
+                    </span>
+                    <span v-if="form.minOrderAmount">
+                      • {{ locale === 'en' ? 'Min order:' : 'Đơn tối thiểu:' }} <strong>{{ formatMoney(form.minOrderAmount) }}đ</strong>
+                    </span>
+                  </div>
+                </div>
+                <div style="text-align: right; min-width: 100px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center;">
+                  <span style="font-size: 11px; font-weight: 700; color: #3b82f6; background: white; border: 1px solid #bfdbfe; padding: 2px 6px; border-radius: 4px; display: inline-block;">
+                    {{ getPreviewStatus() }}
+                  </span>
+                  <span style="font-size: 10px; color: #6b7280; margin-top: 6px; font-weight: 500;" v-if="form.startDate && form.endDate">
+                    {{ formatDateShort(form.startDate) }} - {{ formatDateShort(form.endDate) }}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -406,7 +436,7 @@
             </div>
 
             <!-- Actions -->
-            <div class="modal-actions">
+            <div class="modal-actions" style="margin-top: 15px;">
               <button type="button" class="btn-cancel" @click="closeModal">{{ $t('admin.btn_cancel') }}</button>
               <button type="submit" class="btn-submit" :disabled="formLoading" id="btn-submit-promo">
                 <span v-if="!formLoading">
@@ -605,6 +635,32 @@ const fmtDate = (d) => {
   })
 }
 
+const getPreviewStatus = () => {
+  if (!form.value.startDate || !form.value.endDate) {
+    return locale.value === 'en' ? 'Draft' : 'Nháp'
+  }
+  const today = new Date().setHours(0, 0, 0, 0)
+  const start = new Date(form.value.startDate).setHours(0, 0, 0, 0)
+  const end = new Date(form.value.endDate).setHours(23, 59, 59, 999)
+  
+  if (today < start) {
+    return locale.value === 'en' ? 'Upcoming' : 'Sắp diễn ra'
+  } else if (today > end) {
+    return locale.value === 'en' ? 'Expired' : 'Hết hạn'
+  } else {
+    return locale.value === 'en' ? 'Active' : 'Đang hoạt động'
+  }
+}
+
+const formatDateShort = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  return `${day}/${month}`
+}
+
+
 // ─── Status helpers
 const getStatusLabel = (promo) => {
   if (!promo.active) return t('admin.status_inactive_toggle')
@@ -696,16 +752,46 @@ const closeModal = () => {
 // ─── Validation
 const validateForm = () => {
   const e = {}
-  if (!form.value.code.trim()) e.code = 'Vui lòng nhập mã khuyến mãi'
-  else if (!/^[A-Z0-9_-]{2,30}$/.test(form.value.code)) e.code = 'Mã chỉ gồm chữ hoa, số, - hoặc _ (2-30 ký tự)'
-  if (!form.value.description.trim()) e.description = 'Vui lòng nhập mô tả'
-  if (!form.value.discountValue || form.value.discountValue <= 0) e.discountValue = 'Giá trị giảm phải lớn hơn 0'
-  if (form.value.discountType === 'PERCENT' && form.value.discountValue > 100) e.discountValue = 'Phần trăm không được vượt quá 100%'
-  if (!form.value.startDate) e.startDate = 'Vui lòng chọn ngày bắt đầu'
-  if (!form.value.endDate) e.endDate = 'Vui lòng chọn ngày kết thúc'
-  if (form.value.startDate && form.value.endDate && form.value.startDate > form.value.endDate) {
-    e.endDate = 'Ngày kết thúc phải sau ngày bắt đầu'
+  const isEn = locale.value === 'en'
+  
+  if (!form.value.code.trim()) {
+    e.code = isEn ? 'Please enter promo code' : 'Vui lòng nhập mã khuyến mãi'
+  } else if (!/^[A-Z0-9_-]{2,30}$/.test(form.value.code)) {
+    e.code = isEn ? 'Uppercase letters, digits, - or _ only (2-30 chars)' : 'Mã chỉ gồm chữ hoa, số, - hoặc _ (2-30 ký tự)'
   }
+  
+  if (!form.value.description.trim()) {
+    e.description = isEn ? 'Please enter description' : 'Vui lòng nhập mô tả'
+  }
+  
+  if (form.value.discountType === 'PERCENT') {
+    if (!form.value.discountValue || form.value.discountValue <= 0 || form.value.discountValue > 100) {
+      e.discountValue = isEn ? 'Discount value must be between 1-100%' : 'Giá trị giảm phải từ 1-100%'
+    }
+    if (form.value.maxDiscountAmount !== null && form.value.maxDiscountAmount < 0) {
+      e.maxDiscountAmount = isEn ? 'Max discount must be at least 0' : 'Giảm tối đa phải từ 0đ'
+    }
+  } else {
+    if (!form.value.discountValue || form.value.discountValue <= 0) {
+      e.discountValue = isEn ? 'Discount amount must be greater than 0' : 'Giá trị giảm phải lớn hơn 0đ'
+    }
+  }
+  
+  if (form.value.minOrderAmount !== null && form.value.minOrderAmount < 0) {
+    e.minOrderAmount = isEn ? 'Min order must be at least 0' : 'Đơn tối thiểu phải từ 0đ'
+  }
+  
+  if (!form.value.startDate) {
+    e.startDate = isEn ? 'Please choose start date' : 'Vui lòng chọn ngày bắt đầu'
+  }
+  if (!form.value.endDate) {
+    e.endDate = isEn ? 'Please choose end date' : 'Vui lòng chọn ngày kết thúc'
+  }
+  
+  if (form.value.startDate && form.value.endDate && form.value.startDate > form.value.endDate) {
+    e.endDate = isEn ? 'End date must be after start date' : 'Ngày kết thúc phải sau ngày bắt đầu'
+  }
+  
   formErr.value = e
   return Object.keys(e).length === 0
 }
