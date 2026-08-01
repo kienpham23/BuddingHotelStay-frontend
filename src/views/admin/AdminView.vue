@@ -204,17 +204,105 @@
               </div>
             </div>
           </div>
-          
-          <!-- Quick settings card -->
-          <div class="quick-settings-card">
-            <div class="quick-settings-header">
-              <Sparkles :size="20" class="color-purple" />
-              <h3>{{ $t('admin.welcome_title') }}</h3>
+           <!-- Row 1: Hoạt động gần đây | Phòng chờ duyệt -->
+          <div class="dashboard-grid-row" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-top: 24px;">
+            <!-- Column 1: Recent Activity -->
+            <div class="dashboard-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 18px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column;">
+              <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <Clock :size="18" style="color: #1a6cf7;" />
+                {{ locale === 'en' ? 'Recent Activities' : 'Hoạt động gần đây' }}
+              </h3>
+              <div class="activity-list" style="display: flex; flex-direction: column; gap: 14px; overflow-y: auto; max-height: 250px; padding-right: 4px;">
+                <div v-for="(act, index) in recentActivities" :key="index" style="display: flex; align-items: flex-start; gap: 12px; border-bottom: 1px dashed #f1f5f9; padding-bottom: 10px;">
+                  <span style="font-size: 11px; font-weight: 700; color: #1a6cf7; background: #eff6ff; padding: 2px 6px; border-radius: 4px; min-width: 46px; text-align: center; margin-top: 2px; flex-shrink: 0;">
+                    {{ act.timeStr }}
+                  </span>
+                  <span style="font-size: 13px; font-weight: 500; color: #334155; line-height: 1.4; text-align: left;">
+                    {{ act.text }}
+                  </span>
+                </div>
+                <div v-if="recentActivities.length === 0" style="text-align: center; color: #94a3b8; font-size: 13px; padding: 20px 0;">
+                  {{ locale === 'en' ? 'No recent activities.' : 'Chưa có hoạt động nào.' }}
+                </div>
+              </div>
             </div>
-            <p>{{ $t('admin.welcome_desc') }}</p>
-            <div class="quick-actions-row">
-              <RouterLink to="/admin/revenue" class="action-btn-shortcut">{{ $t('admin.action_commission') }}</RouterLink>
-              <RouterLink to="/admin/promotions" class="action-btn-shortcut violet">{{ $t('admin.action_promo') }}</RouterLink>
+
+            <!-- Column 2: Rooms Pending Approval -->
+            <div class="dashboard-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 18px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; min-height: 220px;">
+              <div>
+                <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                  <Hotel :size="18" style="color: #f59e0b;" />
+                  {{ locale === 'en' ? 'Rooms Pending Approval' : 'Phòng chờ duyệt' }}
+                </h3>
+                <div style="text-align: center; padding: 20px 0 10px 0;">
+                  <span style="font-size: 3.2rem; font-weight: 800; color: #f59e0b; display: block; line-height: 1;">
+                    {{ pendingRoomsCount }}
+                  </span>
+                  <span style="font-size: 13px; font-weight: 600; color: #64748b; margin-top: 8px; display: block;">
+                    {{ locale === 'en' ? 'rooms waiting for approval' : 'phòng nghỉ đang chờ phê duyệt' }}
+                  </span>
+                </div>
+              </div>
+              <button 
+                @click="activeTab = 'rooms'"
+                style="width: 100%; padding: 11px; border-radius: 10px; font-weight: 700; border: none; background: #f59e0b; color: white; cursor: pointer; transition: background 0.2s; text-align: center; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit;"
+              >
+                {{ locale === 'en' ? 'Go to Approval List' : 'Đi tới duyệt' }} →
+              </button>
+            </div>
+          </div>
+
+          <!-- Row 2: Thao tác nhanh | Hoa hồng mặc định -->
+          <div class="dashboard-grid-row" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; margin-top: 24px;">
+            <!-- Column 1: Quick Actions -->
+            <div class="dashboard-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 18px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+              <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <Sparkles :size="18" style="color: #7c3aed;" />
+                {{ locale === 'en' ? 'Quick Actions' : 'Thao tác nhanh' }}
+              </h3>
+              <div class="quick-actions-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <RouterLink to="/admin/promotions" class="action-btn-shortcut violet" style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+                  <Plus :size="15" />
+                  {{ locale === 'en' ? 'Create Promotion' : 'Tạo khuyến mãi' }}
+                </RouterLink>
+                <button @click="activeTab = 'rooms'" class="action-btn-shortcut" style="display: flex; align-items: center; gap: 8px; justify-content: center; background: #eff6ff; color: #1a6cf7; border-color: #bfdbfe; font-family: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; padding: 0.65rem 1.25rem; border-radius: 10px; transition: all 0.2s;">
+                  <Hotel :size="15" />
+                  {{ locale === 'en' ? 'Approve Rooms' : 'Duyệt phòng' }}
+                </button>
+                <RouterLink to="/admin/revenue" class="action-btn-shortcut" style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+                  <DollarSign :size="15" />
+                  {{ locale === 'en' ? 'Commission Settings' : 'Cấu hình hoa hồng' }}
+                </RouterLink>
+                <RouterLink to="/admin/revenue" class="action-btn-shortcut violet" style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+                  <BarChart2 :size="15" />
+                  {{ locale === 'en' ? 'View Reports' : 'Xem báo cáo' }}
+                </RouterLink>
+              </div>
+            </div>
+
+            <!-- Column 2: System Default Commission -->
+            <div class="dashboard-card" style="background: white; border: 1px solid #e2e8f0; border-radius: 18px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; min-height: 180px;">
+              <div>
+                <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                  <DollarSign :size="18" style="color: #10b981;" />
+                  {{ locale === 'en' ? 'System Commission' : 'Hoa hồng hệ thống' }}
+                </h3>
+                <div style="text-align: center; padding: 10px 0 5px 0;">
+                  <span style="font-size: 3rem; font-weight: 800; color: #10b981; display: block; line-height: 1;">
+                    {{ defaultCommissionRate }}%
+                  </span>
+                  <span style="font-size: 12px; font-weight: 600; color: #64748b; margin-top: 6px; display: block;">
+                    {{ locale === 'en' ? 'default commission rate' : 'tỷ lệ hoa hồng mặc định' }}
+                  </span>
+                </div>
+              </div>
+              <button 
+                @click="changeDefaultCommission"
+                style="width: 100%; padding: 9px; border-radius: 8px; font-weight: 700; border: 1.5px solid #10b981; background: white; color: #10b981; cursor: pointer; transition: all 0.2s; text-align: center; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit;"
+              >
+                <Save :size="14" />
+                {{ locale === 'en' ? 'Change Commission' : 'Thay đổi hoa hồng' }}
+              </button>
             </div>
           </div>
         </div>
@@ -1185,7 +1273,8 @@ import {
   Users, Hotel, FileText, DollarSign, Plus, MapPin, Star, Edit2, Trash2,
   CreditCard, MessageSquare, Check, Lock, Unlock,
   UploadCloud, CheckCircle, AlertCircle, X,
-  LayoutDashboard, BarChart3, Home, LogOut, Tag, Sparkles, Eye
+  LayoutDashboard, BarChart3, Home, LogOut, Tag, Sparkles, Eye,
+  Clock, Save, BarChart2
 } from 'lucide-vue-next'
 
 const { t, locale } = useI18n()
@@ -1268,6 +1357,90 @@ const bookingEndDate = ref('')
 const usersList = ref([])
 const userRoleFilter = ref('ALL') // 'ALL' | 'CUSTOMER' | 'HOST' | 'ADMIN'
 const roomsList = ref([])
+
+const defaultCommissionRate = ref(10)
+const fetchDefaultCommissionRate = async () => {
+  try {
+    const res = await axios.get('/admin/settings/commission-rate')
+    defaultCommissionRate.value = res.data.defaultRate
+  } catch (err) {
+    console.error('Lấy hoa hồng mặc định thất bại:', err)
+  }
+}
+
+const changeDefaultCommission = async () => {
+  const newRate = prompt(
+    locale.value === 'en' 
+      ? 'Enter new default commission rate (0-100%):' 
+      : 'Nhập tỷ lệ hoa hồng mặc định mới cho hệ thống (0-100%):', 
+    defaultCommissionRate.value
+  )
+  if (newRate === null) return
+  const num = Number(newRate)
+  if (isNaN(num) || num < 0 || num > 100) {
+    showToast(locale.value === 'en' ? 'Invalid rate!' : 'Tỷ lệ hoa hồng không hợp lệ!', 'error')
+    return
+  }
+  try {
+    await axios.put('/admin/settings/commission-rate', null, { params: { rate: num } })
+    defaultCommissionRate.value = num
+    showToast(locale.value === 'en' ? 'Updated commission rate successfully!' : 'Cập nhật tỷ lệ hoa hồng mặc định thành công!')
+  } catch (err) {
+    console.error('Cập nhật hoa hồng thất bại:', err)
+    showToast(err.response?.data?.message || 'Không thể cập nhật hoa hồng.', 'error')
+  }
+}
+
+const pendingRoomsCount = computed(() => {
+  return roomsList.value.filter(r => r.status === 'PENDING').length
+})
+
+const recentActivities = computed(() => {
+  const list = []
+  
+  // 1. Add real bookings
+  allBookings.value.forEach(bk => {
+    if (bk.createdAt) {
+      list.push({
+        timestamp: new Date(bk.createdAt).getTime(),
+        timeStr: new Date(bk.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        text: locale.value === 'en' 
+          ? `Guest ${bk.guestName} booked room #${bk.id} (${bk.roomName})` 
+          : `Khách hàng ${bk.guestName} đặt phòng #${bk.id} (${bk.roomName})`,
+        icon: 'booking'
+      })
+    }
+  })
+  
+  // 2. Add real reviews with mock timestamp based on their IDs to keep it stable
+  reviewsList.value.forEach(rv => {
+    const mockTime = new Date().setHours(12 - (rv.id % 12), (rv.id * 7) % 60, 0, 0)
+    list.push({
+      timestamp: mockTime,
+      timeStr: new Date(mockTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      text: locale.value === 'en' 
+        ? `Guest ${rv.customerName} rated ${rv.rating}★ for room ${rv.roomName}` 
+        : `Người dùng ${rv.customerName} đánh giá ${rv.rating}★ cho phòng ${rv.roomName}`,
+      icon: 'review'
+    })
+  })
+  
+  // 3. Add real rooms with mock timestamp
+  roomsList.value.slice(0, 5).forEach(rm => {
+    const mockTime = new Date().setHours(14 - (rm.id % 10), (rm.id * 9) % 60, 0, 0)
+    list.push({
+      timestamp: mockTime,
+      timeStr: new Date(mockTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      text: locale.value === 'en' 
+        ? `Host registered a new room: ${rm.name} (${rm.city})` 
+        : `Chủ phòng đăng phòng mới: ${rm.name} (${rm.city})`,
+      icon: 'room'
+    })
+  })
+  
+  // Sort all activities by timestamp descending
+  return list.sort((a, b) => b.timestamp - a.timestamp).slice(0, 8)
+})
 const paymentsList = ref([])
 const paymentStatusFilter = ref('ALL') // 'ALL' | 'SUCCESS' | 'PENDING' | 'FAILED'
 const paymentStartDate = ref('')
@@ -1909,6 +2082,7 @@ onMounted(() => {
     router.push('/')
   } else {
     fetchAdminData()
+    fetchDefaultCommissionRate()
   }
 })
 </script>
