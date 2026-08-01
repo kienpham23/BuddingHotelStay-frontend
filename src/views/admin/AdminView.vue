@@ -297,7 +297,7 @@
                 </div>
               </div>
               <button 
-                @click="changeDefaultCommission"
+                @click="openCommissionModal"
                 style="width: 100%; padding: 9px; border-radius: 8px; font-weight: 700; border: 1.5px solid #10b981; background: white; color: #10b981; cursor: pointer; transition: all 0.2s; text-align: center; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit;"
               >
                 <Save :size="14" />
@@ -1253,6 +1253,60 @@
       </div>
     </div>
 
+    <!-- SYSTEM COMMISSION MODAL -->
+    <div class="modal-backdrop" v-if="showCommissionModal" @click.self="showCommissionModal = false">
+      <div class="room-modal" style="max-width: 400px; border-radius: 18px; overflow: hidden; background: white; box-shadow: 0 20px 50px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; margin: 0;">
+            <DollarSign :size="18" style="color: #10b981;" />
+            {{ locale === 'en' ? 'Default Commission' : 'Cấu hình hoa hồng' }}
+          </h2>
+          <button class="btn-close" @click="showCommissionModal = false" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #94a3b8;">×</button>
+        </div>
+        <div class="modal-form" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em;">
+              {{ locale === 'en' ? 'Commission Rate (%)' : 'Tỷ lệ hoa hồng (%)' }}
+            </label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input 
+                v-model.number="newSystemCommission"
+                type="number"
+                min="0"
+                max="100"
+                style="padding: 10px 14px; border: 1.5px solid #dde1e9; border-radius: 10px; font-size: 15px; font-weight: 700; color: #1e293b; outline: none; width: 100%; padding-right: 36px;"
+              />
+              <span style="position: absolute; right: 14px; font-size: 15px; font-weight: 800; color: #64748b;">%</span>
+            </div>
+            <span v-if="commissionModalError" style="font-size: 12px; color: #ef4444; font-weight: 600;">
+              {{ commissionModalError }}
+            </span>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0; background: #f8fafc;">
+          <button 
+            class="btn-cancel" 
+            @click="showCommissionModal = false"
+            style="padding: 8px 16px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 600; cursor: pointer; font-size: 13px;"
+          >
+            {{ locale === 'en' ? 'Cancel' : 'Hủy' }}
+          </button>
+          <button 
+            class="btn-submit" 
+            @click="saveSystemCommission" 
+            :disabled="commissionModalLoading"
+            style="padding: 8px 18px; border-radius: 8px; border: none; background: #10b981; color: white; font-weight: 700; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);"
+          >
+            <span v-if="!commissionModalLoading">
+              <Save :size="14" />
+              {{ locale === 'en' ? 'Save' : 'Lưu lại' }}
+            </span>
+            <span v-else class="spinner-small" style="width: 14px; height: 14px;"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast notification -->
     <Transition name="toast-slide">
       <div class="toast" :class="toast.type" v-if="toast.show">
@@ -1368,28 +1422,44 @@ const fetchDefaultCommissionRate = async () => {
   }
 }
 
-const changeDefaultCommission = async () => {
-  const newRate = prompt(
-    locale.value === 'en' 
-      ? 'Enter new default commission rate (0-100%):' 
-      : 'Nhập tỷ lệ hoa hồng mặc định mới cho hệ thống (0-100%):', 
-    defaultCommissionRate.value
-  )
-  if (newRate === null) return
-  const num = Number(newRate)
-  if (isNaN(num) || num < 0 || num > 100) {
-    showToast(locale.value === 'en' ? 'Invalid rate!' : 'Tỷ lệ hoa hồng không hợp lệ!', 'error')
+const showCommissionModal = ref(false)
+const newSystemCommission = ref(10)
+const commissionModalError = ref('')
+const commissionModalLoading = ref(false)
+
+const openCommissionModal = () => {
+  newSystemCommission.value = defaultCommissionRate.value
+  commissionModalError.value = ''
+  showCommissionModal.value = true
+}
+
+const saveSystemCommission = async () => {
+  const val = newSystemCommission.value
+  if (val === null || val === undefined || val === '') {
+    commissionModalError.value = locale.value === 'en' ? 'Please enter a value' : 'Vui lòng nhập tỷ lệ hoa hồng'
     return
   }
+  const num = Number(val)
+  if (isNaN(num) || num < 0 || num > 100) {
+    commissionModalError.value = locale.value === 'en' ? 'Rate must be between 0 and 100%' : 'Tỷ lệ hoa hồng phải từ 0% đến 100%'
+    return
+  }
+  
+  commissionModalLoading.value = true
+  commissionModalError.value = ''
   try {
     await axios.put('/admin/settings/commission-rate', null, { params: { rate: num } })
     defaultCommissionRate.value = num
     showToast(locale.value === 'en' ? 'Updated commission rate successfully!' : 'Cập nhật tỷ lệ hoa hồng mặc định thành công!')
+    showCommissionModal.value = false
   } catch (err) {
     console.error('Cập nhật hoa hồng thất bại:', err)
-    showToast(err.response?.data?.message || 'Không thể cập nhật hoa hồng.', 'error')
+    commissionModalError.value = err.response?.data?.message || (locale.value === 'en' ? 'Failed to update commission rate' : 'Không thể cập nhật hoa hồng.')
+  } finally {
+    commissionModalLoading.value = false
   }
 }
+
 
 const pendingRoomsCount = computed(() => {
   return roomsList.value.filter(r => r.status === 'PENDING').length
