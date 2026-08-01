@@ -465,6 +465,7 @@
     "start_date_label": "Ngày bắt đầu",
     "end_date_label": "Ngày kết thúc",
     "btn_save_changes": "Lưu thay đổi",
+    "btn_create": "Tạo mã mới",
     "confirm_delete_promo_title": "Xác nhận xóa mã khuyến mãi?",
     "btn_cancel_deletion": "Hủy bỏ",
     "btn_delete_permanently": "Xóa vĩnh viễn"

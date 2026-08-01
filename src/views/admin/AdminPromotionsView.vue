@@ -334,10 +334,10 @@
                   <span class="req">*</span>
                 </label>
                 <input
-                  v-model.number="form.discountValue"
-                  type="number"
-                  min="1"
-                  :max="form.discountType === 'PERCENT' ? 100 : undefined"
+                  :value="form.discountType === 'PERCENT' ? form.discountValue : formatMoney(form.discountValue)"
+                  @input="handleDiscountValueInput"
+                  type="text"
+                  inputmode="numeric"
                   placeholder="VD: 10"
                 />
                 <span class="emsg" v-if="formErr.discountValue">{{ formErr.discountValue }}</span>
@@ -346,9 +346,10 @@
                 <div class="fgroup" v-if="form.discountType === 'PERCENT'">
                   <label>{{ $t('admin.max_discount_label') }}</label>
                   <input
-                    v-model.number="form.maxDiscountAmount"
-                    type="number"
-                    min="0"
+                    :value="formatMoney(form.maxDiscountAmount)"
+                    @input="handleMoneyInput($event, 'maxDiscountAmount')"
+                    type="text"
+                    inputmode="numeric"
                     :placeholder="$t('admin.max_discount_placeholder')"
                   />
                 </div>
@@ -360,10 +361,11 @@
               <div class="fgroup">
                 <label>{{ $t('admin.min_order_label') }}</label>
                 <input
-                  v-model.number="form.minOrderAmount"
-                  type="number"
-                  min="0"
-                  placeholder="VD: 500000"
+                  :value="formatMoney(form.minOrderAmount)"
+                  @input="handleMoneyInput($event, 'minOrderAmount')"
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="VD: 500.000"
                 />
               </div>
               <div class="fgroup">
@@ -516,6 +518,80 @@ const fetchPromotions = async () => {
 onMounted(fetchPromotions)
 
 // ─── Formatters
+const formatMoney = (val) => {
+  if (val === null || val === undefined || val === '') return ''
+  const num = parseInt(String(val).replace(/\D/g, ''), 10)
+  if (isNaN(num)) return ''
+  return new Intl.NumberFormat('vi-VN').format(num)
+}
+
+const handleMoneyInput = (event, fieldName) => {
+  const input = event.target
+  const origValue = input.value
+  const selectionStart = input.selectionStart
+  
+  const cleanVal = origValue.replace(/\D/g, '')
+  if (!cleanVal) {
+    form.value[fieldName] = null
+    input.value = ''
+    return
+  }
+  
+  const num = parseInt(cleanVal, 10)
+  form.value[fieldName] = num
+  
+  const formatted = new Intl.NumberFormat('vi-VN').format(num)
+  input.value = formatted
+  
+  const addedChars = formatted.length - origValue.length
+  const newPos = Math.max(0, selectionStart + addedChars)
+  setTimeout(() => {
+    input.setSelectionRange(newPos, newPos)
+  }, 0)
+}
+
+const handleDiscountValueInput = (event) => {
+  const input = event.target
+  const origValue = input.value
+  const selectionStart = input.selectionStart
+  
+  if (form.value.discountType === 'PERCENT') {
+    const cleanVal = origValue.replace(/\D/g, '')
+    if (!cleanVal) {
+      form.value.discountValue = null
+      input.value = ''
+      return
+    }
+    let num = parseInt(cleanVal, 10)
+    if (num > 100) num = 100
+    form.value.discountValue = num
+    input.value = String(num)
+    
+    const addedChars = String(num).length - origValue.length
+    const newPos = Math.max(0, selectionStart + addedChars)
+    setTimeout(() => {
+      input.setSelectionRange(newPos, newPos)
+    }, 0)
+  } else {
+    const cleanVal = origValue.replace(/\D/g, '')
+    if (!cleanVal) {
+      form.value.discountValue = null
+      input.value = ''
+      return
+    }
+    const num = parseInt(cleanVal, 10)
+    form.value.discountValue = num
+    const formatted = new Intl.NumberFormat('vi-VN').format(num)
+    input.value = formatted
+    
+    const addedChars = formatted.length - origValue.length
+    const newPos = Math.max(0, selectionStart + addedChars)
+    setTimeout(() => {
+      input.setSelectionRange(newPos, newPos)
+    }, 0)
+  }
+}
+
 const fmtPrice = (n) => {
   const currentLocale = locale.value === 'en' ? 'en-US' : 'vi-VN'
   return new Intl.NumberFormat(currentLocale, { style: 'currency', currency: 'VND' }).format(n ?? 0)
