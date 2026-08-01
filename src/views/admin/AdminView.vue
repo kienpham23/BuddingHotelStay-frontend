@@ -1489,6 +1489,7 @@ const getRoomStatusLabel = (status) => {
 
 const getPaymentStatusLabel = (status) => {
   switch (status) {
+    case 'SUCCESS':
     case 'COMPLETED': return t('admin.status_success')
     case 'PENDING': return t('admin.status_pending')
     case 'FAILED': return t('admin.status_failed')
@@ -2436,6 +2437,7 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
 .btn-table-unlock:hover { background: #dbeafe; }
 
 .status-badge.active { background: #ecfdf5; color: #059669; }
+.status-badge.success { background: #ecfdf5; color: #059669; }
 .status-badge.failed { background: #fef2f2; color: #dc2626; }
 .status-badge.refunded { background: #f1f5f9; color: #475569; }
 .status-badge.refunded { background: #f1f5f9; color: #475569; }
