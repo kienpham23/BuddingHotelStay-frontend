@@ -242,6 +242,7 @@
               <input 
                 type="date" 
                 v-model="bookingStartDate" 
+                :max="bookingEndDate || undefined"
                 class="date-input" 
                 style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; width: 150px;"
               />
@@ -252,6 +253,7 @@
               <input 
                 type="date" 
                 v-model="bookingEndDate" 
+                :min="bookingStartDate || undefined"
                 class="date-input" 
                 style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; width: 150px;"
               />
@@ -635,6 +637,7 @@
             <input 
               type="date" 
               v-model="paymentStartDate" 
+              :max="paymentEndDate || undefined"
               class="date-input" 
               style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; width: 160px;"
             />
@@ -647,6 +650,7 @@
             <input 
               type="date" 
               v-model="paymentEndDate" 
+              :min="paymentStartDate || undefined"
               class="date-input" 
               style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; width: 160px;"
             />
