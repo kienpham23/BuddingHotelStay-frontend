@@ -636,7 +636,112 @@
           <h2>{{ $t('admin.rooms_tab_title') }}</h2>
         </div>
 
-        <div class="table-container" v-if="roomsList.length > 0">
+        <!-- Room Search and Filter Bar -->
+        <div class="search-bar-row room-filter-bar" style="margin-bottom: 20px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; background: white; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+          <div style="flex: 1; min-width: 240px;">
+            <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">
+              {{ locale === 'en' ? 'Search rooms' : 'Tìm kiếm phòng nghỉ' }}
+            </label>
+            <input 
+              type="text" 
+              v-model="roomSearchQuery" 
+              :placeholder="locale === 'en' ? 'Search by room name, address or host...' : 'Tìm theo tên phòng, địa chỉ hoặc chủ phòng...'" 
+              style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; color: #334155; height: 38px;"
+              @keyup.enter="applyRoomFilters"
+            />
+          </div>
+          
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">
+              {{ locale === 'en' ? 'City' : 'Thành phố' }}
+            </label>
+            <select 
+              v-model="roomCityFilter" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; min-width: 140px; background: white;"
+            >
+              <option value="ALL">{{ locale === 'en' ? 'All Cities' : 'Tất cả thành phố' }}</option>
+              <option value="Hà Nội">Hà Nội</option>
+              <option value="Đà Nẵng">Đà Nẵng</option>
+              <option value="Hồ Chí Minh">Hồ Chí Minh</option>
+              <option value="Phú Quốc">Phú Quốc</option>
+              <option value="Đà Lạt">Đà Lạt</option>
+              <option value="Nha Trang">Nha Trang</option>
+              <option value="Vũng Tàu">Vũng Tàu</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">
+              {{ locale === 'en' ? 'Room Type' : 'Loại phòng' }}
+            </label>
+            <select 
+              v-model="roomTypeFilter" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; min-width: 140px; background: white;"
+            >
+              <option value="ALL">{{ locale === 'en' ? 'All Types' : 'Tất cả loại phòng' }}</option>
+              <option value="Phòng đơn">{{ locale === 'en' ? 'Single Room' : 'Phòng đơn' }}</option>
+              <option value="Deluxe">Deluxe</option>
+              <option value="Family Room">Family Room</option>
+              <option value="Villa">Villa</option>
+              <option value="Standard">Standard</option>
+              <option value="Penthouse">Penthouse</option>
+              <option value="Nhà nguyên căn">{{ locale === 'en' ? 'Entire House' : 'Nhà nguyên căn' }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">
+              {{ locale === 'en' ? 'Status' : 'Trạng thái' }}
+            </label>
+            <select 
+              v-model="roomStatusFilter" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; min-width: 130px; background: white;"
+            >
+              <option value="ALL">{{ locale === 'en' ? 'All Statuses' : 'Tất cả trạng thái' }}</option>
+              <option value="ACTIVE">{{ locale === 'en' ? 'Active' : 'Hoạt động' }}</option>
+              <option value="PENDING">{{ locale === 'en' ? 'Pending' : 'Chờ duyệt' }}</option>
+              <option value="BLOCKED">{{ locale === 'en' ? 'Locked' : 'Bị khóa' }}</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">
+              {{ locale === 'en' ? 'Sort By' : 'Sắp xếp' }}
+            </label>
+            <select 
+              v-model="roomSortBy" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 500; height: 38px; outline: none; color: #334155; min-width: 160px; background: white;"
+            >
+              <option value="NONE">{{ locale === 'en' ? 'Default' : 'Mặc định' }}</option>
+              <option value="PRICE_ASC">{{ locale === 'en' ? 'Price: Low to High' : 'Giá tăng dần' }}</option>
+              <option value="PRICE_DESC">{{ locale === 'en' ? 'Price: High to Low' : 'Giá giảm dần' }}</option>
+              <option value="NEWEST">{{ locale === 'en' ? 'Newest' : 'Mới đăng' }}</option>
+              <option value="MOST_BOOKED">{{ locale === 'en' ? 'Most Booked' : 'Lượt đặt nhiều nhất' }}</option>
+              <option value="HIGHEST_RATED">{{ locale === 'en' ? 'Highest Rated' : 'Đánh giá cao nhất' }}</option>
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <button 
+              type="button" 
+              class="btn-primary" 
+              style="padding: 8px 16px; border-radius: 8px; font-weight: 600; height: 38px; cursor: pointer; border: none; background: #3b82f6; color: white; transition: all 0.2s;"
+              @click="applyRoomFilters"
+            >
+              {{ locale === 'en' ? 'Search' : 'Tìm kiếm' }}
+            </button>
+            <button 
+              type="button" 
+              class="btn-secondary" 
+              style="padding: 8px 16px; border-radius: 8px; font-weight: 600; height: 38px; cursor: pointer; border: 1px solid #cbd5e1; background: white; color: #475569; transition: all 0.2s;"
+              @click="resetRoomFilters"
+            >
+              {{ locale === 'en' ? 'Reset' : 'Đặt lại' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container" v-if="filteredRooms.length > 0">
           <table class="admin-table">
             <thead>
             <tr>
@@ -652,7 +757,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr v-for="rm in roomsList" :key="rm.id">
+            <tr v-for="rm in paginatedRooms" :key="rm.id">
               <td><strong>#{{ rm.id }}</strong></td>
               <td>
                 <div class="table-room-info">
@@ -697,6 +802,47 @@
             </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Pagination controls -->
+        <div class="pagination-container" v-if="roomTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          <button 
+            class="btn-pagination-nav" 
+            :disabled="roomCurrentPage === 1" 
+            @click="roomCurrentPage--"
+            style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
+            :style="roomCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+          >
+            &larr; {{ locale === 'en' ? 'Previous' : 'Trước' }}
+          </button>
+          
+          <button 
+            v-for="p in roomTotalPages" 
+            :key="p"
+            class="btn-pagination-page" 
+            :class="{ active: roomCurrentPage === p }"
+            @click="roomCurrentPage = p"
+            style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-size: 13.5px; font-weight: 600; transition: all 0.2s;"
+            :style="roomCurrentPage === p ? { background: '#3b82f6', borderColor: '#3b82f6', color: 'white' } : { color: '#475569' }"
+          >
+            {{ p }}
+          </button>
+
+          <button 
+            class="btn-pagination-nav" 
+            :disabled="roomCurrentPage === roomTotalPages" 
+            @click="roomCurrentPage++"
+            style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
+            :style="roomCurrentPage === roomTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+          >
+            {{ locale === 'en' ? 'Next' : 'Sau' }} &rarr;
+          </button>
+        </div>
+
+        <div class="empty-state" v-else-if="roomsList.length > 0">
+          <Hotel :size="48" class="color-gray" />
+          <h3>{{ locale === 'en' ? 'No matching rooms found' : 'Không tìm thấy phòng nghỉ phù hợp' }}</h3>
+          <p>{{ locale === 'en' ? 'Try adjusting your search keywords or filter conditions.' : 'Hãy thử thay đổi điều kiện tìm kiếm hoặc bộ lọc của bạn.' }}</p>
         </div>
 
         <div class="empty-state" v-else>
@@ -1602,6 +1748,127 @@ const bookingEndDate = ref('')
 const usersList = ref([])
 const userRoleFilter = ref('ALL') // 'ALL' | 'CUSTOMER' | 'HOST' | 'ADMIN'
 const roomsList = ref([])
+
+// Room management filter, sort and pagination states
+const roomSearchQuery = ref('')
+const roomCityFilter = ref('ALL')
+const roomTypeFilter = ref('ALL')
+const roomStatusFilter = ref('ALL')
+const roomSortBy = ref('NONE')
+
+const appliedRoomSearchQuery = ref('')
+const appliedRoomCityFilter = ref('ALL')
+const appliedRoomTypeFilter = ref('ALL')
+const appliedRoomStatusFilter = ref('ALL')
+const appliedRoomSortBy = ref('NONE')
+
+const roomCurrentPage = ref(1)
+const roomItemsPerPage = ref(5) // 5 items per page
+
+const applyRoomFilters = () => {
+  appliedRoomSearchQuery.value = roomSearchQuery.value
+  appliedRoomCityFilter.value = roomCityFilter.value
+  appliedRoomTypeFilter.value = roomTypeFilter.value
+  appliedRoomStatusFilter.value = roomStatusFilter.value
+  appliedRoomSortBy.value = roomSortBy.value
+  roomCurrentPage.value = 1
+}
+
+const resetRoomFilters = () => {
+  roomSearchQuery.value = ''
+  roomCityFilter.value = 'ALL'
+  roomTypeFilter.value = 'ALL'
+  roomStatusFilter.value = 'ALL'
+  roomSortBy.value = 'NONE'
+  applyRoomFilters()
+}
+
+const filteredRooms = computed(() => {
+  let list = [...roomsList.value]
+
+  // 1. Search Query (name, address, city, host name, host email, id)
+  const q = appliedRoomSearchQuery.value.trim().toLowerCase()
+  if (q) {
+    list = list.filter(rm => {
+      const nameMatch = rm.name?.toLowerCase().includes(q)
+      const addrMatch = rm.address?.toLowerCase().includes(q)
+      const cityMatch = rm.city?.toLowerCase().includes(q)
+      const hostName = rm.hostName || rm.host?.fullName || ''
+      const hostEmail = rm.hostEmail || rm.host?.email || ''
+      const hostMatch = hostName.toLowerCase().includes(q) || hostEmail.toLowerCase().includes(q)
+      const idMatch = `#${rm.id}` === q || rm.id?.toString() === q
+      return nameMatch || addrMatch || cityMatch || hostMatch || idMatch
+    })
+  }
+
+  // 2. City Filter
+  if (appliedRoomCityFilter.value !== 'ALL') {
+    list = list.filter(rm => rm.city === appliedRoomCityFilter.value)
+  }
+
+  // 3. Room Type Filter
+  if (appliedRoomTypeFilter.value !== 'ALL') {
+    list = list.filter(rm => {
+      const type = rm.roomTypeName?.toLowerCase() || ''
+      const filterVal = appliedRoomTypeFilter.value.toLowerCase()
+      
+      if (filterVal === 'phòng đơn') return type.includes('đơn') || type.includes('single')
+      if (filterVal === 'deluxe') return type.includes('deluxe')
+      if (filterVal === 'family room') return type.includes('family') || type.includes('gia đình')
+      if (filterVal === 'villa') return type.includes('villa') || type.includes('biệt thự')
+      if (filterVal === 'standard') return type.includes('standard')
+      if (filterVal === 'penthouse') return type.includes('penthouse')
+      if (filterVal === 'nhà nguyên căn') return type.includes('nhà nguyên căn') || type.includes('house')
+      
+      return type.includes(filterVal)
+    })
+  }
+
+  // 4. Status Filter
+  if (appliedRoomStatusFilter.value !== 'ALL') {
+    list = list.filter(rm => {
+      const status = rm.status?.toUpperCase() || 'ACTIVE'
+      return status === appliedRoomStatusFilter.value
+    })
+  }
+
+  // 5. Sorting
+  if (appliedRoomSortBy.value === 'PRICE_ASC') {
+    list.sort((a, b) => a.pricePerNight - b.pricePerNight)
+  } else if (appliedRoomSortBy.value === 'PRICE_DESC') {
+    list.sort((a, b) => b.pricePerNight - a.pricePerNight)
+  } else if (appliedRoomSortBy.value === 'NEWEST') {
+    list.sort((a, b) => b.id - a.id)
+  } else if (appliedRoomSortBy.value === 'MOST_BOOKED') {
+    list.sort((a, b) => {
+      const countA = allBookings.value.filter(bk => bk.roomId === a.id).length
+      const countB = allBookings.value.filter(bk => bk.roomId === b.id).length
+      return countB - countA
+    })
+  } else if (appliedRoomSortBy.value === 'HIGHEST_RATED') {
+    list.sort((a, b) => {
+      const revsA = reviewsList.value.filter(rv => rv.roomId === a.id)
+      const avgA = revsA.length ? revsA.reduce((sum, r) => sum + r.rating, 0) / revsA.length : 0
+      
+      const revsB = reviewsList.value.filter(rv => rv.roomId === b.id)
+      const avgB = revsB.length ? revsB.reduce((sum, r) => sum + r.rating, 0) / revsB.length : 0
+      
+      return avgB - avgA
+    })
+  }
+
+  return list
+})
+
+const paginatedRooms = computed(() => {
+  const start = (roomCurrentPage.value - 1) * roomItemsPerPage.value
+  const end = start + roomItemsPerPage.value
+  return filteredRooms.value.slice(start, end)
+})
+
+const roomTotalPages = computed(() => {
+  return Math.ceil(filteredRooms.value.length / roomItemsPerPage.value) || 1
+})
 
 const defaultCommissionRate = ref(10)
 const fetchDefaultCommissionRate = async () => {
