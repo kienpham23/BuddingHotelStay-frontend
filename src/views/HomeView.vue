@@ -253,20 +253,6 @@
 
         <!-- SEARCH CONTAINER WRAPPER -->
         <div class="search-container-wrapper">
-          <!-- CATEGORY TABS -->
-          <div class="search-tabs">
-            <button
-                v-for="cat in categories"
-                :key="cat.id"
-                class="search-tab-btn"
-                :class="{ active: activeCategory === cat.id }"
-                @click="activeCategory = cat.id"
-            >
-              <component :is="cat.icon" :size="16" class="tab-ico" />
-              <span>{{ $t(`search.${cat.id}`) }}</span>
-            </button>
-          </div>
-
           <!-- MAIN SEARCH CARD -->
           <div class="search-card">
             <!-- PILLS ROW -->
@@ -1806,7 +1792,7 @@ const onRegister = () => {
 
 /* SEARCH CARD */
 .search-card {
-  background: white; border-radius: 0 16px 16px 16px;
+  background: white; border-radius: 16px;
   padding: 2.25rem 2.25rem 3rem;
   box-shadow: 0 15px 40px rgba(0,0,0,0.2);
   position: relative; text-align: left; z-index: 5;
