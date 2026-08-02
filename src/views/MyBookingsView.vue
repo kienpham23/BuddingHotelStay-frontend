@@ -859,11 +859,23 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
 .arrow-icon { font-size: 1.2rem; color: #cbd5e1; }
 .info-block.guests { margin-left: auto; border-left: 1px solid #e2e8f0; padding-left: 1.5rem; }
 
-.booking-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; }
+.booking-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
 .price-section { display: flex; flex-direction: column; }
 .price-section .label { font-size: 0.75rem; font-weight: 600; color: #64748b; }
 .price-section .price-val { font-size: 1.25rem; font-weight: 800; color: #1a6cf7; }
-.actions-section { display: flex; gap: 0.75rem; }
+.actions-section {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
 
 .btn-cancel-booking {
   background: white; border: 1.5px solid #ef4444; color: #ef4444;
@@ -871,6 +883,8 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
   display: inline-flex; align-items: center; justify-content: center;
   height: 34px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .btn-cancel-booking:hover:not(:disabled) { background: #fef2f2; transform: translateY(-1px); }
 .btn-cancel-booking:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -881,6 +895,8 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
   display: inline-flex; align-items: center; justify-content: center;
   height: 34px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .btn-view-receipt:hover { background: #e2e8f0; color: #1e293b; transform: translateY(-1px); }
 
@@ -906,6 +922,7 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   font-family: 'Inter', sans-serif;
   height: 34px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .btn-continue-pay:hover {
   background: #1558d6;
@@ -1065,6 +1082,8 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 10px rgba(255, 183, 3, 0.25);
   font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-write-review:hover {
@@ -1580,6 +1599,8 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .btn-view-review:hover {
   background: #e2e8f0;
