@@ -1,62 +1,70 @@
 <template>
   <div class="result-page">
-    <div class="result-card" :class="isSuccess ? 'card-success' : 'card-fail'">
+    <div class="result-card" :class="cardClass">
 
-      <!-- Animated Icon -->
-      <div class="icon-circle" :class="isSuccess ? 'icon-success' : 'icon-fail'">
-        <svg v-if="isSuccess" viewBox="0 0 52 52" class="checkmark-svg">
-          <circle class="checkmark-circle" cx="26" cy="26" r="24" fill="none" />
-          <path class="checkmark-check" fill="none" d="M14 27l8 8 16-16" />
-        </svg>
-        <svg v-else viewBox="0 0 52 52" class="crossmark-svg">
-          <circle class="crossmark-circle" cx="26" cy="26" r="24" fill="none" />
-          <path class="crossmark-x" fill="none" d="M16 16 36 36 M36 16 16 36" />
-        </svg>
+      <!-- LOADING STATE -->
+      <div v-if="state === 'loading'" class="state-container">
+        <div class="ret-spin"></div>
+        <h2 class="result-title text-loading">Đang xác thực giao dịch...</h2>
+        <p class="result-desc">Vui lòng giữ kết nối, không đóng trình duyệt hoặc tải lại trang.</p>
       </div>
 
-      <!-- Title -->
-      <h1 class="result-title" :class="isSuccess ? 'title-success' : 'title-fail'">
-        {{ isSuccess ? 'Thanh toán thành công!' : 'Thanh toán thất bại' }}
-      </h1>
-
-      <!-- Order ID badge -->
-      <div class="order-id-badge" v-if="orderId">
-        <span class="badge-label">Mã đơn hàng</span>
-        <span class="badge-value">#{{ orderId }}</span>
-      </div>
-
-      <!-- Success description -->
-      <p v-if="isSuccess" class="result-desc">
-        🎉 Giao dịch của bạn đã được xử lý thành công. Chúng tôi sẽ gửi xác nhận
-        đặt phòng qua email của bạn trong vài phút.
-      </p>
-
-      <!-- Fail message -->
-      <div v-else class="fail-message-box">
-        <span class="fail-icon-inline">⚠️</span>
-        <p class="fail-desc">{{ decodedMessage || 'Giao dịch không thể hoàn tất. Vui lòng thử lại hoặc liên hệ hỗ trợ.' }}</p>
-      </div>
-
-      <!-- Divider -->
-      <div class="divider"></div>
-
-      <!-- Action Buttons -->
-      <div class="action-btns">
-        <RouterLink v-if="isSuccess" to="/bookings" class="btn-primary" id="btn-view-bookings">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-          Xem đặt phòng của tôi
-        </RouterLink>
-
-        <template v-else>
-          <RouterLink to="/bookings" class="btn-primary" id="btn-retry-booking">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
-            Thử lại
+      <!-- SUCCESS STATE -->
+      <div v-else-if="state === 'success'" class="state-container animate-fade-in">
+        <div class="icon-circle icon-success">
+          <svg viewBox="0 0 52 52" class="checkmark-svg">
+            <circle class="checkmark-circle" cx="26" cy="26" r="24" fill="none" />
+            <path class="checkmark-check" fill="none" d="M14 27l8 8 16-16" />
+          </svg>
+        </div>
+        <h1 class="result-title title-success">Thanh toán thành công!</h1>
+        <div class="order-id-badge" v-if="orderId">
+          <span class="badge-label">Mã đặt phòng</span>
+          <span class="badge-value">#{{ orderId }}</span>
+        </div>
+        <p class="result-desc">
+          🎉 Cảm ơn bạn! Giao dịch của bạn đã hoàn tất và được hệ thống ghi nhận thành công. 
+          Xác nhận đặt phòng chi tiết sẽ được gửi qua email của bạn trong ít phút tới.
+        </p>
+        <div class="divider"></div>
+        <div class="action-btns">
+          <RouterLink to="/bookings" class="btn-primary" id="btn-view-bookings">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+            Xem lịch sử đặt phòng
           </RouterLink>
-          <RouterLink to="/" class="btn-secondary" id="btn-go-home">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <RouterLink to="/" class="btn-secondary" id="btn-success-go-home">
             Về trang chủ
           </RouterLink>
-        </template>
+        </div>
+      </div>
+
+      <!-- FAILURE STATE -->
+      <div v-else class="state-container animate-fade-in">
+        <div class="icon-circle icon-fail">
+          <svg viewBox="0 0 52 52" class="crossmark-svg">
+            <circle class="crossmark-circle" cx="26" cy="26" r="24" fill="none" />
+            <path class="crossmark-x" fill="none" d="M16 16 36 36 M36 16 16 36" />
+          </svg>
+        </div>
+        <h1 class="result-title title-fail">Thanh toán thất bại</h1>
+        <div class="order-id-badge" v-if="orderId">
+          <span class="badge-label">Mã đặt phòng</span>
+          <span class="badge-value">#{{ orderId }}</span>
+        </div>
+        <div class="fail-message-box">
+          <span class="fail-icon-inline">⚠️</span>
+          <p class="fail-desc">{{ decodedMessage || 'Giao dịch của bạn không thể hoàn tất. Vui lòng thử lại hoặc liên hệ bộ phận hỗ trợ.' }}</p>
+        </div>
+        <div class="divider"></div>
+        <div class="action-btns">
+          <RouterLink to="/bookings" class="btn-primary" id="btn-retry-booking">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+            Quay lại thử lại
+          </RouterLink>
+          <RouterLink to="/" class="btn-secondary" id="btn-go-home">
+            Về trang chủ
+          </RouterLink>
+        </div>
       </div>
 
       <!-- Footer note -->
@@ -72,23 +80,86 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { verifyVNPayCallback, verifyMoMoCallback } from '../api/payment'
 
 const route = useRoute()
+const { locale } = useI18n()
 
-const resultCode = route.query.resultCode
-const orderId    = route.query.orderId
-const message    = route.query.message
+const state = ref('loading') // 'loading' | 'success' | 'failed'
+const message = ref('')
+const orderId = ref('')
 
-const isSuccess = computed(() => resultCode === '0')
+const isSuccess = computed(() => state.value === 'success')
 
 const decodedMessage = computed(() => {
-  if (!message) return ''
+  if (!message.value) return ''
   try {
-    return decodeURIComponent(message)
+    return decodeURIComponent(message.value)
   } catch {
-    return message
+    return message.value
+  }
+})
+
+const cardClass = computed(() => {
+  if (state.value === 'loading') return 'card-loading'
+  return state.value === 'success' ? 'card-success' : 'card-fail'
+})
+
+onMounted(async () => {
+  const queryParams = { ...route.query }
+
+  // 1. Kiểm tra nếu là VNPay Callback
+  if (queryParams.vnp_ResponseCode !== undefined) {
+    try {
+      const { data } = await verifyVNPayCallback(queryParams)
+      orderId.value = data?.bookingId || queryParams.vnp_TxnRef || ''
+      if (data?.status === 'SUCCESS' || queryParams.vnp_ResponseCode === '00') {
+        state.value = 'success'
+      } else {
+        state.value = 'failed'
+        message.value = data?.message || 'Giao dịch VNPay không thành công hoặc đã bị hủy.'
+      }
+    } catch (e) {
+      state.value = 'failed'
+      message.value = e.response?.data?.message || 'Không thể xác thực giao dịch VNPay với máy chủ.'
+    }
+  }
+  // 2. Kiểm tra nếu là MoMo Callback
+  else if (queryParams.partnerCode !== undefined || queryParams.resultCode !== undefined) {
+    try {
+      const { data } = await verifyMoMoCallback(queryParams)
+      orderId.value = data?.bookingId || queryParams.orderId || ''
+      
+      const isMomoSuccess = data?.status === 'SUCCESS' || 
+                            data?.resultCode === 0 || 
+                            data?.resultCode === '0' || 
+                            queryParams.resultCode === '0' || 
+                            queryParams.resultCode === 0
+                            
+      if (isMomoSuccess) {
+        state.value = 'success'
+      } else {
+        state.value = 'failed'
+        message.value = data?.message || queryParams.message || 'Giao dịch MoMo không thành công.'
+      }
+    } catch (e) {
+      state.value = 'failed'
+      message.value = e.response?.data?.message || 'Không thể xác thực giao dịch MoMo với máy chủ.'
+    }
+  }
+  // 3. Fallback mặc định
+  else {
+    const rc = queryParams.resultCode
+    orderId.value = queryParams.orderId || ''
+    if (rc === '0' || rc === 0) {
+      state.value = 'success'
+    } else {
+      state.value = 'failed'
+      message.value = queryParams.message || 'Giao dịch không thành công.'
+    }
   }
 })
 </script>
@@ -134,10 +205,40 @@ const decodedMessage = computed(() => {
 
 .card-success::before { background: linear-gradient(90deg, #10b981, #34d399); }
 .card-fail::before    { background: linear-gradient(90deg, #f97316, #ef4444); }
+.card-loading::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* LOADING SPINNER */
+.ret-spin {
+  width: 56px;
+  height: 56px;
+  border: 4px solid #f1f5f9;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  margin: 1.5rem auto 2rem;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.text-loading {
+  color: #1e293b;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
 }
 
 /* ICON CIRCLE */

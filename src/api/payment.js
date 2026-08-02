@@ -31,3 +31,13 @@ export const createMoMoUrl = (bookingId) => {
         params: { bookingId }
     })
 }
+
+/**
+ * Gửi các query params MoMo redirect về cho backend xác minh chữ ký và giao dịch
+ * GET /api/payment/momo/callback?partnerCode=...&orderId=...
+ * @param {Object} params - toàn bộ query string từ URL callback
+ * @returns {Object} response dữ liệu xác thực
+ */
+export const verifyMoMoCallback = (params) => {
+    return axios.get('/payment/momo/callback', { params })
+}
