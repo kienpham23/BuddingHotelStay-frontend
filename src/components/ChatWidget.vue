@@ -26,10 +26,7 @@
         <!-- Header -->
         <div class="chat-header">
           <div class="header-avatar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="8" r="4"/>
-              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-            </svg>
+            <span class="bot-avatar-emoji">🤖</span>
           </div>
           <div class="header-info">
             <span class="header-name">{{ t('chatbot.title') }}</span>
@@ -57,10 +54,7 @@
               :class="msg.role === 'user' ? 'msg-row--user' : 'msg-row--bot'"
             >
               <div v-if="msg.role === 'model'" class="msg-avatar">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="8" r="4"/>
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-                </svg>
+                <span class="bot-avatar-emoji-sm">🤖</span>
               </div>
               <div class="bubble" :class="msg.role === 'user' ? 'bubble--user' : 'bubble--bot'">
                 {{ msg.content }}
@@ -114,10 +108,7 @@
           <Transition name="typing-fade">
             <div v-if="isTyping" class="msg-row msg-row--bot">
               <div class="msg-avatar">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="8" r="4"/>
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-                </svg>
+                <span class="bot-avatar-emoji-sm">🤖</span>
               </div>
               <div class="bubble bubble--bot bubble--typing">
                 <span class="typing-dot" />
@@ -126,6 +117,36 @@
               </div>
             </div>
           </Transition>
+
+          <!-- Quick Replies & Suggested Questions when no user messages have been sent yet -->
+          <div v-if="messages.length === 1 && !isTyping" class="initial-suggestions-area">
+            <!-- Quick Replies -->
+            <div class="quick-replies-container">
+              <button 
+                v-for="(reply, rIdx) in quickReplies" 
+                :key="rIdx" 
+                class="quick-reply-btn"
+                @click="selectSuggestedQuery(reply.query)"
+              >
+                {{ reply.text }}
+              </button>
+            </div>
+
+            <!-- Suggested Questions (Empty state) -->
+            <div class="suggested-questions-wrap">
+              <div class="suggested-questions-title">
+                {{ t('chatbot.suggested_questions_title') }}
+              </div>
+              <div 
+                v-for="(qText, qIdx) in suggestedQuestions" 
+                :key="qIdx" 
+                class="suggested-question-item"
+                @click="selectSuggestedQuery(qText)"
+              >
+                {{ qText }}
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Input -->
@@ -152,7 +173,7 @@
               @click="sendMessage"
               :aria-label="t('chatbot.aria_send')"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <line x1="22" y1="2" x2="11" y2="13"/>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"/>
               </svg>
@@ -160,20 +181,21 @@
           </div>
           <p class="input-hint">{{ t('chatbot.hint') }}</p>
         </div>
-
       </div>
     </Transition>
   </Teleport>
 </template>
 
 <script setup>
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import axios from '../api/axios'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const { t, locale } = useI18n()
+const authStore = useAuthStore()
 
 const isOpen       = ref(false)
 const isTyping     = ref(false)
@@ -196,6 +218,44 @@ watch(locale, () => {
     messages.value[0].content = t('chatbot.welcome')
   }
 })
+
+const quickReplies = computed(() => {
+  const role = authStore.role
+  if (role === 'ADMIN') {
+    return [
+      { text: t('chatbot.replies.admin.manage_rooms'), query: t('chatbot.replies.admin.manage_rooms') },
+      { text: t('chatbot.replies.admin.revenue'), query: t('chatbot.replies.admin.revenue') },
+      { text: t('chatbot.replies.admin.promotions'), query: t('chatbot.replies.admin.promotions') }
+    ]
+  } else if (role === 'HOST') {
+    return [
+      { text: t('chatbot.replies.host.post_room'), query: t('chatbot.replies.host.post_room') },
+      { text: t('chatbot.replies.host.revenue'), query: t('chatbot.replies.host.revenue') },
+      { text: t('chatbot.replies.host.bookings'), query: t('chatbot.replies.host.bookings') }
+    ]
+  } else {
+    return [
+      { text: t('chatbot.replies.guest.find_room'), query: t('chatbot.replies.guest.find_room') },
+      { text: t('chatbot.replies.guest.promotions'), query: t('chatbot.replies.guest.promotions') },
+      { text: t('chatbot.replies.guest.my_bookings'), query: t('chatbot.replies.guest.my_bookings') },
+      { text: t('chatbot.replies.guest.contact_support'), query: t('chatbot.replies.guest.contact_support') }
+    ]
+  }
+})
+
+const suggestedQuestions = computed(() => {
+  return [
+    t('chatbot.questions.q1'),
+    t('chatbot.questions.q2'),
+    t('chatbot.questions.q3'),
+    t('chatbot.questions.q4')
+  ]
+})
+
+function selectSuggestedQuery(queryText) {
+  inputText.value = queryText
+  sendMessage()
+}
 
 function toggleChat() {
   isOpen.value = !isOpen.value
@@ -461,12 +521,17 @@ async function sendMessage() {
 .chat-textarea:disabled{opacity:.55;cursor:not-allowed;}
 
 .send-btn {
-  width:36px; height:36px; border-radius:12px; border:none; background:#e4e6ea; color:#8a8a96;
+  width:42px; height:42px; border-radius:14px; border:none; background:#e4e6ea; color:#8a8a96;
   cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;
-  transition:background .2s,color .2s,transform .15s,box-shadow .2s;
+  transition:all .2s ease;
 }
 .send-btn--active { background:linear-gradient(135deg,#5392f9 0%,#7ab3ff 100%); color:#fff; box-shadow:0 3px 12px rgba(83,146,249,.38); }
-.send-btn--active:hover{transform:scale(1.1);}
+.send-btn--active:hover {
+  background: linear-gradient(135deg, #4282eb 0%, #6da2ff 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(83,146,249,.45);
+  transform: scale(1.1);
+}
 .send-btn:disabled{cursor:not-allowed;}
 
 .input-hint { font-size:11px; color:#8a8a96; text-align:center; margin:6px 0 0; opacity:.65; }
@@ -617,5 +682,92 @@ async function sendMessage() {
   .chat-fab { bottom:18px; right:16px; width:52px; height:52px; }
   .chat-fab.is-open { display: none !important; }
   .chat-widget { bottom:0; right:0; left:0; width:100%; height:92dvh; border-radius:20px 20px 0 0; border:none; border-top:1px solid rgba(83,146,249,.14); }
+}
+
+/* New Chatbot UI elements */
+.bot-avatar-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+.bot-avatar-emoji-sm {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.initial-suggestions-area {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.quick-replies-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: 36px;
+  animation: fadeInMsg 0.3s ease-out;
+}
+
+.quick-reply-btn {
+  background: #ffffff;
+  border: 1.5px solid #5392f9;
+  color: #5392f9;
+  padding: 6px 12px;
+  border-radius: 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(83,146,249,0.06);
+}
+
+.quick-reply-btn:hover {
+  background: #5392f9;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(83,146,249,0.2);
+}
+
+.quick-reply-btn:active {
+  transform: translateY(0);
+}
+
+.suggested-questions-wrap {
+  margin-left: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeInMsg 0.4s ease-out;
+}
+
+.suggested-questions-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8a8a96;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.suggested-question-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.suggested-question-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateX(3px);
+  color: #1e293b;
 }
 </style>

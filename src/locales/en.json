@@ -691,17 +691,42 @@
     "nhatrang": "Nha Trang"
   },
   "chatbot": {
-    "welcome": "Hello! I am Building HotelStay virtual assistant, how can I help you? 🏨",
-    "placeholder": "Type a message...",
+    "welcome": "Hello 👋\n\nI am the AI Assistant of BuildingHotelStay.\n\nI can help you:\n• Find suitable rooms\n• Answer booking inquiries\n• Support payments\n• Guide on system usage",
+    "placeholder": "Ask about rooms, bookings, or the system...",
     "hint": "Enter to send • Shift+Enter for new line",
-    "title": "Building HotelStay Assistant",
-    "status_online": "Online",
+    "title": "🤖 BuildingHotelStay AI Assistant",
+    "status_online": "Always ready to help",
     "aria_open": "Open HotelStay assistant",
     "aria_close": "Close chat",
     "aria_send": "Send message",
     "error_conn": "Sorry, I cannot connect right now. Please try again later! 🙏",
     "suggested_rooms": "Suggested Rooms:",
     "view_detail": "View Details",
-    "loading_room": "Loading room #{id}..."
+    "loading_room": "Loading room #{id}...",
+    "suggested_questions_title": "You can try asking:",
+    "questions": {
+      "q1": "📍 Hotels in Da Nang",
+      "q2": "🏖️ Beachfront room under 1 million",
+      "q3": "🎁 Any discount codes available?",
+      "q4": "📅 I want to cancel my booking"
+    },
+    "replies": {
+      "guest": {
+        "find_room": "Find room",
+        "promotions": "Promotions",
+        "my_bookings": "My Bookings",
+        "contact_support": "Contact Support"
+      },
+      "host": {
+        "post_room": "List room",
+        "revenue": "Revenue",
+        "bookings": "Bookings"
+      },
+      "admin": {
+        "manage_rooms": "Manage rooms",
+        "revenue": "Revenue",
+        "promotions": "Promotions"
+      }
+    }
   }
 }

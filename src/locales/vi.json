@@ -691,17 +691,42 @@
     "nhatrang": "Nha Trang"
   },
   "chatbot": {
-    "welcome": "Xin chào! Tôi là trợ lý ảo của Building HotelStay, tôi có thể giúp gì cho bạn? 🏨",
-    "placeholder": "Nhập tin nhắn...",
+    "welcome": "Xin chào 👋\n\nTôi là trợ lý AI của BuildingHotelStay.\n\nTôi có thể giúp bạn:\n• Tìm phòng phù hợp\n• Giải đáp đơn đặt phòng\n• Hỗ trợ thanh toán\n• Hướng dẫn sử dụng hệ thống",
+    "placeholder": "Hỏi về phòng, đặt phòng hoặc hệ thống...",
     "hint": "Enter để gửi • Shift+Enter xuống dòng",
-    "title": "Trợ lý Building HotelStay",
-    "status_online": "Trực tuyến",
+    "title": "🤖 Trợ lý AI BuildingHotelStay",
+    "status_online": "Luôn sẵn sàng hỗ trợ",
     "aria_open": "Mở trợ lý HotelStay",
     "aria_close": "Đóng chat",
     "aria_send": "Gửi tin nhắn",
     "error_conn": "Xin lỗi, hiện tôi không thể kết nối. Vui lòng thử lại sau nhé! 🙏",
     "suggested_rooms": "Phòng được gợi ý:",
     "view_detail": "Xem chi tiết",
-    "loading_room": "Đang tải phòng #{id}..."
+    "loading_room": "Đang tải phòng #{id}...",
+    "suggested_questions_title": "Bạn có thể thử hỏi:",
+    "questions": {
+      "q1": "📍 Khách sạn ở Đà Nẵng",
+      "q2": "🏖️ Phòng gần biển dưới 1 triệu",
+      "q3": "🎁 Có mã giảm giá nào không?",
+      "q4": "📅 Tôi muốn hủy đơn đặt phòng"
+    },
+    "replies": {
+      "guest": {
+        "find_room": "Tìm phòng",
+        "promotions": "Khuyến mãi",
+        "my_bookings": "Đơn của tôi",
+        "contact_support": "Liên hệ hỗ trợ"
+      },
+      "host": {
+        "post_room": "Đăng phòng",
+        "revenue": "Doanh thu",
+        "bookings": "Đơn đặt"
+      },
+      "admin": {
+        "manage_rooms": "Quản lý phòng",
+        "revenue": "Doanh thu",
+        "promotions": "Khuyến mãi"
+      }
+    }
   }
 }
