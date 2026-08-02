@@ -269,6 +269,12 @@ function scrollToBottom() {
   const container = messagesRef.value
   if (!container) return
   
+  // Nếu chỉ có 1 tin nhắn (tin nhắn chào đầu tiên), cuộn lên trên cùng để hiển thị từ đầu lời chào
+  if (messages.value.length === 1) {
+    container.scrollTo({ top: 0, behavior: 'smooth' })
+    return
+  }
+  
   const msgWrappers = container.querySelectorAll('.msg-row-wrap')
   if (msgWrappers.length > 0) {
     const lastMsg = msgWrappers[msgWrappers.length - 1]
