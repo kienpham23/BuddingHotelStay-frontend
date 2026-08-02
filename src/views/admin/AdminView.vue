@@ -634,7 +634,6 @@
       <div v-if="activeTab === 'rooms'">
         <div class="tab-header">
           <h2>{{ $t('admin.rooms_tab_title') }}</h2>
-
         </div>
 
         <div class="table-container" v-if="roomsList.length > 0">
@@ -643,6 +642,7 @@
             <tr>
               <th>ID</th>
               <th>{{ $t('admin.col_room') }}</th>
+              <th>{{ locale === 'en' ? 'Host' : 'Chủ phòng' }}</th>
               <th>{{ $t('admin.col_city') }}</th>
               <th>{{ $t('admin.col_room_type') }}</th>
               <th>{{ $t('admin.col_price') }}</th>
@@ -663,6 +663,13 @@
                   </div>
                 </div>
               </td>
+              <td>
+                <div class="table-host-info" v-if="rm.hostName || rm.host?.fullName">
+                  <p class="host-name"><strong>{{ rm.hostName || rm.host?.fullName }}</strong></p>
+                  <small class="host-email" style="color: #64748b; display: block; font-size: 11px;">{{ rm.hostEmail || rm.host?.email }}</small>
+                </div>
+                <span v-else class="color-gray">-</span>
+              </td>
               <td>{{ rm.city }}</td>
               <td><span class="room-type-badge">{{ rm.roomTypeName }}</span></td>
               <td><strong class="color-blue">{{ formatPrice(rm.pricePerNight) }}</strong></td>
@@ -676,6 +683,10 @@
                 <div class="table-actions">
                   <button v-if="rm.status === 'PENDING'" class="btn-table-approve" @click="approveRoom(rm.id)" :title="$t('admin.btn_approve')">
                     <Check :size="14" /> {{ $t('admin.btn_approve') }}
+                  </button>
+
+                  <button class="btn-table-view" @click="openRoomDetail(rm)" :title="locale === 'en' ? 'View Details' : 'Xem chi tiết'" style="background: #eff6ff; border-color: #bfdbfe; color: #1e40af;">
+                    <Eye :size="14" /> {{ locale === 'en' ? 'Details' : 'Chi tiết' }}
                   </button>
 
                   <button class="btn-table-delete" @click="confirmDeleteRoom(rm)">
@@ -1307,6 +1318,186 @@
       </div>
     </div>
 
+    <!-- ROOM DETAIL DRAWER -->
+    <Transition name="drawer-slide">
+      <div class="drawer-backdrop" v-if="showRoomDetailDrawer" @click="showRoomDetailDrawer = false">
+        <div class="room-drawer" @click.stop>
+          <div class="drawer-header">
+            <h2>Chi tiết phòng nghỉ #{{ selectedRoomDetail?.id }}</h2>
+            <button class="btn-close-drawer" @click="showRoomDetailDrawer = false">×</button>
+          </div>
+          
+          <div class="drawer-body" v-if="selectedRoomDetail">
+            <!-- 1. HÌNH ẢNH GALLERY -->
+            <div class="drawer-section">
+              <h3 class="section-title">Hình ảnh phòng</h3>
+              <div class="drawer-image-gallery" v-if="selectedRoomDetail.imageUrls && selectedRoomDetail.imageUrls.length > 0">
+                <img 
+                  v-for="(url, idx) in selectedRoomDetail.imageUrls" 
+                  :key="idx" 
+                  :src="url" 
+                  class="drawer-gallery-img" 
+                  alt="Room photo" 
+                />
+              </div>
+              <div class="drawer-image-gallery" v-else-if="selectedRoomDetail.images && selectedRoomDetail.images.length > 0">
+                <img 
+                  v-for="(img, idx) in selectedRoomDetail.images" 
+                  :key="idx" 
+                  :src="img.url || img.imageUrl" 
+                  class="drawer-gallery-img" 
+                  alt="Room photo" 
+                />
+              </div>
+              <p v-else class="color-gray text-center py-4">Chưa có hình ảnh nào cho phòng này.</p>
+            </div>
+
+            <!-- 2. THÔNG TIN CƠ BẢN & MÔ TẢ -->
+            <div class="drawer-section">
+              <h3 class="section-title">Thông tin phòng nghỉ</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="label">Tên phòng:</span>
+                  <span class="value"><strong>{{ selectedRoomDetail.name }}</strong></span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Địa chỉ:</span>
+                  <span class="value">{{ selectedRoomDetail.address }}, {{ selectedRoomDetail.city }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Hạng phòng:</span>
+                  <span class="value"><span class="room-type-badge">{{ selectedRoomDetail.roomTypeName }}</span></span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Giá / Đêm:</span>
+                  <span class="value"><strong class="color-blue">{{ formatPrice(selectedRoomDetail.pricePerNight) }}</strong></span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Sức chứa tối đa:</span>
+                  <span class="value">{{ selectedRoomDetail.maxGuests }} khách</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Trạng thái:</span>
+                  <span class="value">
+                    <span class="status-badge" :class="selectedRoomDetail.status?.toLowerCase() || 'active'">
+                      {{ getRoomStatusLabel(selectedRoomDetail.status) }}
+                    </span>
+                  </span>
+                </div>
+              </div>
+              
+              <div class="desc-box" style="margin-top: 12px;">
+                <h4 style="font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px;">Mô tả chi tiết:</h4>
+                <p class="desc-text">{{ selectedRoomDetail.description || 'Không có mô tả chi tiết.' }}</p>
+              </div>
+            </div>
+
+            <!-- 3. TIỆN ÍCH (Amenities) -->
+            <div class="drawer-section">
+              <h3 class="section-title">Tiện ích sẵn có</h3>
+              <div class="amenities-container" v-if="parsedAmenities.length > 0">
+                <span v-for="(am, idx) in parsedAmenities" :key="idx" class="amenity-pill">
+                  {{ am }}
+                </span>
+              </div>
+              <p v-else class="color-gray">Không có thông tin tiện ích.</p>
+            </div>
+
+            <!-- 4. THÔNG TIN HOST (Chủ phòng) -->
+            <div class="drawer-section">
+              <h3 class="section-title">Thông tin chủ phòng (Host)</h3>
+              <div class="host-info-card" v-if="selectedRoomDetail.hostName || selectedRoomDetail.host">
+                <div class="host-avatar-placeholder">
+                  {{ (selectedRoomDetail.hostName || selectedRoomDetail.host?.fullName || 'H').charAt(0).toUpperCase() }}
+                </div>
+                <div class="host-details">
+                  <h4 class="host-name">{{ selectedRoomDetail.hostName || selectedRoomDetail.host?.fullName || 'Chủ phòng #' + selectedRoomDetail.hostId }}</h4>
+                  <p class="host-contact">Email: {{ selectedRoomDetail.hostEmail || selectedRoomDetail.host?.email || 'N/A' }}</p>
+                  <p class="host-contact">SĐT: {{ selectedRoomDetail.hostPhone || selectedRoomDetail.host?.phone || 'N/A' }}</p>
+                </div>
+              </div>
+              <p v-else class="color-gray">Không có thông tin chủ phòng.</p>
+            </div>
+
+            <!-- 5. THỐNG KÊ LƯỢT ĐẶT & DOANH THU -->
+            <div class="drawer-section">
+              <h3 class="section-title">Thống kê hiệu quả</h3>
+              <div class="stats-mini-grid">
+                <div class="stat-mini-card">
+                  <span class="stat-label">Tổng lượt đặt phòng</span>
+                  <span class="stat-val color-blue">{{ roomBookings.length }} lượt</span>
+                </div>
+                <div class="stat-mini-card">
+                  <span class="stat-label">Tổng doanh thu mang lại</span>
+                  <span class="stat-val color-green">{{ formatPrice(roomRevenue) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. LỊCH SỬ ĐẶT PHÒNG -->
+            <div class="drawer-section">
+              <h3 class="section-title">Lịch sử đặt phòng ({{ roomBookings.length }})</h3>
+              <div class="mini-table-wrap" v-if="roomBookings.length > 0">
+                <table class="mini-table">
+                  <thead>
+                    <tr>
+                      <th>Khách hàng</th>
+                      <th>Thời gian</th>
+                      <th>Doanh thu</th>
+                      <th>Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="bk in roomBookings" :key="bk.id">
+                      <td>
+                        <div class="customer-cell">
+                          <span class="cust-name"><strong>{{ bk.guestName }}</strong></span>
+                          <span class="cust-email">{{ bk.guestEmail }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="date-cell">
+                          <span>{{ formatDate(bk.checkIn) }}</span>
+                          <span class="arrow-down">↓</span>
+                          <span>{{ formatDate(bk.checkOut) }}</span>
+                        </div>
+                      </td>
+                      <td><strong class="color-green">{{ formatPrice(bk.totalPrice) }}</strong></td>
+                      <td>
+                        <span class="status-badge-sm" :class="bk.status?.toLowerCase()">
+                          {{ getStatusLabel(bk.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p v-else class="color-gray">Chưa có lượt đặt phòng nào được ghi nhận.</p>
+            </div>
+
+            <!-- 7. ĐÁNH GIÁ (Reviews) -->
+            <div class="drawer-section">
+              <h3 class="section-title">Đánh giá từ khách hàng ({{ roomReviews.length }})</h3>
+              <div class="drawer-reviews-list" v-if="roomReviews.length > 0">
+                <div v-for="rv in roomReviews" :key="rv.id" class="drawer-review-card">
+                  <div class="review-header">
+                    <span class="reviewer-name"><strong>{{ rv.customerName }}</strong></span>
+                    <span class="reviewer-stars">
+                      <Star v-for="s in 5" :key="s" :size="10" :fill="s <= rv.rating ? '#ffb703' : 'transparent'" :color="s <= rv.rating ? '#ffb703' : '#cbd5e1'" />
+                    </span>
+                  </div>
+                  <p class="review-comment">{{ rv.comment }}</p>
+                  <span class="review-date">{{ formatDate(rv.createdAt) }}</span>
+                </div>
+              </div>
+              <p v-else class="color-gray">Chưa có đánh giá nào cho phòng này.</p>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Toast notification -->
     <Transition name="toast-slide">
       <div class="toast" :class="toast.type" v-if="toast.show">
@@ -1696,6 +1887,42 @@ const openUserDetail = (usr) => {
   selectedUserDetail.value = usr
   showUserDetailModal.value = true
 }
+
+// Room detail right drawer state
+const showRoomDetailDrawer = ref(false)
+const selectedRoomDetail = ref(null)
+
+const openRoomDetail = async (room) => {
+  try {
+    const res = await axios.get(`/rooms/${room.id}`)
+    selectedRoomDetail.value = res.data
+  } catch (err) {
+    console.error('Lấy chi tiết phòng thất bại:', err)
+    selectedRoomDetail.value = room
+  }
+  showRoomDetailDrawer.value = true
+}
+
+const parsedAmenities = computed(() => {
+  if (!selectedRoomDetail.value?.amenities) return []
+  return selectedRoomDetail.value.amenities.split(',').map(a => a.trim()).filter(Boolean)
+})
+
+const roomReviews = computed(() => {
+  if (!selectedRoomDetail.value) return []
+  return reviewsList.value.filter(rv => rv.roomId === selectedRoomDetail.value.id)
+})
+
+const roomBookings = computed(() => {
+  if (!selectedRoomDetail.value) return []
+  return allBookings.value.filter(bk => bk.roomId === selectedRoomDetail.value.id)
+})
+
+const roomRevenue = computed(() => {
+  return roomBookings.value
+    .filter(bk => bk.status === 'COMPLETED' || bk.status === 'CONFIRMED')
+    .reduce((sum, bk) => sum + (bk.totalPrice || 0), 0)
+})
 
 const formatPrice = (p) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)
 
@@ -3267,5 +3494,416 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   background: #f1f5f9;
   border-color: #cbd5e1;
   color: #1a6cf7;
+}
+
+/* ROOM DETAIL DRAWER STYLES */
+.drawer-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.room-drawer {
+  width: 580px;
+  max-width: 100%;
+  height: 100%;
+  background: white;
+  box-shadow: -10px 0 25px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.drawer-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+}
+
+.drawer-header h2 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.btn-close-drawer {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-close-drawer:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.drawer-body::-webkit-scrollbar {
+  width: 5px;
+}
+.drawer-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.drawer-section {
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.drawer-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Image gallery */
+.drawer-image-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.drawer-gallery-img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.drawer-gallery-img:first-child {
+  grid-column: span 3;
+  height: 180px;
+}
+
+.drawer-gallery-img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* Info grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.info-item.full-width {
+  grid-column: span 2;
+}
+
+.info-item .label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+.info-item .value {
+  font-size: 13.5px;
+  color: #1e293b;
+}
+
+.desc-text {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #475569;
+  white-space: pre-wrap;
+}
+
+/* Amenities tags */
+.amenities-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.amenity-pill {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+}
+
+/* Host Card */
+.host-info-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+
+.host-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7 0%, #d8b4fe 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.host-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.host-details .host-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.host-details .host-contact {
+  font-size: 12.5px;
+  color: #475569;
+}
+
+/* Stats */
+.stats-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.stat-mini-card {
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  padding: 12px 16px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-mini-card .stat-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.stat-mini-card .stat-val {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+/* Mini Table */
+.mini-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12.5px;
+}
+
+.mini-table th, .mini-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  white-space: nowrap;
+}
+
+.mini-table th {
+  background: #f8fafc;
+  font-weight: 700;
+  color: #475569;
+}
+
+.mini-table tr:last-child td {
+  border-bottom: none;
+}
+
+.customer-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cust-email {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.date-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  color: #334155;
+}
+
+.date-cell .arrow-down {
+  color: #94a3b8;
+  font-weight: bold;
+}
+
+.status-badge-sm {
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.status-badge-sm.completed {
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.status-badge-sm.confirmed {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.status-badge-sm.pending {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+.status-badge-sm.cancelled {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Reviews in Drawer */
+.drawer-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drawer-review-card {
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  padding: 12px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reviewer-name {
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.reviewer-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.review-comment {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.review-date {
+  font-size: 10.5px;
+  color: #94a3b8;
+  align-self: flex-end;
+}
+
+/* Transitions */
+.drawer-slide-enter-active, .drawer-slide-leave-active {
+  transition: opacity 0.3s;
+}
+
+.drawer-slide-enter-active .room-drawer, .drawer-slide-leave-active .room-drawer {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.drawer-slide-enter-from {
+  opacity: 0;
+}
+
+.drawer-slide-enter-from .room-drawer {
+  transform: translateX(100%);
+}
+
+.drawer-slide-leave-to {
+  opacity: 0;
+}
+
+.drawer-slide-leave-to .room-drawer {
+  transform: translateX(100%);
 }
 </style>
