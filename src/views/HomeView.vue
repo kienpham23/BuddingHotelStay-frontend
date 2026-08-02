@@ -99,7 +99,6 @@
             <!-- Destination field -->
             <div 
               class="compact-field dest-field" 
-              ref="compactCitySelectRef"
               style="position: relative; display: flex; align-items: center;"
             >
               <Search :size="16" class="compact-ico" />
@@ -107,31 +106,8 @@
                 v-model="search.city" 
                 type="text" 
                 :placeholder="$t('search.placeholder')" 
-                @focus="compactCityDropdownOpen = true"
                 style="border: none; outline: none; background: transparent; font-size: 13.5px; font-weight: 600; color: #334155; width: 100%; height: 100%; padding: 0 4px 0 0;"
               />
-              <ChevronDown :size="14" class="compact-chevron" :class="{ open: compactCityDropdownOpen }" style="cursor: pointer;" @click.stop="compactCityDropdownOpen = !compactCityDropdownOpen" />
-              
-              <!-- Dropdown menu -->
-              <div v-if="compactCityDropdownOpen" class="compact-guest-dropdown" style="width: 220px; padding: 6px 0; top: calc(100% + 8px); left: 0; display: flex; flex-direction: column;" @click.stop>
-                <div 
-                  v-for="city in availableCities" 
-                  :key="city" 
-                  class="city-dropdown-item" 
-                  style="padding: 10px 16px; font-size: 13.5px; font-weight: 600; color: #475569; cursor: pointer; transition: background 0.2s; text-align: left;"
-                  :style="{ background: search.city === city ? '#f1f5f9' : 'transparent', color: search.city === city ? '#2563eb' : '#475569' }"
-                  @click="search.city = city; compactCityDropdownOpen = false"
-                >
-                  {{ city }}
-                </div>
-                <div 
-                  class="city-dropdown-item" 
-                  style="padding: 10px 16px; font-size: 13.5px; font-weight: 600; color: #94a3b8; border-top: 1px solid #f1f5f9; cursor: pointer; transition: background 0.2s; text-align: left;"
-                  @click="search.city = ''; compactCityDropdownOpen = false"
-                >
-                  {{ locale === 'en' ? 'All Locations' : 'Tất cả địa điểm' }}
-                </div>
-              </div>
             </div>
             
             <!-- Dates range field -->
@@ -270,8 +246,7 @@
               <!-- Destination Selector Dropdown -->
               <div 
                 class="field-item full-width" 
-                :class="{ focused: cityDropdownOpen }"
-                ref="citySelectRef"
+                :class="{ focused: focus === 'city' }"
                 style="position: relative; display: flex; align-items: center;"
               >
                 <Search :size="20" class="field-ico" />
@@ -281,33 +256,10 @@
                       v-model="search.city"
                       type="text"
                       :placeholder="locale === 'en' ? 'Enter tourist destination or city...' : 'Nhập điểm du lịch hoặc thành phố...'"
-                      @focus="cityDropdownOpen = true"
+                      @focus="focus = 'city'"
+                      @blur="focus = ''"
                       style="border: none; outline: none; background: transparent; font-size: 14.5px; font-weight: 600; color: #1e293b; padding: 0; width: 100%;"
                   />
-                </div>
-                <ChevronDown :size="18" class="guest-chevron" :class="{ open: cityDropdownOpen }" style="color: #64748b; cursor: pointer;" @click.stop="cityDropdownOpen = !cityDropdownOpen" />
-                
-                <!-- DROPDOWN PANEL -->
-                <div v-if="cityDropdownOpen" class="guest-dropdown-panel" style="width: 100%; top: calc(100% + 8px); padding: 8px 0; z-index: 100;" @click.stop>
-                  <div 
-                    v-for="city in availableCities" 
-                    :key="city" 
-                    class="city-dropdown-item" 
-                    style="padding: 12px 20px; font-size: 14.5px; font-weight: 600; color: #475569; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px; text-align: left;"
-                    :style="{ background: search.city === city ? '#f1f5f9' : 'transparent', color: search.city === city ? '#3b82f6' : '#475569' }"
-                    @click="search.city = city; cityDropdownOpen = false"
-                  >
-                    <MapPin :size="16" :color="search.city === city ? '#3b82f6' : '#94a3b8'" />
-                    {{ city }}
-                  </div>
-                  <div 
-                    class="city-dropdown-item" 
-                    style="padding: 12px 20px; font-size: 14.5px; font-weight: 600; color: #94a3b8; border-top: 1px solid #f1f5f9; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 8px; text-align: left;"
-                    @click="search.city = ''; cityDropdownOpen = false"
-                  >
-                    <MapPin :size="16" color="#94a3b8" />
-                    {{ locale === 'en' ? 'All Locations' : 'Tất cả địa điểm' }}
-                  </div>
                 </div>
               </div>
 
