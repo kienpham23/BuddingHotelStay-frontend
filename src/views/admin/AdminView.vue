@@ -925,7 +925,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr v-for="pm in filteredPayments" :key="pm.id">
+            <tr v-for="pm in paginatedPayments" :key="pm.id">
               <td><strong>#{{ pm.id }}</strong></td>
               <td><strong>#{{ pm.bookingId }}</strong></td>
               <td>
@@ -943,6 +943,39 @@
             </tr>
             </tbody>
           </table>
+
+          <!-- Pagination for Payments -->
+          <div class="pagination-container" v-if="paymentTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+            <button 
+              class="btn-nav" 
+              :disabled="paymentCurrentPage === 1" 
+              @click="paymentCurrentPage--"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
+              :style="paymentCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+            >
+              &laquo;
+            </button>
+            <button 
+              class="btn-page"
+              v-for="p in paymentTotalPages" 
+              :key="p"
+              :class="{ active: paymentCurrentPage === p }"
+              @click="paymentCurrentPage = p"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 500; min-width: 32px; text-align: center; transition: all 0.2s;"
+              :style="paymentCurrentPage === p ? { background: '#3b82f6', borderColor: '#3b82f6', color: 'white' } : { color: '#475569' }"
+            >
+              {{ p }}
+            </button>
+            <button 
+              class="btn-nav" 
+              :disabled="paymentCurrentPage === paymentTotalPages" 
+              @click="paymentCurrentPage++"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
+              :style="paymentCurrentPage === paymentTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+            >
+              &raquo;
+            </button>
+          </div>
         </div>
 
         <div class="empty-state" v-else-if="paymentsList.length > 0">
@@ -1655,7 +1688,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import axios from '../../api/axios'
@@ -1974,11 +2007,19 @@ const paymentStatusFilter = ref('ALL') // 'ALL' | 'SUCCESS' | 'PENDING' | 'FAILE
 const paymentStartDate = ref('')
 const paymentEndDate = ref('')
 
+const paymentCurrentPage = ref(1)
+const paymentItemsPerPage = ref(10) // 10 items per page
+
 const resetPaymentFilters = () => {
   paymentStatusFilter.value = 'ALL'
   paymentStartDate.value = ''
   paymentEndDate.value = ''
+  paymentCurrentPage.value = 1
 }
+
+watch([paymentStatusFilter, paymentStartDate, paymentEndDate], () => {
+  paymentCurrentPage.value = 1
+})
 
 const filteredPayments = computed(() => {
   let list = paymentsList.value
@@ -2006,6 +2047,16 @@ const filteredPayments = computed(() => {
   }
 
   return list
+})
+
+const paginatedPayments = computed(() => {
+  const start = (paymentCurrentPage.value - 1) * paymentItemsPerPage.value
+  const end = start + paymentItemsPerPage.value
+  return filteredPayments.value.slice(start, end)
+})
+
+const paymentTotalPages = computed(() => {
+  return Math.ceil(filteredPayments.value.length / paymentItemsPerPage.value) || 1
 })
 
 const reviewsList = ref([])
