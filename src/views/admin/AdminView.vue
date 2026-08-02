@@ -1062,7 +1062,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr v-for="rv in filteredReviews" :key="rv.id">
+            <tr v-for="rv in paginatedReviews" :key="rv.id">
               <td><strong>#{{ rv.id }}</strong></td>
               <td><strong>{{ rv.customerName }}</strong></td>
               <td><span class="room-name-cell" style="font-weight:600; color:#334155">{{ rv.roomName }}</span></td>
@@ -1074,13 +1074,55 @@
               <td><p class="review-comment-text" style="max-width:320px; white-space:normal; line-height:1.4; color:#475569">{{ rv.comment }}</p></td>
               <td>{{ formatDate(rv.createdAt) }}</td>
               <td>
-                <button class="btn-table-delete" @click="confirmDeleteReview(rv)">
-                  <Trash2 :size="14" /> {{ $t('admin.btn_delete') }}
-                </button>
+                <div style="display: flex; gap: 8px;">
+                  <button 
+                    class="btn-table-detail" 
+                    @click="openRoomDetailFromReview(rv)"
+                    style="padding: 6px 12px; border-radius: 6px; border: 1px solid #3b82f6; background: #eff6ff; color: #1d4ed8; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-size: 13px; transition: all 0.2s;"
+                  >
+                    <Eye :size="14" /> {{ locale === 'en' ? 'Detail' : 'Chi tiết' }}
+                  </button>
+                  <button class="btn-table-delete" @click="confirmDeleteReview(rv)">
+                    <Trash2 :size="14" /> {{ $t('admin.btn_delete') }}
+                  </button>
+                </div>
               </td>
             </tr>
             </tbody>
           </table>
+
+          <!-- Pagination for Reviews -->
+          <div class="pagination-container" v-if="reviewTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+            <button 
+              class="btn-nav" 
+              :disabled="reviewCurrentPage === 1" 
+              @click="reviewCurrentPage--"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
+              :style="reviewCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+            >
+              &laquo;
+            </button>
+            <button 
+              class="btn-page"
+              v-for="p in reviewTotalPages" 
+              :key="p"
+              :class="{ active: reviewCurrentPage === p }"
+              @click="reviewCurrentPage = p"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 500; min-width: 32px; text-align: center; transition: all 0.2s;"
+              :style="reviewCurrentPage === p ? { background: '#3b82f6', borderColor: '#3b82f6', color: 'white' } : { color: '#475569' }"
+            >
+              {{ p }}
+            </button>
+            <button 
+              class="btn-nav" 
+              :disabled="reviewCurrentPage === reviewTotalPages" 
+              @click="reviewCurrentPage++"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
+              :style="reviewCurrentPage === reviewTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+            >
+              &raquo;
+            </button>
+          </div>
         </div>
 
         <div class="empty-state" v-else>
@@ -2063,6 +2105,9 @@ const reviewsList = ref([])
 const starFilter = ref('ALL') // 'ALL' | 5 | 4 | 3 | 2 | 1
 const activeTab = ref('dashboard')
 
+const reviewCurrentPage = ref(1)
+const reviewItemsPerPage = ref(10) // 10 reviews per page
+
 const countReviewsByStar = (star) => {
   return reviewsList.value.filter(rv => Math.round(rv.rating) === star).length
 }
@@ -2072,6 +2117,20 @@ const filteredReviews = computed(() => {
     return reviewsList.value
   }
   return reviewsList.value.filter(rv => Math.round(rv.rating) === starFilter.value)
+})
+
+const paginatedReviews = computed(() => {
+  const start = (reviewCurrentPage.value - 1) * reviewItemsPerPage.value
+  const end = start + reviewItemsPerPage.value
+  return filteredReviews.value.slice(start, end)
+})
+
+const reviewTotalPages = computed(() => {
+  return Math.ceil(filteredReviews.value.length / reviewItemsPerPage.value) || 1
+})
+
+watch(starFilter, () => {
+  reviewCurrentPage.value = 1
 })
 
 const countUsersByRole = (role) => {
@@ -2219,6 +2278,15 @@ const openRoomDetail = async (room) => {
     selectedRoomDetail.value = room
   }
   showRoomDetailDrawer.value = true
+}
+
+const openRoomDetailFromReview = async (rv) => {
+  const roomId = rv.roomId || rv.room?.id
+  if (!roomId) {
+    alert(locale.value === 'en' ? 'Cannot find room ID for this review' : 'Không tìm thấy ID phòng cho đánh giá này')
+    return
+  }
+  await openRoomDetail({ id: roomId })
 }
 
 const parsedAmenities = computed(() => {
