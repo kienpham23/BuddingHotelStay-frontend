@@ -506,6 +506,79 @@
             <h3>{{ $t('host.bookings.empty_title') }}</h3>
             <p>{{ $t('host.bookings.empty_desc') }}</p>
           </div>
+
+          <!-- BLOCKED DATES SECTION -->
+          <div class="blocked-dates-section" style="margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 24px;">
+            <div class="tab-header" style="margin-bottom: 16px;">
+              <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444;">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                {{ locale === 'vi' ? 'Danh sách chặn ngày phòng (Đóng cửa tạm thời)' : 'Blocked Dates List (Temporary Closed)' }}
+              </h3>
+              <p style="font-size: 0.82rem; color: #64748b; margin-top: 4px; margin-bottom: 0;">{{ locale === 'vi' ? 'Theo dõi và quản lý các khoảng ngày bạn chủ động khóa phòng để dọn dẹp hoặc bảo trì.' : 'Track and manage the date ranges you actively closed for room cleaning or maintenance.' }}</p>
+            </div>
+
+            <!-- Blocked list table -->
+            <div class="table-container" v-if="blockedBookings.length > 0">
+              <table class="bookings-table">
+                <thead>
+                  <tr>
+                    <th>{{ locale === 'vi' ? 'Mã chặn' : 'Block ID' }}</th>
+                    <th>{{ $t('host.bookings.col_room') }}</th>
+                    <th>{{ locale === 'vi' ? 'Khoảng ngày chặn' : 'Blocked Date Range' }}</th>
+                    <th>{{ locale === 'vi' ? 'Số đêm đóng' : 'Closed Nights' }}</th>
+                    <th>{{ $t('host.bookings.col_status') }}</th>
+                    <th>{{ $t('host.bookings.col_action') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="bk in blockedBookings" :key="bk.id">
+                    <td><strong>#BLOCK-{{ bk.id }}</strong></td>
+                    <td>
+                      <div class="table-room-info">
+                        <img :src="bk.roomImage" class="table-room-img" />
+                        <div>
+                          <p class="name">{{ bk.roomName }}</p>
+                          <small class="city">{{ translateCity(bk.city) }}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <p class="stay-dates" style="color: #ef4444; font-weight: 700;">{{ formatDate(bk.checkIn) }} - {{ formatDate(bk.checkOut) }}</p>
+                    </td>
+                    <td>
+                      <span style="font-weight: 600;">{{ calculateDuration(bk.checkIn, bk.checkOut) }} {{ locale === 'en' ? 'nights' : 'đêm' }}</span>
+                    </td>
+                    <td>
+                      <span class="status-badge" style="background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.72rem;">
+                        {{ locale === 'vi' ? 'Đã chặn' : 'Blocked' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button 
+                        class="btn-table-reject" 
+                        style="background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; font-size: 0.72rem; padding: 6px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;"
+                        onmouseover="this.style.background='#fca5a5'; this.style.color='#7f1d1d';"
+                        onmouseout="this.style.background='#fee2e2'; this.style.color='#ef4444';"
+                        @click="handleUnblockFromTable(bk.id)"
+                      >
+                        🔓 {{ locale === 'vi' ? 'Bỏ chặn' : 'Unblock' }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty state for blocked dates -->
+            <div v-else style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px; text-align: center; border: 1.5px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; margin-top: 8px;">
+              <span style="font-size: 2rem; margin-bottom: 8px;">🔓</span>
+              <h4 style="font-size: 0.92rem; font-weight: 700; color: #334155; margin: 0 0 4px 0;">{{ locale === 'vi' ? 'Không có phòng nào đang chặn ngày' : 'No rooms currently blocked' }}</h4>
+              <p style="font-size: 0.8rem; color: #64748b; margin: 0;">{{ locale === 'vi' ? 'Tất cả các phòng nghỉ của bạn đang mở bán đầy đủ các ngày.' : 'All of your rooms are fully open for bookings.' }}</p>
+            </div>
+          </div>
         </div>
 
         <!-- 4. REVENUE TAB -->
@@ -1790,6 +1863,24 @@ const handleClearFilter = () => {
 const realBookingsCount = computed(() => {
   return bookings.value.filter(bk => bk.note !== 'HOST_BLOCKED').length
 })
+
+const blockedBookings = computed(() => {
+  return bookings.value.filter(bk => bk.note === 'HOST_BLOCKED')
+})
+
+const handleUnblockFromTable = async (bookingId) => {
+  if (confirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn mở khóa (bỏ chặn) cho khoảng ngày này?' : 'Are you sure you want to unblock these dates?')) {
+    try {
+      await axios.delete(`/bookings/host/block/${bookingId}`)
+      toastStore.success(locale.value === 'vi' ? 'Bỏ chặn ngày thành công!' : 'Dates unblocked successfully!')
+      const resBookings = await axios.get('/bookings/host')
+      bookings.value = resBookings.data
+    } catch (err) {
+      console.error(err)
+      toastStore.error(locale.value === 'vi' ? 'Bỏ chặn thất bại!' : 'Failed to unblock!')
+    }
+  }
+}
 
 const filteredBookings = computed(() => {
   return bookings.value.filter(bk => {
