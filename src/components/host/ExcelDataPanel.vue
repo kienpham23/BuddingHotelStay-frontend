@@ -13,51 +13,20 @@
 
     <!-- Date Range Picker + Action Buttons Row -->
     <div class="excel-actions-row">
-      <!-- Nút 1: Xuất Excel đặt phòng (kèm bộ chọn ngày) -->
-      <div class="export-bookings-wrap">
-        <!-- Bộ chọn khoảng ngày -->
-        <div class="date-range-row">
-          <div class="date-field">
-            <label for="export-start-date" class="date-label">{{ $t('host.excel.date_start') }}</label>
-            <input
-              type="date"
-              id="export-start-date"
-              class="date-input"
-              v-model="startDate"
-            />
-          </div>
-          <div class="date-field">
-            <label for="export-end-date" class="date-label">{{ $t('host.excel.date_end') }}</label>
-            <input
-              type="date"
-              id="export-end-date"
-              class="date-input"
-              v-model="endDate"
-            />
-          </div>
-        </div>
-
-        <!-- Ghi chú -->
-        <p class="export-note">
-          {{ $t('host.excel.export_note') }}
-        </p>
-
-        <!-- Thông báo lỗi validate -->
-        <p v-if="exportDateError" class="export-date-error">{{ exportDateError }}</p>
-
-        <!-- Nút xuất -->
+      <!-- Nút 1: Xuất danh sách phòng nghỉ -->
+      <div class="export-bookings-wrap" style="justify-content: center;">
         <button
           class="excel-btn excel-btn--export"
-          @click="exportBookings"
-          :disabled="exportingBookings"
-          id="btn-export-bookings"
+          @click="exportRooms"
+          :disabled="exportingRooms"
+          id="btn-export-rooms"
         >
           <span class="excel-btn-inner">
-            <span v-if="!exportingBookings" class="btn-icon"><Download :size="20" /></span>
+            <span v-if="!exportingRooms" class="btn-icon"><Download :size="20" /></span>
             <span v-else class="spinner-small"></span>
             <span>
-              <span class="btn-label">{{ exportingBookings ? $t('host.excel.exporting_btn') : $t('host.excel.export_btn') }}</span>
-              <span class="btn-desc">{{ $t('host.excel.export_desc') }}</span>
+              <span class="btn-label">{{ exportingRooms ? (locale === 'vi' ? 'Đang xuất...' : 'Exporting...') : (locale === 'vi' ? 'Xuất danh sách phòng' : 'Export Rooms List') }}</span>
+              <span class="btn-desc">{{ locale === 'vi' ? 'Tải về toàn bộ danh sách phòng nghỉ của bạn dưới dạng tệp Excel.' : 'Download your entire current rooms list as an Excel sheet.' }}</span>
             </span>
           </span>
         </button>
@@ -216,7 +185,7 @@ import {
   Check, X, Paperclip
 } from 'lucide-vue-next'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 // Emit sự kiện để parent (HostRoomsView) cập nhật danh sách phòng
 const emit = defineEmits(['rooms-updated'])
@@ -224,21 +193,12 @@ const emit = defineEmits(['rooms-updated'])
 // ========================
 // STATE
 // ========================
-const exportingBookings   = ref(false)
+const exportingRooms      = ref(false)
 const downloadingTemplate = ref(false)
 const importingFile       = ref(false)
 const isDraggingExcel     = ref(false)
 const excelFileInput      = ref(null)
 const importResult        = ref(null)
-const exportDateError     = ref('')
-
-// Giá trị mặc định: đầu và cuối tháng hiện tại
-const _now = new Date()
-const _yyyy = _now.getFullYear()
-const _mm   = String(_now.getMonth() + 1).padStart(2, '0')
-const _lastDay = new Date(_now.getFullYear(), _now.getMonth() + 1, 0).getDate()
-const startDate = ref(`${_yyyy}-${_mm}-01`)
-const endDate   = ref(`${_yyyy}-${_mm}-${String(_lastDay).padStart(2, '0')}`)
 
 // ========================
 // HELPERS
@@ -270,33 +230,20 @@ const downloadBlob = (blob, filename) => {
 }
 
 // ========================
-// 1) XUẤT EXCEL ĐẶT PHÒNG
+// 1) XUẤT DANH SÁCH PHÒNG
 // ========================
-const exportBookings = async () => {
-  // Validate trước khi gọi API
-  exportDateError.value = ''
-  if (!startDate.value || !endDate.value) {
-    exportDateError.value = '⚠️ ' + t('host.excel.validation_date_missing')
-    return
-  }
-  if (endDate.value < startDate.value) {
-    exportDateError.value = '⚠️ ' + t('host.excel.validation_date_invalid')
-    return
-  }
-
-  exportingBookings.value = true
+const exportRooms = async () => {
+  exportingRooms.value = true
   try {
-    // QUAN TRỌNG: phải đặt responseType: 'blob' vì đây là file nhị phân .xlsx
-    const res = await axios.get('/excel/host/export-bookings', {
-      params: { startDate: startDate.value, endDate: endDate.value },
+    const res = await axios.get('/excel/host/export-rooms', {
       responseType: 'blob'
     })
-    downloadBlob(res.data, `MyBookings_${startDate.value}_${endDate.value}.xlsx`)
+    downloadBlob(res.data, 'MyRooms.xlsx')
   } catch (err) {
     const msg = err.response?.data?.message || err.message || ''
-    alert('❌ ' + t('host.excel.export_failed_msg') + msg)
+    alert('❌ ' + (locale.value === 'vi' ? 'Xuất danh sách phòng thất bại: ' : 'Failed to export rooms list: ') + msg)
   } finally {
-    exportingBookings.value = false
+    exportingRooms.value = false
   }
 }
 

@@ -384,6 +384,16 @@
             <div class="filter-actions">
               <button class="btn-filter-apply" @click="handleApplyFilter">{{ $t('host.bookings.btn_apply') }}</button>
               <button class="btn-filter-clear" @click="handleClearFilter">{{ $t('host.bookings.btn_clear') }}</button>
+              <button 
+                class="btn-filter-apply" 
+                style="background: #10b981; border-color: #10b981; color: white; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;"
+                @click="exportBookingsToExcel" 
+                :disabled="exportingBookings"
+              >
+                <span v-if="exportingBookings" class="spinner-small" style="width: 14px; height: 14px; border-width: 2px; border-top-color: white; margin: 0;"></span>
+                <span v-else>📊</span>
+                {{ exportingBookings ? (locale === 'vi' ? 'Đang xuất...' : 'Exporting...') : (locale === 'vi' ? 'Xuất Excel' : 'Export Excel') }}
+              </button>
             </div>
           </div>
 
@@ -1879,6 +1889,44 @@ const handleUnblockFromTable = async (bookingId) => {
       console.error(err)
       toastStore.error(locale.value === 'vi' ? 'Bỏ chặn thất bại!' : 'Failed to unblock!')
     }
+  }
+}
+
+const exportingBookings = ref(false)
+const exportBookingsToExcel = async () => {
+  let start = filterStartDate.value
+  let end = filterEndDate.value
+  
+  if (!start || !end) {
+    const now = new Date()
+    const yyyy = now.getFullYear()
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+    start = `${yyyy}-${mm}-01`
+    end = `${yyyy}-${mm}-${String(lastDay).padStart(2, '0')}`
+  }
+  
+  exportingBookings.value = true
+  try {
+    const res = await axios.get('/excel/host/export-bookings', {
+      params: { startDate: start, endDate: end },
+      responseType: 'blob'
+    })
+    
+    const url = URL.createObjectURL(res.data)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `MyBookings_${start}_${end}.xlsx`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    toastStore.success(locale.value === 'vi' ? 'Xuất Excel đặt phòng thành công!' : 'Bookings exported successfully!')
+  } catch (err) {
+    console.error(err)
+    toastStore.error(locale.value === 'vi' ? 'Xuất file Excel thất bại!' : 'Failed to export Excel!')
+  } finally {
+    exportingBookings.value = false
   }
 }
 
