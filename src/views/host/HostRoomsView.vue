@@ -559,7 +559,7 @@
                   <button 
                     type="button" 
                     class="btn-primary" 
-                    style="margin-top: 8px; font-size: 0.78rem; padding: 5px 12px; border-radius: 6px; font-weight: 700; width: 100%; height: auto; background: #2563eb; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;"
+                    style="margin-top: 8px; font-size: 0.7rem; padding: 4px 10px; border-radius: 6px; font-weight: 700; width: fit-content; height: auto; background: #2563eb; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap;"
                     @click="openPayoutModal"
                     :disabled="hostBalance <= 0"
                   >
@@ -2395,7 +2395,11 @@ const handlePayInvoice = async (invoiceId) => {
   payLoading.value = invoiceId
   try {
     const res = await payInvoice(invoiceId, locale.value)
-    if (res.data && res.data.paymentUrl) {
+    if (res.data && res.data.status === 'SUCCESS') {
+      toastStore.success(locale.value === 'vi' ? 'Khấu trừ trực tiếp từ số dư khả dụng thành công!' : 'Successfully offset directly from available balance!')
+      await fetchInvoices()
+      await fetchPayoutData()
+    } else if (res.data && res.data.paymentUrl) {
       window.location.href = res.data.paymentUrl
     } else {
       toastStore.error(t('host.toast_no_link'))
