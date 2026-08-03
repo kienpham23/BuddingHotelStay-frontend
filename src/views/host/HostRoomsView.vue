@@ -1894,22 +1894,19 @@ const handleUnblockFromTable = async (bookingId) => {
 
 const exportingBookings = ref(false)
 const exportBookingsToExcel = async () => {
-  let start = filterStartDate.value
-  let end = filterEndDate.value
-  
-  if (!start || !end) {
-    const now = new Date()
-    const yyyy = now.getFullYear()
-    const mm = String(now.getMonth() + 1).padStart(2, '0')
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-    start = `${yyyy}-${mm}-01`
-    end = `${yyyy}-${mm}-${String(lastDay).padStart(2, '0')}`
+  const ids = filteredBookings.value.map(bk => bk.id)
+  if (ids.length === 0) {
+    toastStore.error(locale.value === 'vi' ? 'Không có dữ liệu đặt phòng phù hợp bộ lọc hiện tại để xuất Excel!' : 'No matching booking data under the current filters to export!')
+    return
   }
-  
+
+  const start = filterStartDate.value || 'all'
+  const end = filterEndDate.value || 'all'
+
   exportingBookings.value = true
   try {
     const res = await axios.get('/excel/host/export-bookings', {
-      params: { startDate: start, endDate: end },
+      params: { bookingIds: ids.join(',') },
       responseType: 'blob'
     })
     
