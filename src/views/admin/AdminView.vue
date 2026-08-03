@@ -570,7 +570,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr v-for="usr in filteredUsers" :key="usr.id">
+            <tr v-for="usr in paginatedUsers" :key="usr.id">
               <td>#{{ usr.id }}</td>
               <td><strong>{{ usr.fullName }}</strong></td>
               <td>{{ usr.email }}</td>
@@ -654,6 +654,39 @@
             </tr>
             </tbody>
           </table>
+
+          <!-- Pagination for Users -->
+          <div class="pagination-container" v-if="userTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+            <button 
+              class="btn-nav" 
+              :disabled="userCurrentPage === 1" 
+              @click="userCurrentPage--"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
+              :style="userCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+            >
+              &laquo;
+            </button>
+            <button 
+              class="btn-page"
+              v-for="p in userTotalPages" 
+              :key="p"
+              :class="{ active: userCurrentPage === p }"
+              @click="userCurrentPage = p"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 500; min-width: 32px; text-align: center; transition: all 0.2s;"
+              :style="userCurrentPage === p ? { background: '#3b82f6', borderColor: '#3b82f6', color: 'white' } : { color: '#475569' }"
+            >
+              {{ p }}
+            </button>
+            <button 
+              class="btn-nav" 
+              :disabled="userCurrentPage === userTotalPages" 
+              @click="userCurrentPage++"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
+              :style="userCurrentPage === userTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+            >
+              &raquo;
+            </button>
+          </div>
         </div>
 
         <div class="empty-state" v-else>
@@ -1857,6 +1890,8 @@ const bookingCurrentPage = ref(1)
 const bookingItemsPerPage = ref(10) // 10 bookings per page
 const usersList = ref([])
 const userRoleFilter = ref('ALL') // 'ALL' | 'CUSTOMER' | 'HOST' | 'ADMIN'
+const userCurrentPage = ref(1)
+const userItemsPerPage = ref(10) // 10 users per page
 const roomsList = ref([])
 
 // Room management filter, sort and pagination states
@@ -2177,6 +2212,20 @@ const filteredUsers = computed(() => {
     return usersList.value
   }
   return usersList.value.filter(u => u.role === userRoleFilter.value)
+})
+
+const paginatedUsers = computed(() => {
+  const start = (userCurrentPage.value - 1) * userItemsPerPage.value
+  const end = start + userItemsPerPage.value
+  return filteredUsers.value.slice(start, end)
+})
+
+const userTotalPages = computed(() => {
+  return Math.ceil(filteredUsers.value.length / userItemsPerPage.value) || 1
+})
+
+watch(userRoleFilter, () => {
+  userCurrentPage.value = 1
 })
 
 const resetBookingFilters = () => {
