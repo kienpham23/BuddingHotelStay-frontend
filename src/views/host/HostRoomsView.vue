@@ -391,7 +391,7 @@
                 :disabled="exportingBookings"
               >
                 <span v-if="exportingBookings" class="spinner-small" style="width: 14px; height: 14px; border-width: 2px; border-top-color: white; margin: 0;"></span>
-                <span v-else>📊</span>
+                <FileSpreadsheet v-else :size="16" />
                 {{ exportingBookings ? (locale === 'vi' ? 'Đang xuất...' : 'Exporting...') : (locale === 'vi' ? 'Xuất Excel' : 'Export Excel') }}
               </button>
             </div>
@@ -1622,7 +1622,8 @@ import {
   Building2, FileText, DollarSign, Hotel, Users,
   Plus, MapPin, Star, Edit2, Trash2, Check, X,
   UploadCloud, Loader2, RefreshCw, UserCheck, CalendarCheck, BedDouble,
-  LayoutDashboard, BarChart3, PieChart, Award, LogOut, Home, Wallet, Calendar, User
+  LayoutDashboard, BarChart3, PieChart, Award, LogOut, Home, Wallet, Calendar, User,
+  FileSpreadsheet
 } from 'lucide-vue-next'
 import ExcelDataPanel from '../../components/host/ExcelDataPanel.vue'
 import { getMyInvoices, payInvoice } from '../../api/invoices'
