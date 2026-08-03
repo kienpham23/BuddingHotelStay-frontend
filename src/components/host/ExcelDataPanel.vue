@@ -86,11 +86,13 @@
         <!-- Trạng thái bình thường -->
         <div v-if="!importingFile" class="dropzone-body">
           <div class="dropzone-icon-wrap">
-            <FolderOpen :size="28" class="dropzone-big-icon" />
+            <FolderOpen :size="18" class="dropzone-big-icon" />
           </div>
-          <p class="dropzone-main-text">{{ $t('host.excel.dropzone_main') }}</p>
-          <p class="dropzone-sub-text">hoặc <strong>{{ $t('host.excel.dropzone_sub') }}</strong></p>
-          <div class="dropzone-format-badge">{{ $t('host.excel.dropzone_badge') }}</div>
+          <div class="dropzone-text-group" style="text-align: left; display: flex; flex-direction: column; gap: 2px;">
+            <p class="dropzone-main-text" style="font-size: 0.85rem; font-weight: 700; color: #1e293b; margin: 0;">{{ $t('host.excel.dropzone_main') }}</p>
+            <p class="dropzone-sub-text" style="font-size: 0.75rem; color: #64748b; margin: 0;">hoặc <strong style="color: #1a6cf7;">{{ $t('host.excel.dropzone_sub') }}</strong></p>
+          </div>
+          <div class="dropzone-format-badge" style="margin-top: 0; margin-left: auto; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; background: #e0eaff; color: #1a6cf7; border-radius: 999px;">{{ $t('host.excel.dropzone_badge') }}</div>
         </div>
 
         <!-- Trạng thái đang xử lý -->
@@ -529,14 +531,14 @@ const resetForNewUpload = () => {
 
 /* ---- Import Section ---- */
 .import-section {
-  padding: 1.25rem 1.5rem 1.5rem;
+  padding: 0.75rem 1.5rem 1rem;
 }
 
 .import-section-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .import-section-icon {
@@ -559,9 +561,8 @@ const resetForNewUpload = () => {
 /* ---- Excel Dropzone ---- */
 .excel-dropzone {
   border: 2px dashed #bfdbfe;
-  border-radius: 14px;
-  padding: 2rem 1.5rem;
-  text-align: center;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
   background: #f8fbff;
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
@@ -588,23 +589,23 @@ const resetForNewUpload = () => {
 
 .dropzone-body {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .dropzone-icon-wrap {
-  width: 60px;
-  height: 60px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: white;
   border: 1.5px solid #dbeafe;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(26, 108, 247, 0.1);
-  margin-bottom: 0.4rem;
+  box-shadow: 0 4px 10px rgba(26, 108, 247, 0.08);
   transition: all 0.22s;
+  flex-shrink: 0;
 }
 
 .excel-dropzone:hover .dropzone-icon-wrap,
