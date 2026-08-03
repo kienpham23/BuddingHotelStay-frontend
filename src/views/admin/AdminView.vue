@@ -1963,6 +1963,26 @@
         {{ toast.message }}
       </div>
     </Transition>
+
+    <!-- GENERAL CUSTOM CONFIRM MODAL -->
+    <div class="modal-backdrop" v-if="showConfirmModal" style="z-index: 2200;">
+      <div class="confirm-modal" style="animation: pop 0.25s ease-out;">
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 0.75rem;">
+          {{ locale === 'vi' ? 'Xác nhận yêu cầu' : 'Confirm Action' }}
+        </h3>
+        <p style="font-size: 0.92rem; color: #475569; line-height: 1.5; margin-bottom: 1.5rem;">
+          {{ confirmMessage }}
+        </p>
+        <div class="modal-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;">
+          <button class="btn-cancel" @click="confirmCallback(false)">
+            {{ locale === 'vi' ? 'Hủy' : 'Cancel' }}
+          </button>
+          <button class="btn-submit" @click="confirmCallback(true)" style="background: #1a6cf7; color: white;">
+            {{ locale === 'vi' ? 'Xác nhận' : 'Confirm' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1999,6 +2019,21 @@ const toast = ref({ show: false, type: 'success', message: '' })
 const showToast = (message, type = 'success') => {
   toast.value = { show: true, type, message }
   setTimeout(() => { toast.value.show = false }, 3500)
+}
+
+// Custom Confirm Modal State
+const showConfirmModal = ref(false)
+const confirmMessage = ref('')
+const confirmCallback = ref(null)
+const triggerConfirm = (message) => {
+  return new Promise((resolve) => {
+    confirmMessage.value = message
+    confirmCallback.value = (result) => {
+      showConfirmModal.value = false
+      resolve(result)
+    }
+    showConfirmModal.value = true
+  })
 }
 
 const startEditCommission = (usr) => {
@@ -2038,7 +2073,7 @@ const saveCommission = async (usr) => {
 }
 
 const resetCommission = async (usr) => {
-  if (!confirm(t('admin.confirm_reset_commission', { name: usr.fullName }))) return
+  if (!await triggerConfirm(t('admin.confirm_reset_commission', { name: usr.fullName }))) return
   try {
     const response = await axios.patch(`/admin/users/${usr.id}/commission-rate`)
     usr.commissionRate = null
@@ -2867,7 +2902,7 @@ const setPrimaryImageAction = async (img, index) => {
 }
 
 const deleteImageAction = async (img, index) => {
-  if (!confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return
+  if (!await triggerConfirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn xóa ảnh này?' : 'Are you sure you want to delete this image?')) return
 
   if (isEditMode.value && img.id) {
     formLoading.value = true
@@ -3011,7 +3046,7 @@ const confirmBookingStatus = async (bookingId) => {
 
 // Cancel booking status (PENDING/CONFIRMED -> CANCELLED)
 const cancelBookingStatus = async (bookingId) => {
-  if (!confirm('Bạn có chắc chắn muốn hủy đơn đặt phòng này?')) return
+  if (!await triggerConfirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn hủy đơn đặt phòng này?' : 'Are you sure you want to cancel this booking?')) return
   try {
     await axios.patch(`/bookings/${bookingId}/cancel`)
     const idx = allBookings.value.findIndex(b => b.id === bookingId)
@@ -3064,7 +3099,7 @@ watch(adminPayoutStatusFilter, () => {
 })
 
 const handleApprovePayout = async (payoutId) => {
-  if (!confirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn duyệt và chuyển khoản cho yêu cầu rút tiền này?' : 'Are you sure you want to approve and transfer funds for this request?')) return
+  if (!await triggerConfirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn duyệt và chuyển khoản cho yêu cầu rút tiền này?' : 'Are you sure you want to approve and transfer funds for this request?')) return
   try {
     await axios.patch(`/payouts/admin/${payoutId}/approve`)
     showToast(locale.value === 'vi' ? 'Duyệt chuyển khoản thành công' : 'Payout approved successfully')
