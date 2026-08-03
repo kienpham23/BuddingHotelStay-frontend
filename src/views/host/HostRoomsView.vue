@@ -166,7 +166,7 @@
               <div class="icon-wrap color-green"><FileText :size="24" /></div>
               <div class="info">
                 <h4>{{ $t('host.stats.total_bookings') }}</h4>
-                <span class="val">{{ bookings.length }} {{ $t('host.stats.bookings_unit') }}</span>
+                <span class="val">{{ realBookingsCount }} {{ $t('host.stats.bookings_unit') }}</span>
               </div>
             </div>
             <div class="analytic-card">
@@ -1787,8 +1787,17 @@ const handleClearFilter = () => {
   appliedRoomIdFilter.value = null
 }
 
+const realBookingsCount = computed(() => {
+  return bookings.value.filter(bk => bk.note !== 'HOST_BLOCKED').length
+})
+
 const filteredBookings = computed(() => {
   return bookings.value.filter(bk => {
+    // Không hiển thị các lệnh chặn phòng (chỉ hiển thị khách đặt thực tế)
+    if (bk.note === 'HOST_BLOCKED') {
+      return false
+    }
+
     // Room Filter
     if (appliedRoomIdFilter.value && bk.roomId !== appliedRoomIdFilter.value) {
       return false
