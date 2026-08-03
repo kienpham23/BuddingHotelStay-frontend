@@ -371,7 +371,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr v-for="bk in filteredBookings" :key="bk.id" @click="openBookingDetail(bk)" class="clickable-row">
+            <tr v-for="bk in paginatedBookings" :key="bk.id" @click="openBookingDetail(bk)" class="clickable-row">
               <td>
                 <strong>#{{ bk.id }}</strong>
                 <div v-if="bk.createdAt" style="margin-top: 6px; font-size: 11px; color: #64748b; font-weight: 500; line-height: 1.3;">
@@ -425,6 +425,39 @@
             </tr>
             </tbody>
           </table>
+
+          <!-- Pagination for Bookings -->
+          <div class="pagination-container" v-if="bookingTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+            <button 
+              class="btn-nav" 
+              :disabled="bookingCurrentPage === 1" 
+              @click="bookingCurrentPage--"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
+              :style="bookingCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+            >
+              &laquo;
+            </button>
+            <button 
+              class="btn-page"
+              v-for="p in bookingTotalPages" 
+              :key="p"
+              :class="{ active: bookingCurrentPage === p }"
+              @click="bookingCurrentPage = p"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 500; min-width: 32px; text-align: center; transition: all 0.2s;"
+              :style="bookingCurrentPage === p ? { background: '#3b82f6', borderColor: '#3b82f6', color: 'white' } : { color: '#475569' }"
+            >
+              {{ p }}
+            </button>
+            <button 
+              class="btn-nav" 
+              :disabled="bookingCurrentPage === bookingTotalPages" 
+              @click="bookingCurrentPage++"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
+              :style="bookingCurrentPage === bookingTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+            >
+              &raquo;
+            </button>
+          </div>
         </div>
 
         <div class="empty-state" v-else>
@@ -1820,6 +1853,8 @@ const allBookings = ref([])
 const bookingSearchQuery = ref('')
 const bookingStartDate = ref('')
 const bookingEndDate = ref('')
+const bookingCurrentPage = ref(1)
+const bookingItemsPerPage = ref(10) // 10 bookings per page
 const usersList = ref([])
 const userRoleFilter = ref('ALL') // 'ALL' | 'CUSTOMER' | 'HOST' | 'ADMIN'
 const roomsList = ref([])
@@ -2186,6 +2221,20 @@ const filteredBookings = computed(() => {
   }
 
   return list
+})
+
+const paginatedBookings = computed(() => {
+  const start = (bookingCurrentPage.value - 1) * bookingItemsPerPage.value
+  const end = start + bookingItemsPerPage.value
+  return filteredBookings.value.slice(start, end)
+})
+
+const bookingTotalPages = computed(() => {
+  return Math.ceil(filteredBookings.value.length / bookingItemsPerPage.value) || 1
+})
+
+watch([bookingSearchQuery, bookingStartDate, bookingEndDate], () => {
+  bookingCurrentPage.value = 1
 })
 
 const todayDateLabel = computed(() => {
