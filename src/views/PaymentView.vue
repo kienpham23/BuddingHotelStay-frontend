@@ -834,6 +834,31 @@ const goStep2 = () => { if (validateStep1()) currentStep.value = 2 }
 const ensureBooking = async () => {
   if (booking.value.bookingId) return booking.value.bookingId
   
+  // Kiểm tra xem khách hàng đã có đơn đặt phòng PENDING nào khớp hay chưa để tránh lỗi trùng lặp phòng
+  try {
+    const myBookingsRes = await axiosInst.get('/bookings/my')
+    const existingPending = (myBookingsRes.data || []).find(b => {
+      const isPending = b.status === 'PENDING'
+      const isSameRoom = Number(b.roomId) === Number(booking.value.roomId)
+      
+      const bCheckIn = b.checkIn ? b.checkIn.split('T')[0] : ''
+      const reqCheckIn = booking.value.checkIn ? booking.value.checkIn.split('T')[0] : ''
+      
+      const bCheckOut = b.checkOut ? b.checkOut.split('T')[0] : ''
+      const reqCheckOut = booking.value.checkOut ? booking.value.checkOut.split('T')[0] : ''
+      
+      return isPending && isSameRoom && bCheckIn === reqCheckIn && bCheckOut === reqCheckOut
+    })
+    
+    if (existingPending) {
+      console.log('Tái sử dụng đơn đặt phòng PENDING trùng khớp:', existingPending.id)
+      booking.value.bookingId = existingPending.id
+      return existingPending.id
+    }
+  } catch (err) {
+    console.warn('Lấy danh sách đơn đặt phòng trước đó thất bại:', err)
+  }
+  
   let method = 'CASH'
   if (payMethod.value === 'momo') {
     method = 'MOMO'
