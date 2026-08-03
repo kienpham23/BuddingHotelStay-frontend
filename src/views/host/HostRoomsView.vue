@@ -336,6 +336,20 @@
             <h2>{{ $t('host.bookings.list_title') }}</h2>
           </div>
 
+          <!-- Active Room Filter Badge -->
+          <div v-if="appliedRoomIdFilter" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 0.82rem; padding: 6px 12px; border-radius: 8px; font-weight: 700; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 8px;">
+              Lọc theo: {{ getRoomNameById(appliedRoomIdFilter) }}
+              <button 
+                @click="appliedRoomIdFilter = null" 
+                style="background: transparent; border: none; font-size: 1rem; color: #ef4444; cursor: pointer; font-weight: bold; padding: 0; line-height: 1; display: inline-flex; align-items: center;"
+                title="Hủy lọc phòng"
+              >
+                &times;
+              </button>
+            </span>
+          </div>
+
           <!-- Filters Bar -->
           <div class="booking-filters-bar" v-if="bookings.length > 0">
             <div class="filter-item">
@@ -418,6 +432,14 @@
                   </td>
                   <td>
                     <div class="table-actions">
+                      <button 
+                        class="btn-table-approve" 
+                        style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-weight: 700;"
+                        @click="openBookingDetailModal(bk)"
+                        :title="locale === 'vi' ? 'Xem Chi tiết' : 'View Details'"
+                      >
+                        👁️ {{ locale === 'vi' ? 'Chi tiết' : 'Details' }}
+                      </button>
                       <button 
                         v-if="bk.status === 'PENDING'" 
                         class="btn-table-approve" 
@@ -716,7 +738,7 @@
                         <button 
                           class="btn-primary-sm" 
                           style="padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: 6px;"
-                          @click="activeSidebarTab = 'rooms'"
+                          @click="handleFilterRoomBookings(room.roomId)"
                         >
                           {{ locale === 'vi' ? 'Chi tiết' : 'Details' }}
                         </button>
@@ -958,6 +980,149 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- BOOKING DETAIL MODAL -->
+    <div class="modal-backdrop" v-if="showBookingDetailModal && selectedBookingDetail" style="z-index: 1200;">
+      <div class="confirm-modal" style="max-width: 600px; width: 95%; background: white; border-radius: 18px; padding: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.18); display: flex; flex-direction: column; gap: 20px; font-family: inherit; text-align: left; max-height: 90vh; overflow-y: auto;">
+        
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+          <div>
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span style="color: #2563eb;">📄</span>
+              {{ locale === 'vi' ? 'Chi Tiết Đơn Đặt Phòng' : 'Booking Details' }}
+            </h3>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 4px 0 0 0;">
+              {{ locale === 'vi' ? 'Thời gian tạo đơn:' : 'Created at:' }} {{ formatDate(selectedBookingDetail.createdAt) }}
+            </p>
+          </div>
+          <button @click="showBookingDetailModal = false" style="background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; font-weight: 300; line-height: 1;">&times;</button>
+        </div>
+
+        <!-- Body content -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- Section 1: General Info -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">{{ locale === 'vi' ? 'Mã đơn đặt phòng' : 'Booking ID' }}</label>
+              <p style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin: 4px 0 0 0;">#{{ selectedBookingDetail.id }}</p>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">{{ locale === 'vi' ? 'Mã giao dịch' : 'Transaction ID' }}</label>
+              <p style="font-size: 0.95rem; font-weight: 600; color: #0f172a; margin: 4px 0 0 0;">{{ selectedBookingDetail.transactionId || selectedBookingDetail.paymentTxnRef || '-' }}</p>
+            </div>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 0;" />
+
+          <!-- Section 2: Room Info -->
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">{{ locale === 'vi' ? 'Thông tin phòng' : 'Room Info' }}</label>
+            <p style="font-size: 0.98rem; font-weight: 700; color: #0f172a; margin: 4px 0 0 0;">{{ selectedBookingDetail.roomName }}</p>
+            <small style="color: #64748b; font-weight: 500; display: block; margin-top: 2px;">{{ translateCity(selectedBookingDetail.city) }}</small>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 0;" />
+
+          <!-- Section 3: Guest Info -->
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 4px;">{{ locale === 'vi' ? 'Thông tin khách đặt' : 'Guest Details' }}</label>
+            <div style="background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 4px;">
+              <p style="font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 0;">{{ selectedBookingDetail.guestName }}</p>
+              <p style="font-size: 0.82rem; color: #475569; margin: 0;">Email: {{ selectedBookingDetail.guestEmail }}</p>
+              <p style="font-size: 0.82rem; color: #475569; margin: 0;">SĐT: {{ selectedBookingDetail.guestPhone || '-' }}</p>
+            </div>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 0;" />
+
+          <!-- Section 4: Stay Details -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">{{ locale === 'vi' ? 'Ngày nhận phòng' : 'Check-In' }}</label>
+              <p style="font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 4px 0 0 0;">{{ formatDate(selectedBookingDetail.checkIn) }}</p>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">{{ locale === 'vi' ? 'Ngày trả phòng' : 'Check-Out' }}</label>
+              <p style="font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 4px 0 0 0;">{{ formatDate(selectedBookingDetail.checkOut) }}</p>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">{{ locale === 'vi' ? 'Số đêm' : 'Number of Nights' }}</label>
+              <p style="font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 4px 0 0 0;">{{ calculateDuration(selectedBookingDetail.checkIn, selectedBookingDetail.checkOut) }} {{ locale === 'en' ? 'nights' : 'đêm' }}</p>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">{{ locale === 'vi' ? 'Số khách' : 'Guests' }}</label>
+              <p style="font-size: 0.9rem; font-weight: 700; color: #0f172a; margin: 4px 0 0 0;">{{ selectedBookingDetail.maxGuests || 2 }} {{ locale === 'en' ? 'guests' : 'khách' }}</p>
+            </div>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 0;" />
+
+          <!-- Section 5: Financial Info -->
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 6px;">{{ locale === 'vi' ? 'Chi tiết doanh thu' : 'Financial Breakdown' }}</label>
+            <div style="background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: #64748b;">Giá phòng / đêm:</span>
+                <span style="font-weight: 600; color: #0f172a;">{{ formatPrice(selectedBookingDetail.pricePerNight || Math.round(selectedBookingDetail.totalPrice / (calculateDuration(selectedBookingDetail.checkIn, selectedBookingDetail.checkOut) || 1))) }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-top: 1px dashed #e2e8f0; padding-top: 6px;">
+                <span style="color: #64748b; font-weight: 600;">Tổng cộng (A):</span>
+                <span style="font-weight: 700; color: #0f172a;">{{ formatPrice(selectedBookingDetail.totalPrice) }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: #64748b;">Phí nền tảng (B = 15%):</span>
+                <span style="font-weight: 600; color: #ef4444;">- {{ formatPrice(selectedBookingDetail.totalPrice * 0.15) }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 6px; font-size: 0.92rem;">
+                <span style="font-weight: 700; color: #10b981;">Host thực nhận (A - B):</span>
+                <span style="font-weight: 800; color: #10b981;">{{ formatPrice(selectedBookingDetail.totalPrice * 0.85) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 0;" />
+
+          <!-- Section 6: Payment Method & Booking Status -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">{{ locale === 'vi' ? 'Phương thức thanh toán' : 'Payment Method' }}</label>
+              <div style="margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                <span class="pay-method-badge" 
+                      style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; width: fit-content;"
+                      :style="selectedBookingDetail.paymentMethod === 'VNPAY' ? 'background: #dbeafe; color: #1d4ed8;' : selectedBookingDetail.paymentMethod === 'MOMO' ? 'background: #fce7f3; color: #9d174d;' : 'background: #e0f2fe; color: #0369a1;'">
+                  {{ selectedBookingDetail.paymentMethod || $t('host.bookings.payment_unknown') }}
+                </span>
+                <span class="pay-status-badge" 
+                      style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700; width: fit-content;" 
+                      :style="selectedBookingDetail.paid ? 'background: #d1fae5; color: #065f46;' : 'background: #fef3c7; color: #92400e;'">
+                  {{ selectedBookingDetail.paid ? $t('host.bookings.payment_paid') : $t('host.bookings.payment_unpaid') }}
+                </span>
+              </div>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">{{ locale === 'vi' ? 'Trạng thái đơn' : 'Booking Status' }}</label>
+              <div style="margin-top: 4px;">
+                <span class="status-badge" :class="selectedBookingDetail.status.toLowerCase()">
+                  {{ getStatusLabel(selectedBookingDetail.status) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="display: flex; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 12px; margin-top: 8px;">
+          <button 
+            class="btn-primary-sm" 
+            style="background: #475569; padding: 8px 20px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; color: white;"
+            @click="showBookingDetailModal = false"
+          >
+            {{ locale === 'vi' ? 'Đóng' : 'Close' }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1508,6 +1673,25 @@ const filterEndDate = ref('')
 const appliedStatus = ref('')
 const appliedStartDate = ref('')
 const appliedEndDate = ref('')
+const appliedRoomIdFilter = ref(null)
+
+const showBookingDetailModal = ref(false)
+const selectedBookingDetail = ref(null)
+
+const openBookingDetailModal = (bk) => {
+  selectedBookingDetail.value = bk
+  showBookingDetailModal.value = true
+}
+
+const getRoomNameById = (roomId) => {
+  const r = rooms.value.find(x => x.id === roomId)
+  return r ? r.name : 'Phòng #' + roomId
+}
+
+const handleFilterRoomBookings = (roomId) => {
+  appliedRoomIdFilter.value = roomId
+  activeSidebarTab.value = 'bookings'
+}
 
 const handleApplyFilter = () => {
   appliedStatus.value = filterStatus.value
@@ -1522,10 +1706,16 @@ const handleClearFilter = () => {
   appliedStatus.value = ''
   appliedStartDate.value = ''
   appliedEndDate.value = ''
+  appliedRoomIdFilter.value = null
 }
 
 const filteredBookings = computed(() => {
   return bookings.value.filter(bk => {
+    // Room Filter
+    if (appliedRoomIdFilter.value && bk.roomId !== appliedRoomIdFilter.value) {
+      return false
+    }
+
     // 1. Status Filter
     if (appliedStatus.value && bk.status !== appliedStatus.value) {
       return false
