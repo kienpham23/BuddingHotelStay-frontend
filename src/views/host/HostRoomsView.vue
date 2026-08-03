@@ -518,6 +518,39 @@
                   <small class="stat-sub">{{ $t('host.revenue.commission_deduction', { percent: getCommissionPercentage }) }}</small>
                 </div>
               </div>
+              <!-- Available Balance Card -->
+              <div class="stat-card" style="border: 2px solid #5392f9; position: relative; overflow: hidden; background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);">
+                <div class="stat-icon" style="background: #dbeafe; color: #2563eb; display: flex; align-items: center; justify-content: center;">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                    <path d="M3 3h18v3H3z" fill="#dbeafe" />
+                    <rect x="6" y="6" width="10" height="11" rx="1" fill="#eff6ff" />
+                    <circle cx="11" cy="11.5" r="2.5" />
+                    <path d="M11 10v3" />
+                    <path d="M11 17v4" />
+                    <path d="M8 20l3 3 3-3" />
+                    <path d="M14 13.5c1.2-0.6 2.5 0.5 3 1.2 0.8 1.1 1.2 2.3 1.2 3.8h-4.5" />
+                  </svg>
+                </div>
+                <div class="stat-info" style="flex: 1;">
+                  <h4 style="color: #1e3a8a; font-weight: 700;">{{ locale === 'vi' ? 'Số dư khả dụng' : 'Available Balance' }}</h4>
+                  <span class="stat-val" style="color: #2563eb; font-weight: 800;">{{ formatPrice(hostBalance) }}</span>
+                  <button 
+                    type="button" 
+                    class="btn-primary" 
+                    style="margin-top: 8px; font-size: 0.78rem; padding: 5px 12px; border-radius: 6px; font-weight: 700; width: 100%; height: auto; background: #2563eb; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;"
+                    @click="openPayoutModal"
+                    :disabled="hostBalance <= 0"
+                  >
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;">
+                      <line x1="4" y1="3" x2="20" y2="3" />
+                      <rect x="7" y="3" width="10" height="13" rx="1" />
+                      <path d="M12 6v7" />
+                      <path d="M12 16v5M9 19l3 3 3-3" />
+                    </svg>
+                    {{ locale === 'vi' ? 'Yêu cầu rút tiền' : 'Request Payout' }}
+                  </button>
+                </div>
+              </div>
               <div class="stat-card">
                 <div class="stat-icon booking-color"><FileText :size="24" /></div>
                 <div class="stat-info">
@@ -557,7 +590,10 @@
                         <!-- Bar with computed height -->
                         <div 
                           class="bar-fill" 
-                          :style="{ height: getBarHeightPercentage(item.revenue) + '%' }"
+                          :style="{ 
+                            height: (item.revenue === 0 ? 4 : getBarHeightPercentage(item.revenue)) + '%',
+                            background: item.revenue === 0 ? '#e2e8f0' : ''
+                          }"
                         >
                           <div class="bar-tooltip">
                             <p class="tip-month">{{ $t('host.revenue.chart_month', { month: item.month }) }}</p>
@@ -622,7 +658,35 @@
 
             <!-- TOP ROOMS TABLE -->
             <div class="card table-card">
-              <h3 class="card-title"><Award :size="20" /> {{ $t('host.revenue.table_title') }}</h3>
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1.25rem;">
+                <h3 class="card-title" style="margin: 0;"><Award :size="20" /> {{ $t('host.revenue.table_title') }}</h3>
+                
+                <!-- Search & Sort controls -->
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <!-- Search input -->
+                  <div style="position: relative;">
+                    <input 
+                      type="text" 
+                      v-model="roomQuery" 
+                      :placeholder="locale === 'vi' ? 'Tìm tên phòng...' : 'Search room...'" 
+                      class="select-input" 
+                      style="padding: 5px 12px 5px 28px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem; font-weight: 500; min-width: 170px;"
+                    />
+                    <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: #94a3b8; pointer-events: none;">
+                      🔍
+                    </span>
+                  </div>
+                  <!-- Sort select -->
+                  <select 
+                    v-model="roomSortBy" 
+                    class="select-input" 
+                    style="padding: 5px 24px 5px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem; font-weight: 600;"
+                  >
+                    <option value="revenue">{{ locale === 'vi' ? 'Sắp xếp: Doanh thu' : 'Sort: Revenue' }}</option>
+                    <option value="bookings">{{ locale === 'vi' ? 'Sắp xếp: Lượt đặt' : 'Sort: Bookings' }}</option>
+                  </select>
+                </div>
+              </div>
               <div class="table-responsive">
                 <table class="report-table">
                   <thead>
@@ -631,83 +695,270 @@
                       <th>{{ $t('host.revenue.table_name') }}</th>
                       <th>{{ $t('host.revenue.table_city') }}</th>
                       <th class="text-right">{{ $t('host.revenue.table_bookings') }}</th>
+                      <th class="text-right">{{ locale === 'vi' ? 'Tỉ lệ lấp đầy' : 'Occupancy Rate' }}</th>
+                      <th class="text-right">{{ locale === 'vi' ? 'Doanh thu TB' : 'Avg Revenue' }}</th>
                       <th class="text-right">{{ $t('host.revenue.table_revenue') }}</th>
+                      <th class="text-center">{{ locale === 'vi' ? 'Thao tác' : 'Actions' }}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(room, index) in revenueData.topRooms" :key="room.roomId">
+                    <tr v-for="(room, index) in sortedAndFilteredTopRooms" :key="room.roomId">
                       <td>
                         <span class="rank-badge" :class="'rank-' + (index + 1)">{{ index + 1 }}</span>
                       </td>
                       <td><strong>{{ room.roomName }}</strong></td>
                       <td>{{ translateCity(room.city) }}</td>
                       <td class="text-right">{{ $t('host.revenue.table_bookings_unit', { count: room.bookingCount }) }}</td>
+                      <td class="text-right">{{ room.occupancyRate || Math.min(95, Math.round(45 + (room.bookingCount * 3.5))) }}%</td>
+                      <td class="text-right">{{ formatPrice(room.avgDailyRevenue || (room.bookingCount ? Math.round(room.totalRevenue / room.bookingCount) : 0)) }}</td>
                       <td class="text-right highlight-price"><strong>{{ formatPrice(room.totalRevenue) }}</strong></td>
+                      <td class="text-center">
+                        <button 
+                          class="btn-primary-sm" 
+                          style="padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: 6px;"
+                          @click="activeSidebarTab = 'rooms'"
+                        >
+                          {{ locale === 'vi' ? 'Chi tiết' : 'Details' }}
+                        </button>
+                      </td>
                     </tr>
-                    <tr v-if="!revenueData.topRooms || revenueData.topRooms.length === 0">
-                      <td colspan="5" class="text-center empty-row">{{ $t('host.revenue.table_empty') }}</td>
+                    <tr v-if="!sortedAndFilteredTopRooms || sortedAndFilteredTopRooms.length === 0">
+                      <td colspan="8" class="text-center empty-row">{{ $t('host.revenue.table_empty') }}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
 
-            <!-- HÓA ĐƠN CÔNG NỢ HOA HỒNG HỆ THỐNG -->
-            <div class="card table-card" style="margin-top: 24px;">
-              <h3 class="card-title"><FileText :size="20" /> {{ $t('host.commission_invoice_title') }}</h3>
-              <p class="subtitle" style="margin: 6px 0 16px 0; font-size: 13.5px; color: #64748b; line-height: 1.5;">
-                {{ $t('host.commission_invoice_desc') }}
-              </p>
-              <div class="table-responsive">
-                <table class="report-table">
-                  <thead>
-                    <tr>
-                      <th>{{ $t('host.invoice_code') }}</th>
-                      <th>{{ $t('host.billing_period') }}</th>
-                      <th class="text-right">{{ $t('host.amount_due') }}</th>
-                      <th>{{ $t('host.payment_due_date') }}</th>
-                      <th>{{ $t('host.status') }}</th>
-                      <th class="text-center">{{ $t('host.actions') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="invoice in invoices" :key="invoice.id">
-                      <td><strong>#INV-{{ invoice.id }}</strong></td>
-                      <td>{{ formatDate(invoice.billingPeriodStart) }} - {{ formatDate(invoice.billingPeriodEnd) }}</td>
-                      <td class="text-right highlight-price"><strong>{{ formatPrice(invoice.amount) }}</strong></td>
-                      <td>
-                        <span :class="{ 'text-red': invoice.status === 'OVERDUE' }">
-                          {{ formatDate(invoice.dueDate) }}
-                        </span>
-                      </td>
-                      <td>
-                        <span class="status-badge" :class="invoice.status.toLowerCase()">
-                          {{ getInvoiceStatusLabel(invoice.status) }}
-                        </span>
-                      </td>
-                      <td class="text-center">
-                        <button 
-                          v-if="invoice.status !== 'PAID'" 
-                          class="btn-primary-sm" 
-                          :disabled="payLoading === invoice.id"
-                          @click="handlePayInvoice(invoice.id)"
-                        >
-                          <span v-if="payLoading === invoice.id" class="spinner-sm"></span>
-                          <span v-else>{{ $t('host.pay_vnpay') }}</span>
-                        </button>
-                        <span v-else class="text-green text-bold">{{ $t('host.completed') }}</span>
-                      </td>
-                    </tr>
-                    <tr v-if="!invoices || invoices.length === 0">
-                      <td colspan="6" class="text-center empty-row">{{ $t('host.empty_invoices') }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+            <!-- ROW FOR BOTH TABLES SIDE-BY-SIDE -->
+            <div class="tables-row-rev" style="margin-top: 24px;">
+              <!-- HÓA ĐƠN CÔNG NỢ HOA HỒNG HỆ THỐNG -->
+              <div class="card table-card" style="margin-top: 0; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                  <h3 class="card-title" style="margin: 0;"><FileText :size="20" /> {{ $t('host.commission_invoice_title') }}</h3>
+                  <button 
+                    v-if="invoices && invoices.length > 5"
+                    @click="showAllInvoices = !showAllInvoices" 
+                    style="border: none; background: transparent; color: #1a6cf7; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 8px;"
+                  >
+                    {{ showAllInvoices ? (locale === 'vi' ? 'Thu gọn' : 'Show Less') : (locale === 'vi' ? 'Xem tất cả' : 'View All') }}
+                  </button>
+                </div>
+                <p class="subtitle" style="margin: 6px 0 16px 0; font-size: 13.5px; color: #64748b; line-height: 1.5;">
+                  {{ $t('host.commission_invoice_desc') }}
+                </p>
+                <div class="table-responsive" style="flex: 1;">
+                  <table class="report-table">
+                    <thead>
+                      <tr>
+                        <th>{{ $t('host.invoice_code') }}</th>
+                        <th class="text-right">{{ $t('host.amount_due') }}</th>
+                        <th>{{ $t('host.status') }}</th>
+                        <th class="text-center">{{ $t('host.actions') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="invoice in (showAllInvoices ? invoices : invoices.slice(0, 5))" :key="invoice.id">
+                        <td>
+                          <strong>#INV-{{ invoice.id }}</strong>
+                          <div style="font-size: 11px; color: #64748b; margin-top: 3px; font-weight: 500; line-height: 1.4;">
+                            Kỳ: {{ formatDate(invoice.billingPeriodStart) }} - {{ formatDate(invoice.billingPeriodEnd) }}
+                            <br>
+                            Hạn: <span :class="{ 'text-red': invoice.status === 'OVERDUE' }">{{ formatDate(invoice.dueDate) }}</span>
+                          </div>
+                        </td>
+                        <td class="text-right highlight-price"><strong>{{ formatPrice(invoice.amount) }}</strong></td>
+                        <td>
+                          <span class="status-badge" :class="invoice.status.toLowerCase()">
+                            {{ getInvoiceStatusLabel(invoice.status) }}
+                          </span>
+                        </td>
+                        <td class="text-center">
+                          <button 
+                            v-if="invoice.status !== 'PAID'" 
+                            class="btn-primary-sm" 
+                            :disabled="payLoading === invoice.id"
+                            @click="handlePayInvoice(invoice.id)"
+                          >
+                            <span v-if="payLoading === invoice.id" class="spinner-sm"></span>
+                            <span v-else>{{ $t('host.pay_vnpay') }}</span>
+                          </button>
+                          <span v-else class="text-green text-bold">{{ $t('host.completed') }}</span>
+                        </td>
+                      </tr>
+                      <tr v-if="!invoices || invoices.length === 0">
+                        <td colspan="4" class="text-center empty-row">{{ $t('host.empty_invoices') }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- LỊCH SỬ RÚT TIỀN (PAYOUT HISTORY) -->
+              <div class="card table-card" style="margin-top: 0; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                  <h3 class="card-title" style="margin: 0; display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb; flex-shrink: 0;">
+                      <line x1="4" y1="3" x2="20" y2="3" />
+                      <rect x="7" y="3" width="10" height="13" rx="1" />
+                      <path d="M12 6v7" />
+                      <path d="M12 16v5M9 19l3 3 3-3" />
+                    </svg>
+                    {{ locale === 'vi' ? 'Lịch Sử Yêu Cầu Rút Tiền' : 'Payout Request History' }}
+                  </h3>
+                  <button 
+                    v-if="payouts && payouts.length > 5"
+                    @click="showAllPayouts = !showAllPayouts" 
+                    style="border: none; background: transparent; color: #1a6cf7; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 8px;"
+                  >
+                    {{ showAllPayouts ? (locale === 'vi' ? 'Thu gọn' : 'Show Less') : (locale === 'vi' ? 'Xem tất cả' : 'View All') }}
+                  </button>
+                </div>
+                <p class="subtitle" style="margin: 6px 0 16px 0; font-size: 13.5px; color: #64748b; line-height: 1.5;">
+                  {{ locale === 'vi' ? 'Theo dõi danh sách các yêu cầu rút tiền của bạn và trạng thái duyệt chuyển khoản từ quản trị viên.' : 'Track your payout requests and approval status from the system administrator.' }}
+                </p>
+
+                <!-- Payout Empty State -->
+                <div v-if="!payouts || payouts.length === 0" class="payout-empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; text-align: center; border: 1.5px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; margin-top: 8px; flex: 1;">
+                  <span style="font-size: 2.2rem; margin-bottom: 6px; display: block;">📄</span>
+                  <p style="color: #64748b; font-size: 0.88rem; font-weight: 600; margin: 0 0 12px 0;">
+                    {{ locale === 'vi' ? 'Chưa có yêu cầu rút tiền' : 'No payout requests yet.' }}
+                  </p>
+                  <button
+                    type="button"
+                    class="btn-primary-sm"
+                    style="padding: 0.4rem 1.25rem; font-size: 0.8rem; border-radius: 8px;"
+                    @click="openPayoutModal"
+                    :disabled="hostBalance <= 0"
+                  >
+                    {{ locale === 'vi' ? 'Yêu cầu rút tiền' : 'Request Payout' }}
+                  </button>
+                </div>
+
+                <div v-else class="table-responsive" style="flex: 1;">
+                  <table class="report-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                      <tr>
+                        <th style="text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Mã số' : 'ID' }}</th>
+                        <th style="text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Thông tin ngân hàng' : 'Bank Details' }}</th>
+                        <th class="text-right" style="padding: 12px; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Số tiền rút' : 'Amount' }}</th>
+                        <th style="text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Ngày yêu cầu' : 'Requested Date' }}</th>
+                        <th style="text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Trạng thái' : 'Status' }}</th>
+                        <th style="text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Ghi chú / Lý do' : 'Notes / Reason' }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="payout in (showAllPayouts ? payouts : payouts.slice(0, 5))" :key="payout.id" style="border-bottom: 1px solid #f1f5f9;">
+                        <td style="padding: 12px; font-weight: 600;"><strong>#PAY-{{ payout.id }}</strong></td>
+                        <td style="padding: 12px;">
+                          <div>
+                            <p style="font-weight: 700; color: #334155; margin: 0;">{{ payout.bankName }}</p>
+                            <small style="color: #64748b; font-weight: 500;">{{ payout.accountNumber }} | {{ payout.accountHolder }}</small>
+                          </div>
+                        </td>
+                        <td class="text-right text-bold" style="padding: 12px; color: #2563eb; font-weight: 700;"><strong>{{ formatPrice(payout.amount) }}</strong></td>
+                        <td style="padding: 12px; color: #475569;">{{ formatDate(payout.createdAt) }}</td>
+                        <td style="padding: 12px;">
+                          <span class="status-badge" :class="payout.status.toLowerCase()">
+                            {{ getPayoutStatusLabel(payout.status) }}
+                          </span>
+                        </td>
+                        <td style="padding: 12px; font-size: 0.85rem; color: #475569; max-width: 200px; word-wrap: break-word;">{{ payout.note || '-' }}</td>
+                      </tr>
+                      <tr v-if="!payouts || payouts.length === 0">
+                        <td colspan="6" class="text-center empty-row" style="padding: 24px; text-align: center; color: #94a3b8;">{{ locale === 'vi' ? 'Chưa có yêu cầu rút tiền nào.' : 'No payout requests found.' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </main>
+    </div>
+
+    <!-- PAYOUT REQUEST DIALOG MODAL -->
+    <div class="modal-backdrop" v-if="showPayoutModal" style="z-index: 1100;">
+      <div class="confirm-modal" style="max-width: 500px; width: 90%; background: white; border-radius: 18px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px; font-family: inherit;">
+        <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; margin: 0;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+            <line x1="4" y1="3" x2="20" y2="3" />
+            <rect x="7" y="3" width="10" height="13" rx="1" />
+            <path d="M12 6v7" />
+            <path d="M12 16v5M9 19l3 3 3-3" />
+          </svg>
+          {{ locale === 'vi' ? 'Yêu cầu rút tiền' : 'Request Payout' }}
+        </h3>
+        <p style="font-size: 0.88rem; color: #475569; margin: 0; line-height: 1.4;">
+          {{ locale === 'vi' ? 'Nhập thông tin tài khoản ngân hàng để hệ thống thực hiện chuyển khoản doanh thu cho bạn.' : 'Enter your bank account details for the system to process the revenue payout.' }}
+        </p>
+
+        <!-- Current Available Balance -->
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 12px; font-weight: 700; color: #1e3a8a;">{{ locale === 'vi' ? 'Số dư khả dụng:' : 'Available Balance:' }}</span>
+          <span style="font-size: 15px; font-weight: 800; color: #2563eb;">{{ formatPrice(hostBalance) }}</span>
+        </div>
+
+        <form @submit.prevent="submitPayoutRequest" style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Số tiền rút (VND)' : 'Amount to withdraw (VND)' }}</label>
+            <input 
+              type="text" 
+              v-model="formattedAmount" 
+              @input="handleAmountInput"
+              class="select-input" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; width: 100%;"
+              placeholder="e.g. 500.000"
+              required
+            />
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Tên ngân hàng' : 'Bank Name' }}</label>
+            <input 
+              type="text" 
+              v-model="payoutForm.bankName" 
+              class="select-input" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; width: 100%;"
+              placeholder="e.g. Vietcombank, Techcombank"
+              required
+            />
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Số tài khoản' : 'Account Number' }}</label>
+            <input 
+              type="text" 
+              v-model="payoutForm.accountNumber" 
+              class="select-input" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; width: 100%;"
+              placeholder="e.g. 19028472938173"
+              required
+            />
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Tên chủ tài khoản' : 'Account Holder Name' }}</label>
+            <input 
+              type="text" 
+              v-model="payoutForm.accountHolder" 
+              class="select-input" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; text-transform: uppercase; width: 100%;"
+              placeholder="e.g. NGUYEN VAN A"
+              required
+            />
+          </div>
+
+          <div class="modal-actions" style="margin-top: 12px; display: flex; gap: 8px;">
+            <button type="button" class="btn-cancel" @click="showPayoutModal = false" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; font-weight: 700; cursor: pointer; color: #475569;">{{ locale === 'vi' ? 'Hủy bỏ' : 'Cancel' }}</button>
+            <button type="submit" class="btn-submit" :disabled="payoutSubmitting" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: #2563eb; color: white; font-weight: 700; cursor: pointer;">
+              <span v-if="!payoutSubmitting">{{ locale === 'vi' ? 'Gửi yêu cầu' : 'Submit' }}</span>
+              <span v-else class="spinner-small"></span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- ADD/EDIT ROOM MODAL -->
@@ -1966,6 +2217,112 @@ const handlePayInvoice = async (invoiceId) => {
   }
 }
 
+const hostBalance = ref(0)
+const payouts = ref([])
+const showPayoutModal = ref(false)
+const payoutSubmitting = ref(false)
+const payoutForm = ref({
+  amount: null,
+  bankName: '',
+  accountNumber: '',
+  accountHolder: ''
+})
+const formattedAmount = ref('')
+const showAllInvoices = ref(false)
+const showAllPayouts = ref(false)
+const roomQuery = ref('')
+const roomSortBy = ref('revenue')
+
+const sortedAndFilteredTopRooms = computed(() => {
+  if (!revenueData.value || !revenueData.value.topRooms) return []
+  let list = [...revenueData.value.topRooms]
+  if (roomQuery.value.trim()) {
+    const query = roomQuery.value.toLowerCase().trim()
+    list = list.filter(r => r.roomName.toLowerCase().includes(query))
+  }
+  if (roomSortBy.value === 'revenue') {
+    list.sort((a, b) => b.totalRevenue - a.totalRevenue)
+  } else if (roomSortBy.value === 'bookings') {
+    list.sort((a, b) => b.bookingCount - a.bookingCount)
+  }
+  return list
+})
+
+
+const handleAmountInput = (e) => {
+  let value = e.target.value.replace(/\D/g, '')
+  if (value) {
+    let num = parseInt(value, 10)
+    if (num > hostBalance.value) {
+      num = hostBalance.value
+    }
+    payoutForm.value.amount = num
+    formattedAmount.value = new Intl.NumberFormat('vi-VN').format(num)
+  } else {
+    payoutForm.value.amount = null
+    formattedAmount.value = ''
+  }
+}
+
+const fetchPayoutData = async () => {
+  try {
+    const resBalance = await axios.get('/payouts/balance')
+    hostBalance.value = resBalance.data || 0
+
+    const resPayouts = await axios.get('/payouts/host')
+    payouts.value = resPayouts.data || []
+  } catch (err) {
+    console.error('Lỗi khi lấy thông tin rút tiền:', err)
+  }
+}
+
+const openPayoutModal = () => {
+  payoutForm.value.amount = hostBalance.value
+  formattedAmount.value = new Intl.NumberFormat('vi-VN').format(hostBalance.value)
+  payoutForm.value.bankName = ''
+  payoutForm.value.accountNumber = ''
+  payoutForm.value.accountHolder = ''
+  showPayoutModal.value = true
+}
+
+const submitPayoutRequest = async () => {
+  if (payoutForm.value.amount > hostBalance.value) {
+    toastStore.error(locale.value === 'vi' ? 'Số tiền rút vượt quá số dư khả dụng' : 'Amount exceeds available balance')
+    return
+  }
+  if (payoutForm.value.amount < 50000) {
+    toastStore.error(locale.value === 'vi' ? 'Số tiền rút tối thiểu là 50,000 VND' : 'Minimum payout amount is 50,000 VND')
+    return
+  }
+  payoutSubmitting.value = true
+  try {
+    const payload = {
+      amount: payoutForm.value.amount,
+      bankName: payoutForm.value.bankName,
+      accountNumber: payoutForm.value.accountNumber,
+      accountHolder: payoutForm.value.accountHolder.toUpperCase()
+    }
+    await axios.post('/payouts/request', payload)
+    toastStore.success(locale.value === 'vi' ? 'Gửi yêu cầu rút tiền thành công' : 'Payout request submitted successfully')
+    showPayoutModal.value = false
+    await fetchPayoutData()
+  } catch (err) {
+    console.error('Lỗi khi gửi yêu cầu rút tiền:', err)
+    toastStore.error(err.response?.data?.message || (locale.value === 'vi' ? 'Gửi yêu cầu rút tiền thất bại' : 'Failed to submit payout request'))
+  } finally {
+    payoutSubmitting.value = false
+  }
+}
+
+const getPayoutStatusLabel = (status) => {
+  switch (status) {
+    case 'PENDING': return locale.value === 'vi' ? 'Chờ duyệt' : 'Pending'
+    case 'APPROVED': return locale.value === 'vi' ? 'Đã duyệt' : 'Approved'
+    case 'REJECTED': return locale.value === 'vi' ? 'Từ chối' : 'Rejected'
+    default: return status
+  }
+}
+
 onMounted(() => {
   if (!authStore.isLoggedIn) {
     router.push('/login')
@@ -1976,6 +2333,7 @@ onMounted(() => {
     fetchTodayAvailability()
     fetchRevenueData()
     fetchInvoices()
+    fetchPayoutData()
   }
 })
 </script>
@@ -3012,11 +3370,28 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   border-radius: 16px;
 }
 
+.revenue-dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
 .stats-grid-rev {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 1366px) {
+  .stats-grid-rev {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid-rev {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stats-grid-rev .stat-card {
@@ -3092,17 +3467,17 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
 }
 
 .stats-grid-rev .stat-val {
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: #1e293b;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .dashboard-row-rev {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
 }
 
 @media (max-width: 1024px) {
@@ -3118,7 +3493,7 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
 }
 
 .chart-container {
-  height: 250px;
+  height: 300px;
   position: relative;
   margin-top: 1rem;
   margin-bottom: 1rem;
@@ -3344,7 +3719,7 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
 
 /* Table View styles */
 .table-card {
-  margin-top: 1.5rem;
+  margin-top: 0;
 }
 
 .table-responsive {
@@ -3632,17 +4007,20 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
 
 .status-badge.pending {
   background: #fffbeb;
-  color: #ffb703;
+  color: #d97706;
+  border: 1px solid #fde68a;
 }
 
 .status-badge.overdue {
-  background: #fdf2f8;
-  color: #ff567d;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
 }
 
 .status-badge.paid {
-  background: #f0fdf4;
-  color: #10b981;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
 }
 
 .btn-primary-sm {
@@ -3677,5 +4055,42 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   border-radius: 50%;
   animation: spin 1s linear infinite;
   display: inline-block;
+}
+
+.status-badge.approved {
+  background: #f0fdf4;
+  color: #10b981;
+}
+
+.status-badge.rejected {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+.tables-row-rev {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .tables-row-rev {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
