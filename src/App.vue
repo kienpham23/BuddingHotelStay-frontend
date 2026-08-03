@@ -87,6 +87,16 @@ html, body {
   padding: 8px;
 }
 
+.lang-dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: transparent;
+}
+
 .header-lang-selector-dropdown:hover .lang-dropdown-menu {
   display: block;
 }
