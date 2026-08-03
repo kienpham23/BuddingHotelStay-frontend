@@ -1587,6 +1587,26 @@
         </div>
       </div>
     </div>
+
+    <!-- GENERAL CUSTOM CONFIRM MODAL -->
+    <div class="modal-backdrop" v-if="showConfirmModal" style="z-index: 2200;">
+      <div class="confirm-modal" style="animation: pop 0.25s ease-out;">
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 0.75rem;">
+          {{ locale === 'vi' ? 'Xác nhận yêu cầu' : 'Confirm Action' }}
+        </h3>
+        <p style="font-size: 0.92rem; color: #475569; line-height: 1.5; margin-bottom: 1.5rem;">
+          {{ confirmMessage }}
+        </p>
+        <div class="modal-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;">
+          <button class="btn-cancel" @click="confirmCallback(false)">
+            {{ locale === 'vi' ? 'Hủy' : 'Cancel' }}
+          </button>
+          <button class="btn-submit" @click="confirmCallback(true)" style="background: #1a6cf7; color: white;">
+            {{ locale === 'vi' ? 'Xác nhận' : 'Confirm' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1622,6 +1642,21 @@ const bookings = ref([])
 const activeSidebarTab = ref('dashboard')
 const invoices = ref([])
 const payLoading = ref(null)
+
+// Custom Confirm Modal State
+const showConfirmModal = ref(false)
+const confirmMessage = ref('')
+const confirmCallback = ref(null)
+const triggerConfirm = (message) => {
+  return new Promise((resolve) => {
+    confirmMessage.value = message
+    confirmCallback.value = (result) => {
+      showConfirmModal.value = false
+      resolve(result)
+    }
+    showConfirmModal.value = true
+  })
+}
 
 // Room Calendar & Block Dates State
 const showCalendarModal = ref(false)
@@ -1773,7 +1808,7 @@ const handleBlockDates = async () => {
 }
 
 const handleUnblockDates = async (bookingId) => {
-  if (!confirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn bỏ chặn khoảng ngày này?' : 'Are you sure you want to unblock this date range?')) return
+  if (!await triggerConfirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn bỏ chặn khoảng ngày này?' : 'Are you sure you want to unblock this date range?')) return
   
   blockLoading.value = true
   try {
@@ -1879,7 +1914,7 @@ const blockedBookings = computed(() => {
 })
 
 const handleUnblockFromTable = async (bookingId) => {
-  if (confirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn mở khóa (bỏ chặn) cho khoảng ngày này?' : 'Are you sure you want to unblock these dates?')) {
+  if (await triggerConfirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn mở khóa (bỏ chặn) cho khoảng ngày này?' : 'Are you sure you want to unblock these dates?')) {
     try {
       await axios.delete(`/bookings/host/block/${bookingId}`)
       toastStore.success(locale.value === 'vi' ? 'Bỏ chặn ngày thành công!' : 'Dates unblocked successfully!')
@@ -2422,7 +2457,7 @@ const setPrimaryImageAction = async (img, index) => {
 }
 
 const deleteImageAction = async (img, index) => {
-  if (!confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return
+  if (!await triggerConfirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn xóa ảnh này?' : 'Are you sure you want to delete this image?')) return
   
   if (isEditMode.value && img.id) {
     formLoading.value = true
@@ -2547,7 +2582,7 @@ const confirmBooking = async (bookingId) => {
 }
 
 const confirmCashPayment = async (bookingId) => {
-  if (!confirm('Xác nhận bạn đã nhận đủ tiền mặt từ khách cho đơn này?')) return
+  if (!await triggerConfirm(locale.value === 'vi' ? 'Xác nhận bạn đã nhận đủ tiền mặt từ khách cho đơn này?' : 'Confirm that you have received enough cash from the guest for this booking?')) return
   try {
     await axios.patch(`/bookings/${bookingId}/confirm-cash-payment`)
     toastStore.success('Đã xác nhận thanh toán tiền mặt thành công.')
@@ -2559,7 +2594,7 @@ const confirmCashPayment = async (bookingId) => {
 }
 
 const completeBooking = async (bookingId) => {
-  if (!confirm('Xác nhận hoàn thành đơn đặt phòng này? (Khách đã check-out và thanh toán đầy đủ)')) return
+  if (!await triggerConfirm(locale.value === 'vi' ? 'Xác nhận hoàn thành đơn đặt phòng này? (Khách đã check-out và thanh toán đầy đủ)' : 'Confirm the completion of this booking? (Guest has checked out and fully paid)')) return
   try {
     await axios.patch(`/bookings/${bookingId}/complete`)
     toastStore.success('Đã xác nhận hoàn thành đơn đặt phòng.')
@@ -2571,7 +2606,7 @@ const completeBooking = async (bookingId) => {
 }
 
 const rejectBooking = async (bookingId) => {
-  if (!confirm('Bạn có chắc chắn muốn hủy đơn đặt phòng này?')) return
+  if (!await triggerConfirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn hủy đơn đặt phòng này?' : 'Are you sure you want to cancel this booking?')) return
   try {
     await axios.patch(`/bookings/${bookingId}/reject`)
     const idx = bookings.value.findIndex(b => b.id === bookingId)
