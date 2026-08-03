@@ -403,6 +403,82 @@
               </button>
             </div>
           </div>
+
+          <!-- Invoice Status Filter Tabs -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+            <button
+              type="button"
+              @click="invoiceStatusFilter = 'ALL'"
+              :style="{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: 'none',
+                fontWeight: '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                background: invoiceStatusFilter === 'ALL' ? '#5392f9' : '#f1f5f9',
+                color: invoiceStatusFilter === 'ALL' ? 'white' : '#475569',
+                boxShadow: invoiceStatusFilter === 'ALL' ? '0 4px 10px rgba(83,146,249,0.3)' : 'none'
+              }"
+            >
+              {{ locale === 'vi' ? 'Tất cả' : 'All' }} ({{ invoices.length }})
+            </button>
+            <button
+              type="button"
+              @click="invoiceStatusFilter = 'PENDING'"
+              :style="{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: 'none',
+                fontWeight: '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                background: invoiceStatusFilter === 'PENDING' ? '#f59e0b' : '#f1f5f9',
+                color: invoiceStatusFilter === 'PENDING' ? 'white' : '#475569',
+                boxShadow: invoiceStatusFilter === 'PENDING' ? '0 4px 10px rgba(245,158,11,0.3)' : 'none'
+              }"
+            >
+              {{ locale === 'vi' ? 'Chưa thanh toán' : 'Unpaid' }} ({{ countInvoicesByStatus('PENDING') }})
+            </button>
+            <button
+              type="button"
+              @click="invoiceStatusFilter = 'OVERDUE'"
+              :style="{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: 'none',
+                fontWeight: '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                background: invoiceStatusFilter === 'OVERDUE' ? '#ef4444' : '#f1f5f9',
+                color: invoiceStatusFilter === 'OVERDUE' ? 'white' : '#475569',
+                boxShadow: invoiceStatusFilter === 'OVERDUE' ? '0 4px 10px rgba(239,68,68,0.3)' : 'none'
+              }"
+            >
+              {{ locale === 'vi' ? 'Quá hạn' : 'Overdue' }} ({{ countInvoicesByStatus('OVERDUE') }})
+            </button>
+            <button
+              type="button"
+              @click="invoiceStatusFilter = 'PAID'"
+              :style="{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: 'none',
+                fontWeight: '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                background: invoiceStatusFilter === 'PAID' ? '#10b981' : '#f1f5f9',
+                color: invoiceStatusFilter === 'PAID' ? 'white' : '#475569',
+                boxShadow: invoiceStatusFilter === 'PAID' ? '0 4px 10px rgba(16,185,129,0.3)' : 'none'
+              }"
+            >
+              {{ locale === 'vi' ? 'Đã thanh toán' : 'Paid' }} ({{ countInvoicesByStatus('PAID') }})
+            </button>
+          </div>
           
           <div class="table-responsive">
             <table class="report-table">
@@ -419,7 +495,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="invoice in invoices" :key="invoice.id">
+                <tr v-for="invoice in filteredInvoices" :key="invoice.id">
                   <td><strong>#INV-{{ invoice.id }}</strong></td>
                   <td>
                     <div><strong>{{ invoice.host?.fullName }}</strong></div>
@@ -442,8 +518,10 @@
                   </td>
                   <td>{{ invoice.paidAt ? formatDateTime(invoice.paidAt) : '-' }}</td>
                 </tr>
-                <tr v-if="!invoices || invoices.length === 0">
-                  <td colspan="8" class="text-center empty-row">{{ $t('admin.empty_invoices') }}</td>
+                <tr v-if="filteredInvoices.length === 0">
+                  <td colspan="8" class="text-center empty-row">
+                    {{ invoices.length === 0 ? $t('admin.empty_invoices') : (locale === 'vi' ? 'Không có hóa đơn nào với trạng thái này.' : 'No invoices found with this status.') }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -478,8 +556,18 @@ import { getAllInvoicesAdmin, generateInvoicesAdmin } from '../../api/invoices'
 const { t, locale } = useI18n()
 
 const invoices = ref([])
+const invoiceStatusFilter = ref('ALL') // 'ALL' | 'PENDING' | 'OVERDUE' | 'PAID'
 const generateDate = ref(new Date().toISOString().split('T')[0])
 const generateLoading = ref(false)
+
+const filteredInvoices = computed(() => {
+  if (invoiceStatusFilter.value === 'ALL') return invoices.value
+  return invoices.value.filter(inv => inv.status === invoiceStatusFilter.value)
+})
+
+const countInvoicesByStatus = (status) => {
+  return invoices.value.filter(inv => inv.status === status).length
+}
 
 const changeLanguage = (lang) => {
   locale.value = lang

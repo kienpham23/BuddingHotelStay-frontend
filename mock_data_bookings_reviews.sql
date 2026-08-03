@@ -881,3 +881,252 @@ INSERT INTO `reviews` (`id`, `user_id`, `room_id`, `rating`, `comment`, `created
 (30029, 1109, 401, 4, 'Rất sạch sẽ ngăn nắp, drap giường trắng tinh tươm thơm tho.', '2026-06-22 14:00:00'),
 (30030, 1110, 402, 5, 'Giá hợp túi tiền, phòng nhỏ xinh ấm cúng và đầy đủ tiện nghi.', '2026-06-27 14:00:00');
 
+-- ============================================================
+-- 16. THÊM ĐẶT PHÒNG LỊCH SỬ CHO HOST ID 4 (Phòng 4) VÀ HOST ID 7 (Phòng 7)
+--     Mục tiêu: Mỗi tháng từ Tháng 1 -> Tháng 7 năm 2026 đều có ít nhất 1 đặt phòng
+--     cho từng host để dữ liệu biểu đồ doanh thu Admin trực quan hơn.
+--     Phòng 4  : 1.800.000đ/đêm  (3 đêm = 5.400.000đ | 4 đêm = 7.200.000đ)
+--     Phòng 7  : 4.500.000đ/đêm  (3 đêm = 13.500.000đ | 4 đêm = 18.000.000đ)
+-- ============================================================
+INSERT INTO `bookings` (`id`, `user_id`, `room_id`, `check_in`, `check_out`, `num_guests`, `total_price`, `status`, `note`, `commission_amount`, `host_earning`, `is_commission_billed`, `discount_amount`, `original_price`, `promo_code`, `created_at`, `updated_at`) VALUES
+-- == PHÒNG 4 (host 4) ==
+(40001, 1101, 4, '2026-01-08', '2026-01-11', 2,  5400000.00, 'COMPLETED', NULL, 540000.00,  4860000.00,  0, 0.00,  5400000.00, NULL, '2026-01-05 10:00:00', '2026-01-11 12:00:00'),
+(40002, 1102, 4, '2026-02-10', '2026-02-13', 2,  5400000.00, 'COMPLETED', NULL, 540000.00,  4860000.00,  0, 0.00,  5400000.00, NULL, '2026-02-07 10:00:00', '2026-02-13 12:00:00'),
+(40003, 1103, 4, '2026-03-15', '2026-03-19', 2,  7200000.00, 'COMPLETED', NULL, 720000.00,  6480000.00,  0, 0.00,  7200000.00, NULL, '2026-03-12 10:00:00', '2026-03-19 12:00:00'),
+(40004, 1104, 4, '2026-04-05', '2026-04-08', 2,  5400000.00, 'COMPLETED', NULL, 540000.00,  4860000.00,  0, 0.00,  5400000.00, NULL, '2026-04-02 10:00:00', '2026-04-08 12:00:00'),
+(40005, 1105, 4, '2026-05-03', '2026-05-07', 2,  7200000.00, 'COMPLETED', NULL, 720000.00,  6480000.00,  0, 0.00,  7200000.00, NULL, '2026-04-30 10:00:00', '2026-05-07 12:00:00'),
+(40006, 1106, 4, '2026-06-12', '2026-06-15', 2,  5400000.00, 'COMPLETED', NULL, 540000.00,  4860000.00,  0, 0.00,  5400000.00, NULL, '2026-06-09 10:00:00', '2026-06-15 12:00:00'),
+(40007, 1107, 4, '2026-07-08', '2026-07-11', 2,  5400000.00, 'COMPLETED', NULL, 540000.00,  4860000.00,  0, 0.00,  5400000.00, NULL, '2026-07-05 10:00:00', '2026-07-11 12:00:00'),
+-- == PHÒNG 7 (host_id=99 / Sky Villa Vũng Tàu) ==
+(40011, 1111, 7, '2026-01-15', '2026-01-18', 4, 13500000.00, 'COMPLETED', NULL, 1350000.00, 12150000.00, 0, 0.00, 13500000.00, NULL, '2026-01-12 10:00:00', '2026-01-18 12:00:00'),
+(40012, 1112, 7, '2026-02-18', '2026-02-22', 4, 18000000.00, 'COMPLETED', NULL, 1800000.00, 16200000.00, 0, 0.00, 18000000.00, NULL, '2026-02-15 10:00:00', '2026-02-22 12:00:00'),
+(40013, 1113, 7, '2026-03-08', '2026-03-11', 6, 13500000.00, 'COMPLETED', NULL, 1350000.00, 12150000.00, 0, 0.00, 13500000.00, NULL, '2026-03-05 10:00:00', '2026-03-11 12:00:00'),
+(40014, 1114, 7, '2026-04-18', '2026-04-22', 5, 18000000.00, 'COMPLETED', NULL, 1800000.00, 16200000.00, 0, 0.00, 18000000.00, NULL, '2026-04-15 10:00:00', '2026-04-22 12:00:00'),
+(40015, 1115, 7, '2026-05-10', '2026-05-14', 4, 18000000.00, 'COMPLETED', NULL, 1800000.00, 16200000.00, 0, 0.00, 18000000.00, NULL, '2026-05-07 10:00:00', '2026-05-14 12:00:00'),
+(40016, 1116, 7, '2026-06-20', '2026-06-24', 6, 18000000.00, 'COMPLETED', NULL, 1800000.00, 16200000.00, 0, 0.00, 18000000.00, NULL, '2026-06-17 10:00:00', '2026-06-24 12:00:00'),
+(40017, 1117, 7, '2026-07-05', '2026-07-09', 4, 18000000.00, 'COMPLETED', NULL, 1800000.00, 16200000.00, 0, 0.00, 18000000.00, NULL, '2026-07-02 10:00:00', '2026-07-09 12:00:00');
+
+-- 17. THÊM THANH TOÁN TƯƠNG ỨNG (Payments, IDs 40001-40017)
+INSERT INTO `payments` (`id`, `booking_id`, `amount`, `method`, `status`, `transaction_id`, `paid_at`, `created_at`) VALUES
+-- Phòng 4 (host 4)
+(40001, 40001,  5400000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_40001_MOCK', '2026-01-08 10:30:00', NOW()),
+(40002, 40002,  5400000.00, 'MOMO',  'SUCCESS', 'TXN_MM_40002_MOCK',  '2026-02-10 10:30:00', NOW()),
+(40003, 40003,  7200000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_40003_MOCK', '2026-03-15 10:30:00', NOW()),
+(40004, 40004,  5400000.00, 'MOMO',  'SUCCESS', 'TXN_MM_40004_MOCK',  '2026-04-05 10:30:00', NOW()),
+(40005, 40005,  7200000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_40005_MOCK', '2026-05-03 10:30:00', NOW()),
+(40006, 40006,  5400000.00, 'MOMO',  'SUCCESS', 'TXN_MM_40006_MOCK',  '2026-06-12 10:30:00', NOW()),
+(40007, 40007,  5400000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_40007_MOCK', '2026-07-08 10:30:00', NOW()),
+-- Phòng 7 (Sky Villa - host_id=99)
+(40011, 40011, 13500000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_40011_MOCK', '2026-01-15 10:30:00', NOW()),
+(40012, 40012, 18000000.00, 'MOMO',  'SUCCESS', 'TXN_MM_40012_MOCK',  '2026-02-18 10:30:00', NOW()),
+(40013, 40013, 13500000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_40013_MOCK', '2026-03-08 10:30:00', NOW()),
+(40014, 40014, 18000000.00, 'MOMO',  'SUCCESS', 'TXN_MM_40014_MOCK',  '2026-04-18 10:30:00', NOW()),
+(40015, 40015, 18000000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_40015_MOCK', '2026-05-10 10:30:00', NOW()),
+(40016, 40016, 18000000.00, 'MOMO',  'SUCCESS', 'TXN_MM_40016_MOCK',  '2026-06-20 10:30:00', NOW()),
+(40017, 40017, 18000000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_40017_MOCK', '2026-07-05 10:30:00', NOW());
+
+-- ============================================================
+-- 18. THÊM 30 ĐẶT PHÒNG THÁNG 7/2026 (Booking IDs 50001-50030)
+--     Dùng các phòng 304-318, 403-434 chưa có đặt phòng đầu tháng 7
+--     Khách hàng 1101-1125 (cycling), trạng thái COMPLETED
+--     Commission = 10% thống nhất
+-- ============================================================
+INSERT INTO `bookings` (`id`, `user_id`, `room_id`, `check_in`, `check_out`, `num_guests`, `total_price`, `status`, `note`, `commission_amount`, `host_earning`, `is_commission_billed`, `discount_amount`, `original_price`, `promo_code`, `created_at`, `updated_at`) VALUES
+-- Nhóm 1: Các phòng cao cấp tại Hà Nội, HCM (Jul 1-4)
+(50001, 1101, 403, '2026-07-01', '2026-07-04', 2, 25500000.00, 'COMPLETED', NULL, 2550000.00, 22950000.00, 0, 0.00, 25500000.00, NULL, '2026-06-28 10:00:00', '2026-07-04 12:00:00'),
+(50002, 1102, 404, '2026-07-01', '2026-07-04', 4, 12600000.00, 'COMPLETED', NULL, 1260000.00, 11340000.00, 0, 0.00, 12600000.00, NULL, '2026-06-28 10:30:00', '2026-07-04 12:00:00'),
+(50003, 1103, 407, '2026-07-01', '2026-07-04', 3, 16500000.00, 'COMPLETED', NULL, 1650000.00, 14850000.00, 0, 0.00, 16500000.00, NULL, '2026-06-28 11:00:00', '2026-07-04 12:00:00'),
+(50004, 1104, 408, '2026-07-01', '2026-07-04', 4, 19500000.00, 'COMPLETED', NULL, 1950000.00, 17550000.00, 0, 0.00, 19500000.00, NULL, '2026-06-28 11:30:00', '2026-07-04 12:00:00'),
+-- Nhóm 2: Đà Nẵng, Phú Quốc, Nha Trang (Jul 1-4)
+(50005, 1105, 410, '2026-07-01', '2026-07-04', 4, 27000000.00, 'COMPLETED', NULL, 2700000.00, 24300000.00, 0, 0.00, 27000000.00, NULL, '2026-06-29 09:00:00', '2026-07-04 12:00:00'),
+(50006, 1106, 411, '2026-07-01', '2026-07-04', 3, 10500000.00, 'COMPLETED', NULL, 1050000.00,  9450000.00, 0, 0.00, 10500000.00, NULL, '2026-06-29 09:30:00', '2026-07-04 12:00:00'),
+(50007, 1107, 414, '2026-07-01', '2026-07-04', 4, 22500000.00, 'COMPLETED', NULL, 2250000.00, 20250000.00, 0, 0.00, 22500000.00, NULL, '2026-06-29 10:00:00', '2026-07-04 12:00:00'),
+(50008, 1108, 416, '2026-07-01', '2026-07-04', 2,  1800000.00, 'COMPLETED', NULL,  180000.00,  1620000.00, 0, 0.00,  1800000.00, NULL, '2026-06-29 10:30:00', '2026-07-04 12:00:00'),
+(50009, 1109, 418, '2026-07-01', '2026-07-04', 4, 21000000.00, 'COMPLETED', NULL, 2100000.00, 18900000.00, 0, 0.00, 21000000.00, NULL, '2026-06-29 11:00:00', '2026-07-04 12:00:00'),
+(50010, 1110, 420, '2026-07-01', '2026-07-04', 2,  6300000.00, 'COMPLETED', NULL,  630000.00,  5670000.00, 0, 0.00,  6300000.00, NULL, '2026-06-29 11:30:00', '2026-07-04 12:00:00'),
+-- Nhóm 3: Đà Lạt, Vũng Tàu, Sa Pa, Ninh Bình, Hạ Long (Jul 1-4)
+(50011, 1111, 422, '2026-07-01', '2026-07-04', 4, 14400000.00, 'COMPLETED', NULL, 1440000.00, 12960000.00, 0, 0.00, 14400000.00, NULL, '2026-06-30 09:00:00', '2026-07-04 12:00:00'),
+(50012, 1112, 424, '2026-07-01', '2026-07-04', 2,  6900000.00, 'COMPLETED', NULL,  690000.00,  6210000.00, 0, 0.00,  6900000.00, NULL, '2026-06-30 09:30:00', '2026-07-04 12:00:00'),
+(50013, 1113, 426, '2026-07-01', '2026-07-04', 6, 18600000.00, 'COMPLETED', NULL, 1860000.00, 16740000.00, 0, 0.00, 18600000.00, NULL, '2026-06-30 10:00:00', '2026-07-04 12:00:00'),
+(50014, 1114, 428, '2026-07-01', '2026-07-04', 3, 12000000.00, 'COMPLETED', NULL, 1200000.00, 10800000.00, 0, 0.00, 12000000.00, NULL, '2026-06-30 10:30:00', '2026-07-04 12:00:00'),
+(50015, 1115, 430, '2026-07-01', '2026-07-04', 2,  7800000.00, 'COMPLETED', NULL,  780000.00,  7020000.00, 0, 0.00,  7800000.00, NULL, '2026-06-30 11:00:00', '2026-07-04 12:00:00'),
+(50016, 1116, 432, '2026-07-01', '2026-07-04', 4,  9600000.00, 'COMPLETED', NULL,  960000.00,  8640000.00, 0, 0.00,  9600000.00, NULL, '2026-06-30 11:30:00', '2026-07-04 12:00:00'),
+(50017, 1117, 434, '2026-07-01', '2026-07-04', 6, 17400000.00, 'COMPLETED', NULL, 1740000.00, 15660000.00, 0, 0.00, 17400000.00, NULL, '2026-06-30 12:00:00', '2026-07-04 12:00:00'),
+-- Nhóm 4: Phòng 301-320 còn trống đầu tháng 7 (Jul 1-4/5)
+(50018, 1118, 304, '2026-07-01', '2026-07-04', 2, 18000000.00, 'COMPLETED', NULL, 1800000.00, 16200000.00, 0, 0.00, 18000000.00, NULL, '2026-07-01 08:00:00', '2026-07-04 12:00:00'),
+(50019, 1119, 305, '2026-07-01', '2026-07-04', 2,  1950000.00, 'COMPLETED', NULL,  195000.00,  1755000.00, 0, 0.00,  1950000.00, NULL, '2026-07-01 08:30:00', '2026-07-04 12:00:00'),
+(50020, 1120, 306, '2026-07-01', '2026-07-05', 4, 20000000.00, 'COMPLETED', NULL, 2000000.00, 18000000.00, 0, 0.00, 20000000.00, NULL, '2026-07-01 09:00:00', '2026-07-05 12:00:00'),
+(50021, 1121, 307, '2026-07-01', '2026-07-05', 2,  4400000.00, 'COMPLETED', NULL,  440000.00,  3960000.00, 0, 0.00,  4400000.00, NULL, '2026-07-01 09:30:00', '2026-07-05 12:00:00'),
+(50022, 1122, 308, '2026-07-01', '2026-07-05', 4, 32000000.00, 'COMPLETED', NULL, 3200000.00, 28800000.00, 0, 0.00, 32000000.00, NULL, '2026-07-01 10:00:00', '2026-07-05 12:00:00'),
+(50023, 1123, 309, '2026-07-01', '2026-07-05', 2,  7200000.00, 'COMPLETED', NULL,  720000.00,  6480000.00, 0, 0.00,  7200000.00, NULL, '2026-07-01 10:30:00', '2026-07-05 12:00:00'),
+(50024, 1124, 310, '2026-07-01', '2026-07-05', 2,  8800000.00, 'COMPLETED', NULL,  880000.00,  7920000.00, 0, 0.00,  8800000.00, NULL, '2026-07-01 11:00:00', '2026-07-05 12:00:00'),
+(50025, 1125, 311, '2026-07-01', '2026-07-05', 2,  4800000.00, 'COMPLETED', NULL,  480000.00,  4320000.00, 0, 0.00,  4800000.00, NULL, '2026-07-01 11:30:00', '2026-07-05 12:00:00'),
+(50026, 1101, 312, '2026-07-01', '2026-07-05', 4, 22000000.00, 'COMPLETED', NULL, 2200000.00, 19800000.00, 0, 0.00, 22000000.00, NULL, '2026-07-01 12:00:00', '2026-07-05 12:00:00'),
+(50027, 1102, 313, '2026-07-01', '2026-07-05', 3,  5200000.00, 'COMPLETED', NULL,  520000.00,  4680000.00, 0, 0.00,  5200000.00, NULL, '2026-07-01 12:30:00', '2026-07-05 12:00:00'),
+-- Nhóm 5: Phòng cuối tháng 7 chưa được đặt
+(50028, 1103, 316, '2026-07-01', '2026-07-03', 6, 11600000.00, 'COMPLETED', NULL, 1160000.00, 10440000.00, 0, 0.00, 11600000.00, NULL, '2026-07-01 13:00:00', '2026-07-03 12:00:00'),
+(50029, 1104, 317, '2026-07-01', '2026-07-06', 2, 19000000.00, 'COMPLETED', NULL, 1900000.00, 17100000.00, 0, 0.00, 19000000.00, NULL, '2026-07-01 13:30:00', '2026-07-06 12:00:00'),
+(50030, 1105, 318, '2026-07-01', '2026-07-08', 2,  4900000.00, 'COMPLETED', NULL,  490000.00,  4410000.00, 0, 0.00,  4900000.00, NULL, '2026-07-01 14:00:00', '2026-07-08 12:00:00');
+
+-- 19. THANH TOÁN CHO 30 ĐẶT PHÒNG THÁNG 7 (Payment IDs 50001-50030)
+INSERT INTO `payments` (`id`, `booking_id`, `amount`, `method`, `status`, `transaction_id`, `paid_at`, `created_at`) VALUES
+(50001, 50001, 25500000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50001_MOCK', '2026-07-01 10:05:00', NOW()),
+(50002, 50002, 12600000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50002_MOCK',  '2026-07-01 10:10:00', NOW()),
+(50003, 50003, 16500000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50003_MOCK', '2026-07-01 10:15:00', NOW()),
+(50004, 50004, 19500000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50004_MOCK',  '2026-07-01 10:20:00', NOW()),
+(50005, 50005, 27000000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50005_MOCK', '2026-07-01 10:25:00', NOW()),
+(50006, 50006, 10500000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50006_MOCK',  '2026-07-01 10:30:00', NOW()),
+(50007, 50007, 22500000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50007_MOCK', '2026-07-01 10:35:00', NOW()),
+(50008, 50008,  1800000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50008_MOCK',  '2026-07-01 10:40:00', NOW()),
+(50009, 50009, 21000000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50009_MOCK', '2026-07-01 10:45:00', NOW()),
+(50010, 50010,  6300000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50010_MOCK',  '2026-07-01 10:50:00', NOW()),
+(50011, 50011, 14400000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50011_MOCK', '2026-07-01 11:00:00', NOW()),
+(50012, 50012,  6900000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50012_MOCK',  '2026-07-01 11:05:00', NOW()),
+(50013, 50013, 18600000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50013_MOCK', '2026-07-01 11:10:00', NOW()),
+(50014, 50014, 12000000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50014_MOCK',  '2026-07-01 11:15:00', NOW()),
+(50015, 50015,  7800000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50015_MOCK', '2026-07-01 11:20:00', NOW()),
+(50016, 50016,  9600000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50016_MOCK',  '2026-07-01 11:25:00', NOW()),
+(50017, 50017, 17400000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50017_MOCK', '2026-07-01 11:30:00', NOW()),
+(50018, 50018, 18000000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50018_MOCK',  '2026-07-01 11:35:00', NOW()),
+(50019, 50019,  1950000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50019_MOCK', '2026-07-01 11:40:00', NOW()),
+(50020, 50020, 20000000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50020_MOCK',  '2026-07-01 11:45:00', NOW()),
+(50021, 50021,  4400000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50021_MOCK', '2026-07-01 11:50:00', NOW()),
+(50022, 50022, 32000000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50022_MOCK',  '2026-07-01 11:55:00', NOW()),
+(50023, 50023,  7200000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50023_MOCK', '2026-07-01 12:00:00', NOW()),
+(50024, 50024,  8800000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50024_MOCK',  '2026-07-01 12:05:00', NOW()),
+(50025, 50025,  4800000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50025_MOCK', '2026-07-01 12:10:00', NOW()),
+(50026, 50026, 22000000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50026_MOCK',  '2026-07-01 12:15:00', NOW()),
+(50027, 50027,  5200000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50027_MOCK', '2026-07-01 12:20:00', NOW()),
+(50028, 50028, 11600000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50028_MOCK',  '2026-07-01 12:25:00', NOW()),
+(50029, 50029, 19000000.00, 'VNPAY', 'SUCCESS', 'TXN_VNP_50029_MOCK', '2026-07-01 12:30:00', NOW()),
+(50030, 50030,  4900000.00, 'MOMO',  'SUCCESS', 'TXN_MM_50030_MOCK',  '2026-07-01 12:35:00', NOW());
+
+-- ============================================================
+-- 20. THÊM 9 PHÒNG MIỀN NÚI TÂY BẮC - ĐÔNG BẮC
+--     Địa điểm: Tà Xùa (Sơn La), Mù Căng Chải (Yên Bái), Hoàng Su Phì (Hà Giang),
+--               Đồng Văn (Hà Giang), Mộc Châu (Sơn La), Bắc Hà (Lào Cai),
+--               Tủa Chùa (Điện Biên), Na Hang (Tuyên Quang), Sìn Hồ (Lai Châu)
+--     Host 4  : Room 441, 442, 443
+--     Host 7  : Room 444, 445, 446
+--     Host 10 : Room 447, 448, 449
+--     7 ảnh/phòng, URL không trùng lặp, đúng chủ đề địa điểm
+-- ============================================================
+INSERT INTO `rooms` (`id`, `host_id`, `room_type_id`, `name`, `description`, `address`, `city`, `price_per_night`, `max_guests`, `status`) VALUES
+-- == HOST 4 ==
+(441, 4, 4,
+ 'Tà Xùa Cloud Hunter Homestay – Ngủ Giữa Biển Mây Sơn La',
+ 'Trải nghiệm đêm ngủ giữa biển mây huyền ảo tại đỉnh Tà Xùa - điểm săn mây đẹp nhất Tây Bắc. Căn homestay làm hoàn toàn bằng gỗ thông mộc mạc nép mình ở độ cao hơn 2.000m, ban công rộng hướng ra thung lũng mây trắng bồng bềnh. Buổi sáng thức dậy đón bình minh vàng trên biển mây là trải nghiệm không thể nào quên. Phòng ngủ ấm cúng với đệm bông ấm áp, có bếp than hồng để sưởi trong đêm lạnh, và hệ thống đèn led ấm tạo không gian lãng mạn. Chủ nhà là người Mông bản địa sẽ nấu các món ăn đặc sản như cơm lam, gà đen nướng hương liệu núi rừng.',
+ 'Bản Bẹ, Tà Xùa', 'Sơn La', 1200000.00, 3, 'ACTIVE'),
+(442, 4, 5,
+ 'Mù Căng Chải Terraced Villa – Ngắm Ruộng Bậc Thang Vàng Mùa Gặt',
+ 'Biệt thự nghỉ dưỡng sang trọng tọa lạc trên đỉnh đồi bao quanh bởi những thửa ruộng bậc thang vàng óng tuyệt đẹp của Mù Căng Chải. Tầm nhìn panorama 180 độ ôm trọn cả thung lũng Lìm Mông và La Pán Tẩn bậc thang vào mùa lúa chín tháng 9-10. Villa 2 tầng rộng rãi sở hữu phòng khách kính panorama tràn viền đón ánh nắng, bếp đầy đủ tiện nghi, sân thượng riêng có bàn ghế cafe ngắm cảnh hoàng hôn vàng. Thiết kế hiện đại nhưng sử dụng toàn bộ vật liệu gỗ địa phương tạo cảm giác gần gũi thiên nhiên.',
+ 'Thôn Mí Háng Tầu, La Pán Tẩn', 'Yên Bái', 2800000.00, 6, 'ACTIVE'),
+(443, 4, 4,
+ 'Hoàng Su Phì Hmong Eco Homestay – Giữa Cung Đường Bản Phùng',
+ 'Căn nhà gỗ truyền thống của người H''Mông được giữ nguyên kiến trúc cổ bản địa tại trung tâm xã Bản Phùng - nơi có những thửa ruộng bậc thang đẹp nhất Hoàng Su Phì. Homestay nằm lưng chừng đồi, vườn hoa tam giác mạch nở rộ quanh năm trước hiên nhà. Bữa sáng thưởng thức cháo ngô, bánh cuốn nóng hổi cùng trà san tuyết cổ thụ bản địa. Chủ nhà là nghệ nhân dệt thổ cẩm - du khách có thể tham gia trực tiếp trải nghiệm dệt vải thổ cẩm truyền thống đặc sắc.',
+ 'Bản Phùng, Hoàng Su Phì', 'Hà Giang', 950000.00, 4, 'ACTIVE'),
+-- == HOST 7 ==
+(444, 7, 4,
+ 'Đồng Văn Rock Plateau Bungalow – Cao Nguyên Đá Hà Giang',
+ 'Bungalow đá cổ độc đáo nằm ngay trên Cao Nguyên Đá Đồng Văn - Di sản địa chất toàn cầu UNESCO. Căn nhà xây bằng đá tai mèo đặc trưng của người Mông vùng cao, bảo tồn hoàn toàn kiến trúc nhà cổ trên 100 năm tuổi. Ban công đá nhìn xuống thung lũng Đồng Văn hùng vĩ với những cột đá tai mèo ngạo nghễ sừng sững. Cách Dinh thự Vua Mèo chỉ 2km, Cổng Trời Quản Bạ 18km. Buổi tối ngắm dải ngân hà rực rỡ trên bầu trời đêm không ô nhiễm ánh sáng.',
+ 'Phố Cáo, Đồng Văn', 'Hà Giang', 1100000.00, 4, 'ACTIVE'),
+(445, 7, 4,
+ 'Mộc Châu Hilltop Cabin – Đồi Chè Xanh & Rừng Thông Bát Ngát',
+ 'Căn cabin gỗ thông ấm áp nằm trên đỉnh đồi chè xanh mướt mênh mông tại Mộc Châu. Từ ban công cabin nhìn xuống những đồi chè uốn lượn tựa thảm nhung xanh mát trải dài tới tận chân trời rất đẹp mắt. Khu vực xung quanh rừng thông bạt ngàn thơm mùi nhựa thông dịu dàng. Mùa xuân hoa mận hoa đào nở trắng rực, mùa hè đồng hướng dương vàng rực rỡ. Tiện nghi cabin đầy đủ: máy sưởi, chăn len ấm, bếp nướng BBQ ngoài trời và xe máy để dạo vùng quê Mộc Châu.',
+ 'Tiểu khu Chiềng Di, Mộc Châu', 'Sơn La', 1500000.00, 4, 'ACTIVE'),
+(446, 7, 5,
+ 'Bắc Hà Cloud Valley Villa – Chợ Phiên Bản Địa & Sương Mù Bốn Mùa',
+ 'Biệt thự nghỉ dưỡng độc đáo trên ngọn đồi cao nhìn xuống thung lũng Bắc Hà bốn mùa sương khói. Nổi bật nhất là mỗi sáng Chủ nhật chủ nhà đưa khách đi chợ phiên Bắc Hà - khu chợ cổ nhất và sắc màu nhất vùng Tây Bắc với đồng bào Mông, Dao, Tày mặc trang phục truyền thống. Villa rộng 200m2 bao gồm phòng khách lớn lò sưởi củi ấm cúng, 3 phòng ngủ King-size, sân thượng kính panorama và vườn thảo mộc riêng.',
+ 'Thôn Na Lo, Bắc Hà', 'Lào Cai', 3200000.00, 8, 'ACTIVE'),
+-- == HOST 10 ==
+(447, 10, 4,
+ 'Tủa Chùa Stargazing Homestay – Đêm Ngắm Sao Trên Mây Điện Biên',
+ 'Homestay nhỏ xinh trên đỉnh núi Tủa Chùa yên tĩnh - một trong những điểm ngắm sao đẹp nhất Điện Biên nhờ bầu trời không ô nhiễm ánh sáng đô thị. Căn nhà gỗ tự nhiên đơn giản, mộc mạc nhưng đầy ắp sự ấm áp theo phong cách bản địa người Mông trắng. Nằm cao hơn 1.800m, buổi sáng cả thung lũng chìm trong mây trắng như bông cotton dày đặc. Chủ nhà chuẩn bị bữa sáng cơm nếp nương, trứng gà ta và rau rừng tươi ngon. Điểm trekking khởi đầu cho những chuyến leo núi khám phá đỉnh Tủa Chùa.',
+ 'Thôn Tà Sáo, Tủa Chùa', 'Điện Biên', 800000.00, 3, 'ACTIVE'),
+(448, 10, 5,
+ 'Na Hang Hồ Thủy Điện Lakeside Villa – Tuyên Quang Thiên Đường Ẩn',
+ 'Biệt thự tuyệt đẹp nằm bên bờ hồ thủy điện Na Hang xanh biếc - thường được ví là Hạ Long trên cạn với những ngọn núi đá vôi nhô lên giữa mặt hồ phẳng lặng như gương. Villa sở hữu cầu tàu gỗ riêng, thuyền kayak miễn phí để chèo khám phá hang động trong núi đá. Không gian rộng lớn thoáng đãng, tầm nhìn trực tiếp ra mặt hồ lăn tăn sóng gợn sáng lấp lánh buổi bình minh. Gần khu bảo tồn thiên nhiên Na Hang với hơn 400 loài chim quý hiếm.',
+ 'Thôn Bản Bung, Na Hang', 'Tuyên Quang', 2500000.00, 6, 'ACTIVE'),
+(449, 10, 4,
+ 'Sìn Hồ Cloud Gate Cabin – Lai Châu Cổng Mây Bốn Mùa',
+ 'Căn cabin nhỏ ấm cúng tại Sìn Hồ - vùng đất được mệnh danh là "Đà Lạt của Tây Bắc" với khí hậu mát mẻ quanh năm, hoa đào hoa mận nở rộ quanh nhà mỗi độ xuân về. Đặc sản của Sìn Hồ là phiên chợ tình người Thái diễn ra cuối tuần - nơi thanh niên trai gái các bản làng về hẹn hò giao duyên rất thú vị. Cabin làm từ gỗ pơ mu thơm ngát, nội thất giản dị ấm áp với chăn bông dày, cửa sổ gỗ nhìn ra đồi thông xanh ngát. Chủ nhà dẫn đường trekking khám phá bản làng người Lự và thác nước hoang sơ.',
+ 'Bản Phiêng Đán, Sìn Hồ', 'Lai Châu', 1000000.00, 3, 'ACTIVE');
+
+-- 21. ẢNH CHO 9 PHÒNG MIỀN NÚI (IDs 44101-44907 | 7 ảnh/phòng, không trùng URL)
+INSERT INTO `room_images` (`id`, `room_id`, `image_url`, `is_primary`) VALUES
+-- *** Room 441: Tà Xùa Cloud Hunter Homestay (mây trắng, nhà gỗ núi rừng, bình minh) ***
+(44101, 441, 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80', 1),
+(44102, 441, 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80', 0),
+(44103, 441, 'https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1200&q=80', 0),
+(44104, 441, 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80', 0),
+(44105, 441, 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1200&q=80', 0),
+(44106, 441, 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1200&q=80', 0),
+(44107, 441, 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80', 0),
+-- *** Room 442: Mù Căng Chải Terraced Villa (ruộng bậc thang, thung lũng vàng) ***
+(44201, 442, 'https://images.unsplash.com/photo-1540202404-d0cad9bf5dbc?auto=format&fit=crop&w=1200&q=80', 1),
+(44202, 442, 'https://images.unsplash.com/photo-1471922694854-ff1b63b20054?auto=format&fit=crop&w=1200&q=80', 0),
+(44203, 442, 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1200&q=80', 0),
+(44204, 442, 'https://images.unsplash.com/photo-1494500764479-0c8f2919a3d8?auto=format&fit=crop&w=1200&q=80', 0),
+(44205, 442, 'https://images.unsplash.com/photo-1418985991508-e47386d96a71?auto=format&fit=crop&w=1200&q=80', 0),
+(44206, 442, 'https://images.unsplash.com/photo-1443632864897-14973fa006cf?auto=format&fit=crop&w=1200&q=80', 0),
+(44207, 442, 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?auto=format&fit=crop&w=1200&q=80', 0),
+-- *** Room 443: Hoàng Su Phì Hmong Eco Homestay (đồi chè, bản làng H'Mông, thổ cẩm) ***
+(44301, 443, 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1200&q=80', 1),
+(44302, 443, 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80', 0),
+(44303, 443, 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80', 0),
+(44304, 443, 'https://images.unsplash.com/photo-1474524955719-b9f87c50ce47?auto=format&fit=crop&w=1200&q=80', 0),
+(44305, 443, 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1200&q=80', 0),
+(44306, 443, 'https://images.unsplash.com/photo-1455218873088-b0f3cbe45da2?auto=format&fit=crop&w=1200&q=80', 0),
+(44307, 443, 'https://images.unsplash.com/photo-1434394354979-a235cd36269d?auto=format&fit=crop&w=1200&q=80', 0),
+-- *** Room 444: Đồng Văn Rock Plateau Bungalow (đá tai mèo, cao nguyên, núi đá hùng vĩ) ***
+(44401, 444, 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1200&q=80', 1),
+(44402, 444, 'https://images.unsplash.com/photo-1547555999-14e818e09e33?auto=format&fit=crop&w=1200&q=80', 0),
+(44403, 444, 'https://images.unsplash.com/photo-1546587348-d12660c30c50?auto=format&fit=crop&w=1200&q=80', 0),
+(44404, 444, 'https://images.unsplash.com/photo-1506197061069-0a20c8e6ef26?auto=format&fit=crop&w=1200&q=80', 0),
+(44405, 444, 'https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&w=1200&q=80', 0),
+(44406, 444, 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&w=1200&q=80', 0),
+(44407, 444, 'https://images.unsplash.com/photo-1516912481808-3406841bd33c?auto=format&fit=crop&w=1200&q=80', 0),
+-- *** Room 445: Mộc Châu Hilltop Cabin (đồi chè, hoa mận trắng, cánh đồng hướng dương) ***
+(44501, 445, 'https://images.unsplash.com/photo-1487088678257-3a541e6e3922?auto=format&fit=crop&w=1200&q=80', 1),
+(44502, 445, 'https://images.unsplash.com/photo-1482192505345-5852ba8e4e96?auto=format&fit=crop&w=1200&q=80', 0),
+(44503, 445, 'https://images.unsplash.com/photo-1485628118572-91f7f5e0b1b7?auto=format&fit=crop&w=1200&q=80', 0),
+(44504, 445, 'https://images.unsplash.com/photo-1483728642387-6c3bdd6c93e5?auto=format&fit=crop&w=1200&q=80', 0),
+(44505, 445, 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80', 0),
+(44506, 445, 'https://images.unsplash.com/photo-1491555103944-7c647fd857e6?auto=format&fit=crop&w=1200&q=80', 0),
+(44507, 445, 'https://images.unsplash.com/photo-1490682143684-14369e18dce8?auto=format&fit=crop&w=1200&q=80', 0),
+-- *** Room 446: Bắc Hà Cloud Valley Villa (thung lũng sương mù, chợ phiên sắc màu) ***
+(44601, 446, 'https://images.unsplash.com/photo-1496545672447-f699b503d270?auto=format&fit=crop&w=1200&q=80', 1),
+(44602, 446, 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=1200&q=80', 0),
+(44603, 446, 'https://images.unsplash.com/photo-1526080652727-5b77f74eacd2?auto=format&fit=crop&w=1200&q=80', 0),
+(44604, 446, 'https://images.unsplash.com/photo-1527489377706-5bf97e608852?auto=format&fit=crop&w=1200&q=80', 0),
+(44605, 446, 'https://images.unsplash.com/photo-1529316275402-0462fda2098b?auto=format&fit=crop&w=1200&q=80', 0),
+(44606, 446, 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=1200&q=80', 0),
+(44607, 446, 'https://images.unsplash.com/photo-1533130061792-64b345e4a833?auto=format&fit=crop&w=1200&q=80', 0),
+-- *** Room 447: Tủa Chùa Stargazing Homestay (bầu trời sao, mây núi đêm Điện Biên) ***
+(44701, 447, 'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?auto=format&fit=crop&w=1200&q=80', 1),
+(44702, 447, 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80', 0),
+(44703, 447, 'https://images.unsplash.com/photo-1540390769625-2fc3f8b1d50c?auto=format&fit=crop&w=1200&q=80', 0),
+(44704, 447, 'https://images.unsplash.com/photo-1542204165-65bf26d21d4b?auto=format&fit=crop&w=1200&q=80', 0),
+(44705, 447, 'https://images.unsplash.com/photo-1543357480-c60d40a5e5e1?auto=format&fit=crop&w=1200&q=80', 0),
+(44706, 447, 'https://images.unsplash.com/photo-1544979590-37e9b47eb705?auto=format&fit=crop&w=1200&q=80', 0),
+(44707, 447, 'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=1200&q=80', 0),
+-- *** Room 448: Na Hang Lakeside Villa (hồ xanh, núi đá vôi, kayak thuyền mộc) ***
+(44801, 448, 'https://images.unsplash.com/photo-1468276311594-df7cb65d8df6?auto=format&fit=crop&w=1200&q=80', 1),
+(44802, 448, 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=1200&q=80', 0),
+(44803, 448, 'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?auto=format&fit=crop&w=1200&q=80', 0),
+(44804, 448, 'https://images.unsplash.com/photo-1480807227203-2ad3a8e0d5ee?auto=format&fit=crop&w=1200&q=80', 0),
+(44805, 448, 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=1200&q=80', 0),
+(44806, 448, 'https://images.unsplash.com/photo-1456428746267-a1756408f782?auto=format&fit=crop&w=1200&q=80', 0),
+(44807, 448, 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1200&q=80', 0),
+-- *** Room 449: Sìn Hồ Cloud Gate Cabin (đồi thông, hoa đào mận, sương mù Lai Châu) ***
+(44901, 449, 'https://images.unsplash.com/photo-1486166787932-7eba7f88b4a0?auto=format&fit=crop&w=1200&q=80', 1),
+(44902, 449, 'https://images.unsplash.com/photo-1484404476063-1c09ad0e4be6?auto=format&fit=crop&w=1200&q=80', 0),
+(44903, 449, 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80', 0),
+(44904, 449, 'https://images.unsplash.com/photo-1453728013993-6d66e9c9123a?auto=format&fit=crop&w=1200&q=80', 0),
+(44905, 449, 'https://images.unsplash.com/photo-1437846972679-9e6e537be46e?auto=format&fit=crop&w=1200&q=80', 0),
+(44906, 449, 'https://images.unsplash.com/photo-1421789665209-c9b2a435d3dc?auto=format&fit=crop&w=1200&q=80', 0),
+(44907, 449, 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=80', 0);
+
+
+
+
