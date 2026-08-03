@@ -1313,14 +1313,32 @@
           <div class="form-row">
             <div class="form-group">
               <label>{{ $t('host.rooms.form_city') }}</label>
-              <select v-model="roomForm.city" required>
-                <option value="">{{ $t('host.rooms.form_city_select') }}</option>
+              <input 
+                v-model="roomForm.city" 
+                type="text" 
+                list="host-city-list" 
+                :placeholder="$t('host.rooms.form_city_select')" 
+                autocomplete="off"
+                required 
+              />
+              <datalist id="host-city-list">
                 <option v-for="c in cityOptions" :key="c.value" :value="c.value">{{ c.label }}</option>
-              </select>
+              </datalist>
             </div>
             <div class="form-group">
               <label>{{ $t('host.rooms.form_price') }}</label>
-              <input v-model.number="roomForm.pricePerNight" type="number" min="10000" required />
+              <input 
+                type="text" 
+                inputmode="numeric"
+                :value="roomForm.pricePerNight ? roomForm.pricePerNight.toLocaleString('vi-VN') : ''"
+                @input="(e) => { const raw = e.target.value.replace(/\./g,'').replace(/[^0-9]/g,''); roomForm.pricePerNight = raw ? parseInt(raw) : null; e.target.value = raw ? parseInt(raw).toLocaleString('vi-VN') : ''; }"
+                placeholder="VD: 1.500.000"
+                min="10000"
+                required 
+              />
+              <small v-if="roomForm.pricePerNight" style="color: #10b981; font-weight: 600; font-size: 12px; margin-top: 3px; display: block;">
+                ≈ {{ Number(roomForm.pricePerNight).toLocaleString('vi-VN') }} VND / đêm
+              </small>
             </div>
           </div>
 

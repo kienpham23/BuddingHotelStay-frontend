@@ -1570,15 +1570,22 @@
           <div class="form-row">
             <div class="form-group">
               <label>Thành phố</label>
-              <select v-model="roomForm.city" required>
-                <option value="">Chọn thành phố</option>
+              <input 
+                v-model="roomForm.city" 
+                type="text" 
+                list="admin-city-list" 
+                placeholder="Nhập hoặc chọn thành phố" 
+                autocomplete="off"
+                required 
+              />
+              <datalist id="admin-city-list">
                 <option value="Hà Nội">Hà Nội</option>
                 <option value="Đà Nẵng">Đà Nẵng</option>
                 <option value="Hồ Chí Minh">Hồ Chí Minh</option>
                 <option value="Phú Quốc">Phú Quốc</option>
                 <option value="Đà Lạt">Đà Lạt</option>
                 <option value="Nha Trang">Nha Trang</option>
-              </select>
+              </datalist>
             </div>
             <div class="form-group">
               <label>Giá một đêm (VND)</label>
