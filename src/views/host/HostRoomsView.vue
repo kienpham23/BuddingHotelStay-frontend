@@ -16,8 +16,11 @@
 
       <!-- User profile in sidebar -->
       <div class="sidebar-profile" v-if="authStore.isLoggedIn">
-        <div class="profile-avatar">
-          {{ authStore.user?.fullName ? authStore.user.fullName.charAt(0).toUpperCase() : 'H' }}
+        <div class="profile-avatar" style="overflow: hidden; display: flex; align-items: center; justify-content: center;">
+          <img v-if="authStore.user?.avatarUrl" :src="authStore.user.avatarUrl" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;" />
+          <template v-else>
+            {{ authStore.user?.fullName ? authStore.user.fullName.charAt(0).toUpperCase() : 'H' }}
+          </template>
         </div>
         <div class="profile-info">
           <span class="profile-name">{{ authStore.user?.fullName }}</span>
@@ -58,6 +61,14 @@
         >
           <BarChart3 :size="18" />
           <span>{{ $t('host.sidebar.revenue') }}</span>
+        </button>
+        <button
+          class="menu-item"
+          :class="{ active: activeSidebarTab === 'profile' }"
+          @click="activeSidebarTab = 'profile'"
+        >
+          <User :size="18" />
+          <span>{{ locale === 'vi' ? 'Tài khoản' : 'Account' }}</span>
         </button>
       </nav>
 
@@ -897,6 +908,72 @@
             </div>
           </div>
         </div>
+
+        <!-- 5. PROFILE TAB -->
+        <div v-if="activeSidebarTab === 'profile'" class="fade-in-tab" style="max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+          <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;">
+            <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+              <User :size="20" style="color: #2563eb;" />
+              {{ locale === 'vi' ? 'Thông tin cá nhân' : 'Personal Information' }}
+            </h3>
+            <form @submit.prevent="handleUpdateProfile" style="display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">{{ locale === 'vi' ? 'Họ và tên' : 'Full Name' }}</label>
+                  <input type="text" v-model="profileForm.fullName" style="padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem;" required />
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">Email</label>
+                  <input type="email" :value="profileForm.email" disabled style="padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; color: #94a3b8; font-size: 0.9rem;" />
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">{{ locale === 'vi' ? 'Số điện thoại' : 'Phone Number' }}</label>
+                  <input type="text" v-model="profileForm.phone" style="padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem;" />
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">{{ locale === 'vi' ? 'Ảnh đại diện (URL)' : 'Avatar URL' }}</label>
+                  <input type="text" v-model="profileForm.avatarUrl" style="padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem;" />
+                </div>
+              </div>
+              <button type="submit" :disabled="updatingProfile" style="width: fit-content; align-self: flex-end; padding: 10px 24px; border-radius: 8px; border: none; background: #2563eb; color: white; font-weight: 700; cursor: pointer;">
+                <span v-if="updatingProfile">{{ locale === 'vi' ? 'Đang lưu...' : 'Saving...' }}</span>
+                <span v-else>{{ locale === 'vi' ? 'Lưu thay đổi' : 'Save Changes' }}</span>
+              </button>
+            </form>
+          </div>
+
+          <div style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;">
+            <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444;">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              {{ locale === 'vi' ? 'Đổi mật khẩu' : 'Change Password' }}
+            </h3>
+            <form @submit.prevent="handleUpdatePassword" style="display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">{{ locale === 'vi' ? 'Mật khẩu hiện tại' : 'Current Password' }}</label>
+                <input type="password" v-model="passwordForm.oldPassword" style="padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem;" required />
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">{{ locale === 'vi' ? 'Mật khẩu mới' : 'New Password' }}</label>
+                  <input type="password" v-model="passwordForm.newPassword" style="padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem;" required />
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <label style="font-size: 0.85rem; font-weight: 600; color: #475569;">{{ locale === 'vi' ? 'Xác nhận mật khẩu mới' : 'Confirm New Password' }}</label>
+                  <input type="password" v-model="passwordForm.confirmPassword" style="padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.9rem;" required />
+                </div>
+              </div>
+              <button type="submit" :disabled="updatingPassword" style="width: fit-content; align-self: flex-end; padding: 10px 24px; border-radius: 8px; border: none; background: #ef4444; color: white; font-weight: 700; cursor: pointer;">
+                <span v-if="updatingPassword">{{ locale === 'vi' ? 'Đang cập nhật...' : 'Updating...' }}</span>
+                <span v-else>{{ locale === 'vi' ? 'Đổi mật khẩu' : 'Update Password' }}</span>
+              </button>
+            </form>
+          </div>
+        </div>
       </main>
     </div>
 
@@ -1442,10 +1519,11 @@ import {
   Building2, FileText, DollarSign, Hotel, Users,
   Plus, MapPin, Star, Edit2, Trash2, Check, X,
   UploadCloud, Loader2, RefreshCw, UserCheck, CalendarCheck, BedDouble,
-  LayoutDashboard, BarChart3, PieChart, Award, LogOut, Home, Wallet, Calendar
+  LayoutDashboard, BarChart3, PieChart, Award, LogOut, Home, Wallet, Calendar, User
 } from 'lucide-vue-next'
 import ExcelDataPanel from '../../components/host/ExcelDataPanel.vue'
 import { getMyInvoices, payInvoice } from '../../api/invoices'
+import { getProfile, updateProfile, changePassword } from '../../api/users'
 
 const { t, locale } = useI18n()
 const changeLanguage = (lang) => {
@@ -2517,6 +2595,90 @@ const getPayoutStatusLabel = (status) => {
   }
 }
 
+// Profile and settings variables
+const profileForm = ref({
+  fullName: '',
+  email: '',
+  phone: '',
+  avatarUrl: ''
+})
+const updatingProfile = ref(false)
+
+const passwordForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const updatingPassword = ref(false)
+
+const fetchUserProfile = async () => {
+  try {
+    const res = await getProfile()
+    profileForm.value.fullName = res.data.fullName || ''
+    profileForm.value.email = res.data.email || ''
+    profileForm.value.phone = res.data.phone || ''
+    profileForm.value.avatarUrl = res.data.avatarUrl || ''
+    
+    // Make sure local store stays in sync with backend user profile
+    if (authStore.user) {
+      authStore.user.avatarUrl = res.data.avatarUrl
+      authStore.user.fullName = res.data.fullName
+      localStorage.setItem('user', JSON.stringify(authStore.user))
+    }
+  } catch (err) {
+    console.error('Lỗi khi tải thông tin cá nhân:', err)
+  }
+}
+
+const handleUpdateProfile = async () => {
+  updatingProfile.value = true
+  try {
+    const res = await updateProfile({
+      fullName: profileForm.value.fullName,
+      phone: profileForm.value.phone,
+      avatarUrl: profileForm.value.avatarUrl
+    })
+    toastStore.success(locale.value === 'vi' ? 'Cập nhật thông tin thành công!' : 'Profile updated successfully!')
+    
+    // Update local user object in store so sidebar avatar/name changes dynamically!
+    if (authStore.user) {
+      authStore.user.fullName = res.data.fullName
+      authStore.user.phone = res.data.phone
+      authStore.user.avatarUrl = res.data.avatarUrl
+      // Save updated user to localstorage so it persists across refreshes
+      localStorage.setItem('user', JSON.stringify(authStore.user))
+    }
+  } catch (err) {
+    console.error('Lỗi khi cập nhật thông tin:', err)
+    toastStore.error(err.response?.data?.message || (locale.value === 'vi' ? 'Cập nhật thông tin thất bại!' : 'Failed to update profile!'))
+  } finally {
+    updatingProfile.value = false
+  }
+}
+
+const handleUpdatePassword = async () => {
+  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+    toastStore.error(locale.value === 'vi' ? 'Mật khẩu xác nhận không khớp!' : 'Confirm password does not match!')
+    return
+  }
+  updatingPassword.value = true
+  try {
+    await changePassword({
+      oldPassword: passwordForm.value.oldPassword,
+      newPassword: passwordForm.value.newPassword
+    })
+    toastStore.success(locale.value === 'vi' ? 'Đổi mật khẩu thành công!' : 'Password updated successfully!')
+    passwordForm.value.oldPassword = ''
+    passwordForm.value.newPassword = ''
+    passwordForm.value.confirmPassword = ''
+  } catch (err) {
+    console.error('Lỗi khi đổi mật khẩu:', err)
+    toastStore.error(err.response?.data?.message || (locale.value === 'vi' ? 'Đổi mật khẩu thất bại!' : 'Failed to change password!'))
+  } finally {
+    updatingPassword.value = false
+  }
+}
+
 onMounted(() => {
   if (!authStore.isLoggedIn) {
     router.push('/login')
@@ -2528,6 +2690,7 @@ onMounted(() => {
     fetchRevenueData()
     fetchInvoices()
     fetchPayoutData()
+    fetchUserProfile()
   }
 })
 </script>
