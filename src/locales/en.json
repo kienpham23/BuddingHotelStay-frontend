@@ -706,6 +706,8 @@
   },
   "chatbot": {
     "welcome": "Hello 👋\n\nI am the AI Assistant of BuildingHotelStay.\n\nI can help you:\n• Find suitable rooms\n• Answer booking inquiries\n• Support payments\n• Guide on system usage",
+    "welcome_host": "Hello 👋\n\nI am the Host AI Assistant.\n\nI can help you:\n• Guide on room listing and approval\n• Manage guest bookings\n• Answer questions about revenue reports\n• Support blocking room dates on calendar",
+    "welcome_admin": "Hello 👋\n\nI am the Admin AI Assistant.\n\nI can help you:\n• Manage room approvals\n• View system statistics and revenue\n• Setup promotions and system configs\n• Support user management",
     "placeholder": "Ask about rooms, bookings, or the system...",
     "hint": "Enter to send • Shift+Enter for new line",
     "title": "🤖 BuildingHotelStay AI Assistant",
@@ -723,6 +725,18 @@
       "q2": "🏖️ Beachfront room under 1 million",
       "q3": "🎁 Any discount codes available?",
       "q4": "📅 I want to cancel my booking"
+    },
+    "questions_host": {
+      "q1": "🔑 How do I list a new room?",
+      "q2": "📊 Where can I view revenue reports?",
+      "q3": "📅 How do I block dates for a room?",
+      "q4": "❌ How do I cancel/reject a guest booking?"
+    },
+    "questions_admin": {
+      "q1": "🏢 How do I approve a host's room?",
+      "q2": "📈 Where can I view system revenue?",
+      "q3": "🎁 How do I create a new promo code?",
+      "q4": "👥 How do I manage user accounts?"
     },
     "replies": {
       "guest": {

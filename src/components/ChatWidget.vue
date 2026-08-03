@@ -208,14 +208,25 @@ const inputRef     = ref(null)
 // Room details map and dynamic loading
 const roomDetailsMap = ref({})
 
+const welcomeMessageText = computed(() => {
+  const role = authStore.role
+  if (role === 'HOST') {
+    return t('chatbot.welcome_host')
+  } else if (role === 'ADMIN') {
+    return t('chatbot.welcome_admin')
+  } else {
+    return t('chatbot.welcome')
+  }
+})
+
 const messages = ref([
-  { role: 'model', content: t('chatbot.welcome'), roomIds: [] }
+  { role: 'model', content: welcomeMessageText.value, roomIds: [] }
 ])
 
-// Watch locale to update welcome message dynamically if no chat history yet
-watch(locale, () => {
+// Watch locale and user role to update welcome message dynamically if no chat history yet
+watch([locale, () => authStore.role], () => {
   if (messages.value.length === 1 && messages.value[0].role === 'model') {
-    messages.value[0].content = t('chatbot.welcome')
+    messages.value[0].content = welcomeMessageText.value
   }
 })
 
@@ -244,12 +255,29 @@ const quickReplies = computed(() => {
 })
 
 const suggestedQuestions = computed(() => {
-  return [
-    t('chatbot.questions.q1'),
-    t('chatbot.questions.q2'),
-    t('chatbot.questions.q3'),
-    t('chatbot.questions.q4')
-  ]
+  const role = authStore.role
+  if (role === 'HOST') {
+    return [
+      t('chatbot.questions_host.q1'),
+      t('chatbot.questions_host.q2'),
+      t('chatbot.questions_host.q3'),
+      t('chatbot.questions_host.q4')
+    ]
+  } else if (role === 'ADMIN') {
+    return [
+      t('chatbot.questions_admin.q1'),
+      t('chatbot.questions_admin.q2'),
+      t('chatbot.questions_admin.q3'),
+      t('chatbot.questions_admin.q4')
+    ]
+  } else {
+    return [
+      t('chatbot.questions.q1'),
+      t('chatbot.questions.q2'),
+      t('chatbot.questions.q3'),
+      t('chatbot.questions.q4')
+    ]
+  }
 })
 
 function selectSuggestedQuery(queryText) {

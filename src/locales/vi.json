@@ -706,6 +706,8 @@
   },
   "chatbot": {
     "welcome": "Xin chào 👋\n\nTôi là trợ lý AI của BuildingHotelStay.\n\nTôi có thể giúp bạn:\n• Tìm phòng phù hợp\n• Giải đáp đơn đặt phòng\n• Hỗ trợ thanh toán\n• Hướng dẫn sử dụng hệ thống",
+    "welcome_host": "Xin chào 👋\n\nTôi là trợ lý AI dành cho Chủ nhà (Host).\n\nTôi có thể giúp bạn:\n• Hướng dẫn đăng và duyệt phòng nghỉ\n• Quản lý danh sách đơn đặt phòng của khách\n• Giải đáp cách xem báo cáo doanh thu\n• Hỗ trợ quản lý khóa ngày phòng nghỉ",
+    "welcome_admin": "Xin chào 👋\n\nTôi là trợ lý AI dành cho Quản trị viên (Admin).\n\nTôi có thể giúp bạn:\n• Quản lý duyệt phòng nghỉ của Host\n• Xem thống kê và doanh thu hệ thống\n• Thiết lập khuyến mãi và cấu hình hệ thống\n• Hỗ trợ quản trị tài khoản người dùng",
     "placeholder": "Hỏi về phòng, đặt phòng hoặc hệ thống...",
     "hint": "Enter để gửi • Shift+Enter xuống dòng",
     "title": "🤖 Trợ lý AI BuildingHotelStay",
@@ -723,6 +725,18 @@
       "q2": "🏖️ Phòng gần biển dưới 1 triệu",
       "q3": "🎁 Có mã giảm giá nào không?",
       "q4": "📅 Tôi muốn hủy đơn đặt phòng"
+    },
+    "questions_host": {
+      "q1": "🔑 Làm thế nào để đăng phòng mới?",
+      "q2": "📊 Xem báo cáo doanh thu ở đâu?",
+      "q3": "📅 Cách khóa/chặn ngày phòng trống?",
+      "q4": "❌ Cách hủy/từ chối đơn của khách?"
+    },
+    "questions_admin": {
+      "q1": "🏢 Làm thế nào để duyệt phòng của Host?",
+      "q2": "📈 Xem tổng doanh thu toàn sàn ở đâu?",
+      "q3": "🎁 Cách tạo mã giảm giá mới?",
+      "q4": "👥 Quản lý danh sách tài khoản người dùng?"
     },
     "replies": {
       "guest": {
