@@ -22,7 +22,7 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
     (response) => {
         const backendUrl = import.meta.env.VITE_API_BASE_URL
-        if (backendUrl && response.data) {
+        if (backendUrl && response.data && !(response.data instanceof Blob)) {
             const replaceLocalhost = (obj) => {
                 if (typeof obj === 'string') {
                     return obj.replaceAll('http://localhost:8088', backendUrl)
