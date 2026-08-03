@@ -471,6 +471,20 @@
     "btn_delete_permanently": "Delete Permanently"
   },
   "host": {
+    "calendar": {
+      "title": "Room Calendar & Block Dates",
+      "btn_block": "Block Dates",
+      "block_new": "Block new date range",
+      "checkin": "From Date (Check-in)",
+      "checkout": "To Date (Check-out)",
+      "tip_title": "Pro tip:",
+      "tip_desc": "Click directly on any pink calendar date labeled \"Blocked\" to quickly unblock that date range.",
+      "processing": "Processing...",
+      "available": "Available",
+      "booked": "Booked",
+      "blocked": "Blocked",
+      "action_name": "Calendar"
+    },
     "panel_tag": "Host Panel",
     "role_host": "Host",
     "sidebar": {

@@ -471,6 +471,20 @@
     "btn_delete_permanently": "Xóa vĩnh viễn"
   },
   "host": {
+    "calendar": {
+      "title": "Thiết lập lịch & Chặn ngày phòng",
+      "btn_block": "Chặn phòng",
+      "block_new": "Chặn khoảng ngày mới",
+      "checkin": "Từ ngày (Check-in)",
+      "checkout": "Đến ngày (Check-out)",
+      "tip_title": "Mẹo nghiệp vụ:",
+      "tip_desc": "Nhấp trực tiếp vào các ô ngày có nhãn \"Blocked\" màu hồng để bỏ chặn nhanh khoảng ngày.",
+      "processing": "Đang xử lý...",
+      "available": "Trống",
+      "booked": "Có khách đặt",
+      "blocked": "Chặn (Đóng)",
+      "action_name": "Lịch phòng"
+    },
     "panel_tag": "Kênh Chủ Nhà",
     "role_host": "Chủ nhà",
     "sidebar": {

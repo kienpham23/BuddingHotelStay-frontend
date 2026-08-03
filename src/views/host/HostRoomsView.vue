@@ -315,6 +315,7 @@
                 </div>
                 <div class="card-actions">
                   <button class="btn-edit" @click="openEditModal(rm)"><Edit2 :size="14" /> {{ $t('host.rooms.edit') }}</button>
+                  <button class="btn-calendar" @click="openRoomCalendar(rm)" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;"><Calendar :size="14" /> {{ $t('host.calendar.action_name') }}</button>
                   <button class="btn-delete" @click="confirmDeleteRoom(rm)"><Trash2 :size="14" /> {{ $t('host.rooms.delete') }}</button>
                 </div>
               </div>
@@ -887,6 +888,129 @@
         </div>
       </div>
     </div>
+
+    <!-- ROOM CALENDAR MODAL (BLOCK DATES) -->
+    <div class="modal-backdrop" v-if="showCalendarModal">
+      <div class="calendar-modal" style="background: white; border-radius: 18px; width: 90%; max-width: 860px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 20px; max-height: 90vh; overflow-y: auto; position: relative;">
+        <!-- Header -->
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px;">
+          <div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+              <CalendarCheck :size="22" style="color: #3b82f6;" />
+              {{ $t('host.calendar.title') }}
+            </h2>
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: 4px; font-weight: 500;">
+              {{ selectedRoomForCalendar?.name }}
+            </p>
+          </div>
+          <button @click="closeRoomCalendar" style="background: #f1f5f9; border: none; font-size: 20px; color: #64748b; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-weight: 700; line-height: 1;">×</button>
+        </div>
+
+        <div class="calendar-layout-grid" style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; align-items: start;">
+          <!-- Left: Calendar view -->
+          <div class="calendar-view-container" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px;">
+            <!-- Month nav -->
+            <div class="month-nav-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <button @click="prevMonth" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 700; color: #334155;">&laquo;</button>
+              <h3 style="font-size: 1rem; font-weight: 800; color: #0f172a; text-transform: capitalize;">
+                {{ new Date(calendarYear, calendarMonth).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US', { month: 'long', year: 'numeric' }) }}
+              </h3>
+              <button @click="nextMonth" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 700; color: #334155;">&raquo;</button>
+            </div>
+
+            <!-- Days of week -->
+            <div class="days-of-week-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; margin-bottom: 8px;">
+              <span v-for="d in (locale === 'vi' ? ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'] : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'])" :key="d" style="font-size: 11px; font-weight: 700; color: #64748b;">{{ d }}</span>
+            </div>
+
+            <!-- Calendar Days Grid -->
+            <div class="calendar-days-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;">
+              <div 
+                v-for="(day, index) in daysInMonthList" 
+                :key="index" 
+                class="calendar-day-cell"
+                style="aspect-ratio: 1.1; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 13px; font-weight: 600; transition: all 0.2s;"
+                :style="[
+                  !day.date ? { background: 'transparent' } :
+                  day.isBooked ? { background: '#d1fae5', color: '#065f46', cursor: 'pointer', border: '1px solid #a7f3d0' } :
+                  day.isBlocked ? { background: '#ffe4e6', color: '#9f1239', cursor: 'pointer', border: '1px solid #fecdd3' } :
+                  day.isPast ? { background: '#f1f5f9', color: '#cbd5e1', cursor: 'not-allowed' } :
+                  { background: 'white', color: '#334155', border: '1px solid #e2e8f0' }
+                ]"
+                :title="day.isBooked ? `${locale === 'vi' ? 'Khách đặt:' : 'Guest:'} ${day.booking?.guestName}` : day.isBlocked ? (locale === 'vi' ? 'Chặn bởi Host - Click để bỏ chặn' : 'Blocked by Host - Click to unblock') : ''"
+                @click="day.isBlocked ? handleUnblockDates(day.booking?.id) : null"
+              >
+                <span>{{ day.dayNumber }}</span>
+                <span v-if="day.isBlocked" style="font-size: 8px; font-weight: 800; margin-top: 2px; text-transform: uppercase;">Blocked</span>
+                <span v-if="day.isBooked" style="font-size: 8px; font-weight: 800; margin-top: 2px; text-transform: uppercase;">Booked</span>
+              </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="calendar-legend" style="display: flex; gap: 16px; margin-top: 16px; font-size: 11px; font-weight: 600; color: #475569; justify-content: center; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="display: inline-block; width: 12px; height: 12px; background: white; border: 1px solid #cbd5e1; border-radius: 3px;"></span>
+                <span>{{ $t('host.calendar.available') }}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="display: inline-block; width: 12px; height: 12px; background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 3px;"></span>
+                <span>{{ $t('host.calendar.booked') }}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="display: inline-block; width: 12px; height: 12px; background: #ffe4e6; border: 1px solid #fecdd3; border-radius: 3px;"></span>
+                <span>{{ $t('host.calendar.blocked') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Setup Block dates form -->
+          <div class="block-form-container" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 16px;">
+            <h3 style="font-size: 0.95rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+              <Plus :size="16" style="color: #ef4444;" />
+              {{ $t('host.calendar.block_new') }}
+            </h3>
+
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+              <label style="font-size: 12px; font-weight: 700; color: #475569;">{{ $t('host.calendar.checkin') }}</label>
+              <input 
+                type="date" 
+                v-model="blockForm.checkIn" 
+                class="select-input" 
+                style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit;"
+                :min="new Date().toISOString().split('T')[0]"
+              />
+            </div>
+
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+              <label style="font-size: 12px; font-weight: 700; color: #475569;">{{ $t('host.calendar.checkout') }}</label>
+              <input 
+                type="date" 
+                v-model="blockForm.checkOut" 
+                class="select-input" 
+                style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit;"
+                :min="blockForm.checkIn || new Date().toISOString().split('T')[0]"
+              />
+            </div>
+
+            <button 
+              @click="handleBlockDates" 
+              class="btn-submit" 
+              style="background: #ef4444; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 700; font-family: inherit; font-size: 13.5px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px;"
+              :disabled="blockLoading"
+            >
+              <X :size="15" />
+              <span>{{ blockLoading ? $t('host.calendar.processing') : $t('host.calendar.btn_block') }}</span>
+            </button>
+
+            <!-- Info card -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; font-size: 0.8rem; color: #475569; line-height: 1.4;">
+              <p style="font-weight: 700; color: #334155; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">💡 {{ $t('host.calendar.tip_title') }}</p>
+              <p>{{ $t('host.calendar.tip_desc') }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -902,7 +1026,7 @@ import {
   Building2, FileText, DollarSign, Hotel, Users,
   Plus, MapPin, Star, Edit2, Trash2, Check, X,
   UploadCloud, Loader2, RefreshCw, UserCheck, CalendarCheck, BedDouble,
-  LayoutDashboard, BarChart3, PieChart, Award, LogOut, Home, Wallet
+  LayoutDashboard, BarChart3, PieChart, Award, LogOut, Home, Wallet, Calendar
 } from 'lucide-vue-next'
 import ExcelDataPanel from '../../components/host/ExcelDataPanel.vue'
 import { getMyInvoices, payInvoice } from '../../api/invoices'
@@ -921,6 +1045,174 @@ const bookings = ref([])
 const activeSidebarTab = ref('dashboard')
 const invoices = ref([])
 const payLoading = ref(null)
+
+// Room Calendar & Block Dates State
+const showCalendarModal = ref(false)
+const selectedRoomForCalendar = ref(null)
+const calendarYear = ref(new Date().getFullYear())
+const calendarMonth = ref(new Date().getMonth()) // 0-11
+const blockForm = ref({
+  checkIn: '',
+  checkOut: ''
+})
+const blockLoading = ref(false)
+
+const openRoomCalendar = (room) => {
+  selectedRoomForCalendar.value = room
+  calendarYear.value = new Date().getFullYear()
+  calendarMonth.value = new Date().getMonth()
+  blockForm.value.checkIn = ''
+  blockForm.value.checkOut = ''
+  showCalendarModal.value = true
+}
+
+const closeRoomCalendar = () => {
+  showCalendarModal.value = false
+  selectedRoomForCalendar.value = null
+}
+
+const prevMonth = () => {
+  if (calendarMonth.value === 0) {
+    calendarMonth.value = 11
+    calendarYear.value--
+  } else {
+    calendarMonth.value--
+  }
+}
+
+const nextMonth = () => {
+  if (calendarMonth.value === 11) {
+    calendarMonth.value = 0
+    calendarYear.value++
+  } else {
+    calendarMonth.value++
+  }
+}
+
+const daysInMonthList = computed(() => {
+  if (!selectedRoomForCalendar.value) return []
+  
+  const year = calendarYear.value
+  const month = calendarMonth.value
+  
+  // First day of the month
+  const firstDay = new Date(year, month, 1)
+  const startDayOfWeek = firstDay.getDay()
+  // Adjust Monday as start of week (0=Mon, ..., 6=Sun)
+  const adjustedStart = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1
+  
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const list = []
+  
+  // Blank days before the 1st
+  for (let i = 0; i < adjustedStart; i++) {
+    list.push({ date: null, dayNumber: '', dateStr: '', booking: null, isBlocked: false, isBooked: false })
+  }
+  
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  // Filter bookings of selected room
+  const roomBookings = bookings.value.filter(bk => 
+    bk.roomId === selectedRoomForCalendar.value.id && 
+    bk.status !== 'CANCELLED' && bk.status !== 'REJECTED'
+  )
+  
+  for (let d = 1; d <= daysInMonth; d++) {
+    const currentDate = new Date(year, month, d)
+    currentDate.setHours(0, 0, 0, 0)
+    
+    const yyyy = currentDate.getFullYear()
+    const mm = String(currentDate.getMonth() + 1).padStart(2, '0')
+    const dd = String(currentDate.getDate()).padStart(2, '0')
+    const dateStr = `${yyyy}-${mm}-${dd}`
+    
+    // Find booking covering this date
+    const booking = roomBookings.find(bk => {
+      const checkInStr = bk.checkIn.split('T')[0]
+      const checkOutStr = bk.checkOut.split('T')[0]
+      return dateStr >= checkInStr && dateStr < checkOutStr
+    })
+    
+    const isBlocked = booking && (booking.note === 'HOST_BLOCKED')
+    const isBooked = booking && !isBlocked
+    const isPast = currentDate < today
+    
+    list.push({
+      date: currentDate,
+      dayNumber: d,
+      dateStr,
+      booking,
+      isBlocked,
+      isBooked,
+      isPast
+    })
+  }
+  
+  return list
+})
+
+const handleBlockDates = async () => {
+  if (!selectedRoomForCalendar.value) return
+  if (!blockForm.value.checkIn || !blockForm.value.checkOut) {
+    toastStore.error(locale.value === 'vi' ? 'Vui lòng chọn đầy đủ ngày nhận và trả phòng' : 'Please select both check-in and check-out dates')
+    return
+  }
+  
+  const cIn = new Date(blockForm.value.checkIn)
+  const cOut = new Date(blockForm.value.checkOut)
+  if (cOut <= cIn) {
+    toastStore.error(locale.value === 'vi' ? 'Ngày kết thúc phải sau ngày bắt đầu' : 'Check-out date must be after check-in date')
+    return
+  }
+  
+  blockLoading.value = true
+  try {
+    const payload = {
+      roomId: selectedRoomForCalendar.value.id,
+      checkIn: blockForm.value.checkIn,
+      checkOut: blockForm.value.checkOut,
+      numGuests: 1,
+      paymentMethod: 'CASH',
+      note: 'HOST_BLOCKED'
+    }
+    
+    await axios.post('/bookings/host/block', payload)
+    toastStore.success(locale.value === 'vi' ? 'Chặn phòng thành công' : 'Room dates blocked successfully')
+    
+    // Refresh bookings to reflect in calendar
+    const resBookings = await axios.get('/bookings/host')
+    bookings.value = resBookings.data
+    
+    // Reset form
+    blockForm.value.checkIn = ''
+    blockForm.value.checkOut = ''
+  } catch (err) {
+    console.error('Lỗi khi chặn phòng:', err)
+    toastStore.error(err.response?.data?.message || (locale.value === 'vi' ? 'Chặn phòng thất bại' : 'Failed to block room dates'))
+  } finally {
+    blockLoading.value = false
+  }
+}
+
+const handleUnblockDates = async (bookingId) => {
+  if (!confirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn bỏ chặn khoảng ngày này?' : 'Are you sure you want to unblock this date range?')) return
+  
+  blockLoading.value = true
+  try {
+    await axios.delete(`/bookings/host/block/${bookingId}`)
+    toastStore.success(locale.value === 'vi' ? 'Bỏ chặn ngày thành công' : 'Room dates unblocked successfully')
+    
+    // Refresh bookings to reflect in calendar
+    const resBookings = await axios.get('/bookings/host')
+    bookings.value = resBookings.data
+  } catch (err) {
+    console.error('Lỗi khi bỏ chặn phòng:', err)
+    toastStore.error(err.response?.data?.message || (locale.value === 'vi' ? 'Bỏ chặn thất bại' : 'Failed to unblock room dates'))
+  } finally {
+    blockLoading.value = false
+  }
+}
 
 const activePageTitle = computed(() => {
   switch (activeSidebarTab.value) {

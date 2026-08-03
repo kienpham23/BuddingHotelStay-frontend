@@ -193,6 +193,24 @@
               <span class="stat-val">{{ $t('host.revenue.rooms_unit', { count: data.totalRooms }) }}</span>
             </div>
           </div>
+          <!-- Available Balance Card -->
+          <div class="stat-card" style="border: 2px solid #5392f9; position: relative; overflow: hidden; background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);">
+            <div class="stat-icon" style="background: #dbeafe; color: #2563eb;"><Wallet :size="24" /></div>
+            <div class="stat-info" style="flex: 1;">
+              <h4 style="color: #1e3a8a; font-weight: 700;">{{ locale === 'vi' ? 'Số dư khả dụng' : 'Available Balance' }}</h4>
+              <span class="stat-val" style="color: #2563eb; font-weight: 800;">{{ formatPrice(hostBalance) }}</span>
+              <button 
+                type="button" 
+                class="btn-primary" 
+                style="margin-top: 8px; font-size: 0.78rem; padding: 5px 12px; border-radius: 6px; font-weight: 700; width: 100%; height: auto; background: #2563eb; color: white; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;"
+                @click="openPayoutModal"
+                :disabled="hostBalance <= 0"
+              >
+                <DollarSign :size="13" />
+                {{ locale === 'vi' ? 'Yêu cầu rút tiền' : 'Request Payout' }}
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- CHART AND BOOKING STATUS BREAKDOWN ROW -->
@@ -404,8 +422,131 @@
             </table>
           </div>
         </div>
+
+        <!-- LỊCH SỬ RÚT TIỀN (PAYOUT HISTORY) -->
+        <div class="card table-card" style="margin-top: 24px;">
+          <h3 class="card-title"><Wallet :size="20" /> {{ locale === 'vi' ? 'Lịch Sử Yêu Cầu Rút Tiền' : 'Payout Request History' }}</h3>
+          <p class="subtitle" style="margin: 6px 0 16px 0; font-size: 13.5px; color: #64748b; line-height: 1.5;">
+            {{ locale === 'vi' ? 'Theo dõi danh sách các yêu cầu rút tiền của bạn và trạng thái duyệt chuyển khoản từ quản trị viên.' : 'Track your payout requests and approval status from the system administrator.' }}
+          </p>
+          <div class="table-responsive">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>{{ locale === 'vi' ? 'Mã số' : 'ID' }}</th>
+                  <th>{{ locale === 'vi' ? 'Thông tin ngân hàng' : 'Bank Details' }}</th>
+                  <th class="text-right">{{ locale === 'vi' ? 'Số tiền rút' : 'Amount' }}</th>
+                  <th>{{ locale === 'vi' ? 'Ngày yêu cầu' : 'Requested Date' }}</th>
+                  <th>{{ locale === 'vi' ? 'Trạng thái' : 'Status' }}</th>
+                  <th>{{ locale === 'vi' ? 'Ghi chú / Lý do' : 'Notes / Reason' }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="payout in payouts" :key="payout.id">
+                  <td><strong>#PAY-{{ payout.id }}</strong></td>
+                  <td>
+                    <div>
+                      <p style="font-weight: 700; color: #334155; margin: 0;">{{ payout.bankName }}</p>
+                      <small style="color: #64748b; font-weight: 500;">{{ payout.accountNumber }} | {{ payout.accountHolder }}</small>
+                    </div>
+                  </td>
+                  <td class="text-right text-bold" style="color: #2563eb;"><strong>{{ formatPrice(payout.amount) }}</strong></td>
+                  <td>{{ formatDate(payout.createdAt) }}</td>
+                  <td>
+                    <span class="status-badge" :class="payout.status.toLowerCase()">
+                      {{ getPayoutStatusLabel(payout.status) }}
+                    </span>
+                  </td>
+                  <td style="font-size: 0.85rem; color: #475569; max-width: 200px; word-wrap: break-word;">{{ payout.note || '-' }}</td>
+                </tr>
+                <tr v-if="!payouts || payouts.length === 0">
+                  <td colspan="6" class="text-center empty-row">{{ locale === 'vi' ? 'Chưa có yêu cầu rút tiền nào.' : 'No payout requests found.' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </main>
+
+    <!-- PAYOUT REQUEST DIALOG MODAL -->
+    <div class="modal-backdrop" v-if="showPayoutModal">
+      <div class="confirm-modal" style="max-width: 500px; width: 90%; background: white; border-radius: 18px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px; font-family: inherit;">
+        <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+          <Wallet :size="20" style="color: #2563eb;" />
+          {{ locale === 'vi' ? 'Yêu cầu rút tiền' : 'Request Payout' }}
+        </h3>
+        <p style="font-size: 0.88rem; color: #475569; margin: 0; line-height: 1.4;">
+          {{ locale === 'vi' ? 'Nhập thông tin tài khoản ngân hàng để hệ thống thực hiện chuyển khoản doanh thu cho bạn.' : 'Enter your bank account details for the system to process the revenue payout.' }}
+        </p>
+
+        <!-- Current Available Balance -->
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 12px; font-weight: 700; color: #1e3a8a;">{{ locale === 'vi' ? 'Số dư khả dụng:' : 'Available Balance:' }}</span>
+          <span style="font-size: 15px; font-weight: 800; color: #2563eb;">{{ formatPrice(hostBalance) }}</span>
+        </div>
+
+        <form @submit.prevent="submitPayoutRequest" style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Số tiền rút (VND)' : 'Amount to withdraw (VND)' }}</label>
+            <input 
+              type="number" 
+              v-model.number="payoutForm.amount" 
+              class="select-input" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;"
+              placeholder="e.g. 500000"
+              required
+              min="50000"
+              :max="hostBalance"
+            />
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Tên ngân hàng' : 'Bank Name' }}</label>
+            <input 
+              type="text" 
+              v-model="payoutForm.bankName" 
+              class="select-input" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;"
+              placeholder="e.g. Vietcombank, Techcombank"
+              required
+            />
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Số tài khoản' : 'Account Number' }}</label>
+            <input 
+              type="text" 
+              v-model="payoutForm.accountNumber" 
+              class="select-input" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;"
+              placeholder="e.g. 19028472938173"
+              required
+            />
+          </div>
+
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Tên chủ tài khoản' : 'Account Holder Name' }}</label>
+            <input 
+              type="text" 
+              v-model="payoutForm.accountHolder" 
+              class="select-input" 
+              style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; text-transform: uppercase;"
+              placeholder="e.g. NGUYEN VAN A"
+              required
+            />
+          </div>
+
+          <div class="modal-actions" style="margin-top: 12px; display: flex; gap: 8px;">
+            <button type="button" class="btn-cancel" @click="showPayoutModal = false" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; font-weight: 700; cursor: pointer; color: #475569;">{{ locale === 'vi' ? 'Hủy bỏ' : 'Cancel' }}</button>
+            <button type="submit" class="btn-submit" :disabled="payoutSubmitting" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: #2563eb; color: white; font-weight: 700; cursor: pointer;">
+              <span v-if="!payoutSubmitting">{{ locale === 'vi' ? 'Gửi yêu cầu' : 'Submit' }}</span>
+              <span v-else class="spinner-small"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -710,9 +851,79 @@ const handlePayInvoice = async (invoiceId) => {
   }
 }
 
+const hostBalance = ref(0)
+const payouts = ref([])
+const showPayoutModal = ref(false)
+const payoutSubmitting = ref(false)
+const payoutForm = ref({
+  amount: null,
+  bankName: '',
+  accountNumber: '',
+  accountHolder: ''
+})
+
+const fetchPayoutData = async () => {
+  try {
+    const resBalance = await axios.get('/payouts/balance')
+    hostBalance.value = resBalance.data || 0
+
+    const resPayouts = await axios.get('/payouts/host')
+    payouts.value = resPayouts.data || []
+  } catch (err) {
+    console.error('Lỗi khi lấy thông tin rút tiền:', err)
+  }
+}
+
+const openPayoutModal = () => {
+  payoutForm.value.amount = hostBalance.value
+  payoutForm.value.bankName = ''
+  payoutForm.value.accountNumber = ''
+  payoutForm.value.accountHolder = ''
+  showPayoutModal.value = true
+}
+
+const submitPayoutRequest = async () => {
+  if (payoutForm.value.amount > hostBalance.value) {
+    alert(locale.value === 'vi' ? 'Số tiền rút vượt quá số dư khả dụng' : 'Amount exceeds available balance')
+    return
+  }
+  if (payoutForm.value.amount < 50000) {
+    alert(locale.value === 'vi' ? 'Số tiền rút tối thiểu là 50,000 VND' : 'Minimum payout amount is 50,000 VND')
+    return
+  }
+  payoutSubmitting.value = true
+  try {
+    const payload = {
+      amount: payoutForm.value.amount,
+      bankName: payoutForm.value.bankName,
+      accountNumber: payoutForm.value.accountNumber,
+      accountHolder: payoutForm.value.accountHolder.toUpperCase()
+    }
+    await axios.post('/payouts/request', payload)
+    alert(locale.value === 'vi' ? 'Gửi yêu cầu rút tiền thành công' : 'Payout request submitted successfully')
+    showPayoutModal.value = false
+    await fetchPayoutData()
+  } catch (err) {
+    console.error('Lỗi khi gửi yêu cầu rút tiền:', err)
+    alert(err.response?.data?.message || (locale.value === 'vi' ? 'Gửi yêu cầu rút tiền thất bại' : 'Failed to submit payout request'))
+  } finally {
+    payoutSubmitting.value = false
+  }
+}
+
+const getPayoutStatusLabel = (status) => {
+  switch (status) {
+    case 'PENDING': return locale.value === 'vi' ? 'Chờ duyệt' : 'Pending'
+    case 'APPROVED': return locale.value === 'vi' ? 'Đã duyệt' : 'Approved'
+    case 'REJECTED': return locale.value === 'vi' ? 'Từ chối' : 'Rejected'
+    default: return status
+  }
+}
+
 onMounted(() => {
   fetchRevenueData()
   fetchInvoices()
+  fetchPayoutData()
 })
 </script>
 
@@ -1445,5 +1656,52 @@ onMounted(() => {
     grid-template-columns: 1fr !important;
     gap: 16px;
   }
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+}
+
+.status-badge.approved {
+  background: #f0fdf4;
+  color: #10b981;
+}
+
+.status-badge.rejected {
+  background: #fef2f2;
+  color: #ef4444;
 }
 </style>

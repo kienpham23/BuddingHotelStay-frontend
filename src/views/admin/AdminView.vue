@@ -79,6 +79,14 @@
           <MessageSquare :size="18" />
           <span>{{ $t('admin.reviews') }}</span>
         </button>
+        <button
+          class="menu-item"
+          :class="{ active: activeTab === 'payouts' }"
+          @click="activeTab = 'payouts'"
+        >
+          <Wallet :size="18" />
+          <span>{{ locale === 'vi' ? 'Duyệt rút tiền' : 'Payout Approvals' }}</span>
+        </button>
 
         <hr class="sidebar-divider" />
 
@@ -1197,8 +1205,171 @@
           <p>{{ starFilter !== 'ALL' ? (locale === 'en' ? 'Try selecting another star rating.' : 'Vui lòng chọn mức đánh giá sao khác.') : $t('admin.empty_reviews_desc') }}</p>
         </div>
       </div>
+
+      <!-- TAB 6: PAYOUT APPROVALS -->
+      <div v-if="activeTab === 'payouts'">
+        <div class="tab-header" style="margin-bottom: 20px;">
+          <h2>{{ locale === 'vi' ? 'Duyệt yêu cầu rút tiền của Host' : 'Host Payout Approvals' }}</h2>
+        </div>
+
+        <!-- Filter bar for payout status -->
+        <div class="payout-filters-row" style="margin-bottom: 20px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button 
+            v-for="st in ['ALL', 'PENDING', 'APPROVED', 'REJECTED']"
+            :key="st"
+            type="button"
+            @click="adminPayoutStatusFilter = st"
+            style="padding: 6px 14px; border-radius: 20px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s;"
+            :style="{
+              background: adminPayoutStatusFilter === st ? '#2563eb' : '#f1f5f9',
+              color: adminPayoutStatusFilter === st ? 'white' : '#475569',
+              boxShadow: adminPayoutStatusFilter === st ? '0 3px 8px rgba(37, 99, 235, 0.25)' : 'none'
+            }"
+          >
+            {{ 
+              st === 'ALL' ? (locale === 'en' ? 'All' : 'Tất cả') :
+              st === 'PENDING' ? (locale === 'en' ? 'Pending' : 'Chờ duyệt') :
+              st === 'APPROVED' ? (locale === 'en' ? 'Approved' : 'Đã duyệt') :
+              (locale === 'en' ? 'Rejected' : 'Từ chối')
+            }}
+          </button>
+        </div>
+
+        <!-- Payout Requests Table -->
+        <div class="table-container" v-if="filteredPayouts.length > 0">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>{{ locale === 'vi' ? 'Chủ phòng (Host)' : 'Host' }}</th>
+                <th>{{ locale === 'vi' ? 'Thông tin ngân hàng' : 'Bank Details' }}</th>
+                <th class="text-right">{{ locale === 'vi' ? 'Số tiền rút' : 'Amount' }}</th>
+                <th>{{ locale === 'vi' ? 'Ngày gửi yêu cầu' : 'Requested Date' }}</th>
+                <th>{{ locale === 'vi' ? 'Trạng thái' : 'Status' }}</th>
+                <th>{{ locale === 'vi' ? 'Ghi chú / Lý do từ chối' : 'Notes / Reject Reason' }}</th>
+                <th>{{ locale === 'vi' ? 'Thao tác' : 'Actions' }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in paginatedPayouts" :key="p.id">
+                <td><strong>#PAY-{{ p.id }}</strong></td>
+                <td>
+                  <div>
+                    <p style="font-weight: 700; color: #1e293b; margin: 0;">{{ p.hostName }}</p>
+                    <small style="color: #64748b; font-weight: 500;">{{ p.hostEmail }}</small>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <p style="font-weight: 700; color: #334155; margin: 0;">{{ p.bankName }}</p>
+                    <small style="color: #64748b; font-weight: 500;">{{ p.accountNumber }} | {{ p.accountHolder }}</small>
+                  </div>
+                </td>
+                <td class="text-right text-bold" style="color: #2563eb;"><strong>{{ formatPrice(p.amount) }}</strong></td>
+                <td>{{ formatDate(p.createdAt) }}</td>
+                <td>
+                  <span class="status-badge-sm" :class="p.status.toLowerCase()" style="font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; font-weight: 700; display: inline-block;">
+                    {{ 
+                      p.status === 'PENDING' ? (locale === 'en' ? 'Pending' : 'Chờ duyệt') :
+                      p.status === 'APPROVED' ? (locale === 'en' ? 'Approved' : 'Đã duyệt') :
+                      (locale === 'en' ? 'Rejected' : 'Từ chối')
+                    }}
+                  </span>
+                </td>
+                <td style="font-size: 0.85rem; color: #475569; max-width: 220px; word-wrap: break-word;">{{ p.note || '-' }}</td>
+                <td>
+                  <div style="display: flex; gap: 8px;" v-if="p.status === 'PENDING'">
+                    <button 
+                      class="btn-table-approve" 
+                      @click="handleApprovePayout(p.id)"
+                      style="padding: 6px 12px; border-radius: 6px; border: none; background: #d1fae5; color: #065f46; font-weight: 700; cursor: pointer; font-size: 13.5px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;"
+                    >
+                      <Check :size="14" /> {{ locale === 'vi' ? 'Duyệt' : 'Duyệt' }}
+                    </button>
+                    <button 
+                      class="btn-table-delete" 
+                      @click="openRejectPayoutModal(p)"
+                      style="padding: 6px 12px; border-radius: 6px; border: 1px solid #ef4444; background: white; color: #ef4444; font-weight: 700; cursor: pointer; font-size: 13.5px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;"
+                    >
+                      <X :size="14" /> {{ locale === 'vi' ? 'Từ chối' : 'Từ chối' }}
+                    </button>
+                  </div>
+                  <span v-else class="processed-text" style="color: #64748b; font-weight: 600; font-size: 0.85rem;">{{ locale === 'vi' ? 'Đã xử lý' : 'Processed' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination for Payouts -->
+          <div class="pagination-container" v-if="payoutTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+            <button 
+              class="btn-nav" 
+              :disabled="payoutCurrentPage === 1" 
+              @click="payoutCurrentPage--"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
+              :style="payoutCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+            >
+              &laquo;
+            </button>
+            <button 
+              class="btn-page"
+              v-for="p in payoutTotalPages" 
+              :key="p"
+              :class="{ active: payoutCurrentPage === p }"
+              @click="payoutCurrentPage = p"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 500; min-width: 32px; text-align: center; transition: all 0.2s;"
+              :style="payoutCurrentPage === p ? { background: '#2563eb', borderColor: '#2563eb', color: 'white' } : { color: '#475569' }"
+            >
+              {{ p }}
+            </button>
+            <button 
+              class="btn-nav" 
+              :disabled="payoutCurrentPage === payoutTotalPages" 
+              @click="payoutCurrentPage++"
+              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
+              :style="payoutCurrentPage === payoutTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
+            >
+              &raquo;
+            </button>
+          </div>
+        </div>
+
+        <div class="empty-state" v-else>
+          <Wallet :size="48" class="color-gray" />
+          <h3>{{ locale === 'vi' ? 'Không có yêu cầu rút tiền nào' : 'No payout requests found' }}</h3>
+          <p>{{ locale === 'vi' ? 'Thử chuyển bộ lọc trạng thái khác để kiểm tra.' : 'Try changing the status filter selection.' }}</p>
+        </div>
+      </div>
     </main>
   </div>
+
+    <!-- ADMIN REJECT PAYOUT MODAL -->
+    <div class="modal-backdrop" v-if="showRejectPayoutModal">
+      <div class="confirm-modal" style="max-width: 450px; width: 90%; background: white; border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 14px;">
+        <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a;">{{ locale === 'vi' ? 'Từ chối yêu cầu rút tiền' : 'Reject Payout Request' }}</h3>
+        <p style="font-size: 0.88rem; color: #475569;">
+          {{ locale === 'vi' ? 'Vui lòng nhập lý do từ chối yêu cầu rút tiền này. Lý do sẽ được hiển thị cho Host.' : 'Please enter the reason for rejecting this payout. This reason will be visible to the Host.' }}
+        </p>
+        <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+          <textarea 
+            v-model="rejectPayoutReason" 
+            placeholder="Ví dụ: Thông tin tài khoản ngân hàng không chính xác..." 
+            rows="3" 
+            style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 14px;"
+          ></textarea>
+        </div>
+        <div class="modal-actions" style="display: flex; gap: 8px; margin-top: 8px;">
+          <button class="btn-cancel" @click="showRejectPayoutModal = false" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; font-weight: 700; cursor: pointer; color: #475569;">{{ locale === 'vi' ? 'Hủy bỏ' : 'Cancel' }}</button>
+          <button 
+            class="btn-confirm-delete" 
+            @click="handleRejectPayout" 
+            style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: #ef4444; color: white; font-weight: 700; cursor: pointer;"
+          >
+            {{ locale === 'vi' ? 'Xác nhận từ chối' : 'Reject Request' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- ADD/EDIT ROOM MODAL -->
     <div class="modal-backdrop" v-if="showFormModal">
@@ -1806,7 +1977,7 @@ import {
   CreditCard, MessageSquare, Check, Lock, Unlock,
   UploadCloud, CheckCircle, AlertCircle, X,
   LayoutDashboard, BarChart3, Home, LogOut, Tag, Sparkles, Eye,
-  Clock, Save, BarChart2
+  Clock, Save, BarChart2, Wallet
 } from 'lucide-vue-next'
 
 const { t, locale } = useI18n()
@@ -2851,6 +3022,93 @@ const cancelBookingStatus = async (bookingId) => {
   }
 }
 
+// ==========================================
+// ADMIN PAYOUT REQUESTS MANAGEMENT
+// ==========================================
+const payoutRequests = ref([])
+const adminPayoutStatusFilter = ref('ALL')
+const payoutCurrentPage = ref(1)
+const payoutItemsPerPage = 10
+const showRejectPayoutModal = ref(false)
+const selectedPayoutForReject = ref(null)
+const rejectPayoutReason = ref('')
+
+const fetchPayoutRequests = async () => {
+  try {
+    const res = await axios.get('/payouts/admin')
+    payoutRequests.value = res.data || []
+  } catch (err) {
+    console.error('Lỗi khi tải danh sách rút tiền:', err)
+  }
+}
+
+const filteredPayouts = computed(() => {
+  if (adminPayoutStatusFilter.value === 'ALL') {
+    return payoutRequests.value
+  }
+  return payoutRequests.value.filter(p => p.status === adminPayoutStatusFilter.value)
+})
+
+const paginatedPayouts = computed(() => {
+  const start = (payoutCurrentPage.value - 1) * payoutItemsPerPage
+  const end = start + payoutItemsPerPage
+  return filteredPayouts.value.slice(start, end)
+})
+
+const payoutTotalPages = computed(() => {
+  return Math.ceil(filteredPayouts.value.length / payoutItemsPerPage)
+})
+
+watch(adminPayoutStatusFilter, () => {
+  payoutCurrentPage.value = 1
+})
+
+const handleApprovePayout = async (payoutId) => {
+  if (!confirm(locale.value === 'vi' ? 'Bạn có chắc chắn muốn duyệt và chuyển khoản cho yêu cầu rút tiền này?' : 'Are you sure you want to approve and transfer funds for this request?')) return
+  try {
+    await axios.patch(`/payouts/admin/${payoutId}/approve`)
+    showToast(locale.value === 'vi' ? 'Duyệt chuyển khoản thành công' : 'Payout approved successfully')
+    await fetchPayoutRequests()
+  } catch (err) {
+    console.error('Duyệt rút tiền thất bại:', err)
+    showToast(err.response?.data?.message || (locale.value === 'vi' ? 'Duyệt rút tiền thất bại' : 'Failed to approve payout'), 'error')
+  }
+}
+
+const openRejectPayoutModal = (payout) => {
+  selectedPayoutForReject.value = payout
+  rejectPayoutReason.value = ''
+  showRejectPayoutModal.value = true
+}
+
+const handleRejectPayout = async () => {
+  if (!selectedPayoutForReject.value) return
+  if (!rejectPayoutReason.value.trim()) {
+    showToast(locale.value === 'vi' ? 'Vui lòng nhập lý do từ chối' : 'Please input a reason for rejection', 'error')
+    return
+  }
+  try {
+    await axios.patch(`/payouts/admin/${selectedPayoutForReject.value.id}/reject`, null, {
+      params: { reason: rejectPayoutReason.value.trim() }
+    })
+    showToast(locale.value === 'vi' ? 'Đã từ chối yêu cầu rút tiền' : 'Payout request rejected')
+    showRejectPayoutModal.value = false
+    await fetchPayoutRequests()
+  } catch (err) {
+    console.error('Từ chối rút tiền thất bại:', err)
+    showToast(err.response?.data?.message || (locale.value === 'vi' ? 'Từ chối rút tiền thất bại' : 'Failed to reject payout'), 'error')
+  }
+}
+
+const getPayoutStatusLabel = (status) => {
+  switch (status) {
+    case 'PENDING': return locale.value === 'vi' ? 'Chờ duyệt' : 'Pending'
+    case 'APPROVED': return locale.value === 'vi' ? 'Đã duyệt' : 'Approved'
+    case 'REJECTED': return locale.value === 'vi' ? 'Từ chối' : 'Rejected'
+    default: return status
+  }
+}
+
 const handleLogout = () => {
   authStore.logout()
   router.push('/')
@@ -2864,6 +3122,7 @@ onMounted(() => {
   } else {
     fetchAdminData()
     fetchDefaultCommissionRate()
+    fetchPayoutRequests()
   }
 })
 </script>
@@ -4389,5 +4648,15 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
 
 .drawer-slide-leave-to .room-drawer {
   transform: translateX(100%);
+}
+
+.status-badge-sm.approved {
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.status-badge-sm.rejected {
+  background: #fef2f2;
+  color: #ef4444;
 }
 </style>
