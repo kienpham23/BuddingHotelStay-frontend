@@ -355,6 +355,21 @@
               />
             </div>
 
+            <!-- Dropdown lọc trạng thái -->
+            <div>
+              <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569;">{{ locale === 'en' ? 'Status' : 'Trạng thái' }}</label>
+              <select
+                v-model="bookingStatusFilter"
+                style="padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; font-weight: 600; height: 38px; outline: none; color: #334155; background: white; cursor: pointer; min-width: 155px; font-family: inherit;"
+              >
+                <option value="ALL">{{ locale === 'en' ? 'All statuses' : 'Tất cả trạng thái' }}</option>
+                <option value="PENDING">{{ locale === 'en' ? 'Pending' : 'Chờ xác nhận' }}</option>
+                <option value="CONFIRMED">{{ locale === 'en' ? 'Confirmed' : 'Đã xác nhận' }}</option>
+                <option value="COMPLETED">{{ locale === 'en' ? 'Completed' : 'Hoàn thành' }}</option>
+                <option value="CANCELLED">{{ locale === 'en' ? 'Cancelled' : 'Đã hủy' }}</option>
+              </select>
+            </div>
+
             <button 
               type="button" 
               class="btn-secondary" 
@@ -2284,6 +2299,7 @@ const allBookings = ref([])
 const bookingSearchQuery = ref('')
 const bookingStartDate = ref('')
 const bookingEndDate = ref('')
+const bookingStatusFilter = ref('ALL') // 'ALL' | 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
 const bookingCurrentPage = ref(1)
 const bookingItemsPerPage = ref(10) // 10 bookings per page
 const usersList = ref([])
@@ -2630,6 +2646,7 @@ const resetBookingFilters = () => {
   bookingSearchQuery.value = ''
   bookingStartDate.value = ''
   bookingEndDate.value = ''
+  bookingStatusFilter.value = 'ALL'
 }
 
 const filteredBookings = computed(() => {
@@ -2667,6 +2684,11 @@ const filteredBookings = computed(() => {
     })
   }
 
+  // 4. Filter by status
+  if (bookingStatusFilter.value !== 'ALL') {
+    list = list.filter(bk => bk.status === bookingStatusFilter.value)
+  }
+
   return list
 })
 
@@ -2680,7 +2702,7 @@ const bookingTotalPages = computed(() => {
   return Math.ceil(filteredBookings.value.length / bookingItemsPerPage.value) || 1
 })
 
-watch([bookingSearchQuery, bookingStartDate, bookingEndDate], () => {
+watch([bookingSearchQuery, bookingStartDate, bookingEndDate, bookingStatusFilter], () => {
   bookingCurrentPage.value = 1
 })
 

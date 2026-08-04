@@ -1062,14 +1062,14 @@ INSERT INTO `room_images` (`id`, `room_id`, `image_url`, `is_primary`) VALUES
 (44105, 441, 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=1200&q=80', 0),
 (44106, 441, 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=1200&q=80', 0),
 (44107, 441, 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80', 0),
--- *** Room 442: Mù Căng Chải Terraced Villa (ruộng bậc thang, thung lũng vàng) ***
-(44201, 442, 'https://images.unsplash.com/photo-1540202404-d0cad9bf5dbc?auto=format&fit=crop&w=1200&q=80', 1),
-(44202, 442, 'https://images.unsplash.com/photo-1471922694854-ff1b63b20054?auto=format&fit=crop&w=1200&q=80', 0),
-(44203, 442, 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1200&q=80', 0),
-(44204, 442, 'https://images.unsplash.com/photo-1494500764479-0c8f2919a3d8?auto=format&fit=crop&w=1200&q=80', 0),
-(44205, 442, 'https://images.unsplash.com/photo-1418985991508-e47386d96a71?auto=format&fit=crop&w=1200&q=80', 0),
-(44206, 442, 'https://images.unsplash.com/photo-1443632864897-14973fa006cf?auto=format&fit=crop&w=1200&q=80', 0),
-(44207, 442, 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?auto=format&fit=crop&w=1200&q=80', 0),
+-- *** Room 442: Mù Căng Chải Terraced Villa – La Pán Tẩn (ruộng bậc thang, thung lũng vàng) ***
+(44201, 442, 'https://booking.muongthanh.com/images/news/2025/04/original/kham-pha-la-pan-tan_1743581304.jpg', 1),
+(44202, 442, 'https://images.unsplash.com/photo-1562577309-4932fdd64cd1?auto=format&fit=crop&w=1200&q=80', 0),
+(44203, 442, 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80', 0),
+(44204, 442, 'https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1200&q=80', 0),
+(44205, 442, 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80', 0),
+(44206, 442, 'https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=1200&q=80', 0),
+(44207, 442, 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80', 0),
 -- *** Room 443: Hoàng Su Phì Hmong Eco Homestay (đồi chè, bản làng H'Mông, thổ cẩm) ***
 (44301, 443, 'https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=1200&q=80', 1),
 (44302, 443, 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80', 0),
@@ -1118,14 +1118,14 @@ INSERT INTO `room_images` (`id`, `room_id`, `image_url`, `is_primary`) VALUES
 (44805, 448, 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?auto=format&fit=crop&w=1200&q=80', 0),
 (44806, 448, 'https://images.unsplash.com/photo-1456428746267-a1756408f782?auto=format&fit=crop&w=1200&q=80', 0),
 (44807, 448, 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1200&q=80', 0),
--- *** Room 449: Sìn Hồ Cloud Gate Cabin (đồi thông, hoa đào mận, sương mù Lai Châu) ***
-(44901, 449, 'https://images.unsplash.com/photo-1486166787932-7eba7f88b4a0?auto=format&fit=crop&w=1200&q=80', 1),
-(44902, 449, 'https://images.unsplash.com/photo-1484404476063-1c09ad0e4be6?auto=format&fit=crop&w=1200&q=80', 0),
-(44903, 449, 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80', 0),
-(44904, 449, 'https://images.unsplash.com/photo-1453728013993-6d66e9c9123a?auto=format&fit=crop&w=1200&q=80', 0),
-(44905, 449, 'https://images.unsplash.com/photo-1437846972679-9e6e537be46e?auto=format&fit=crop&w=1200&q=80', 0),
-(44906, 449, 'https://images.unsplash.com/photo-1421789665209-c9b2a435d3dc?auto=format&fit=crop&w=1200&q=80', 0),
-(44907, 449, 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=80', 0);
+-- *** Room 449: Sìn Hồ Cloud Gate Cabin – Sin Suối Hồ (thiên đường trong mây, Lai Châu) ***
+(44901, 449, 'https://dulich.laichau.gov.vn/DataFiles/2024/06/Places/20240613-181154-QS2BjefY.webp', 1),
+(44902, 449, 'https://dulich.laichau.gov.vn/DataFiles/2024/06/Places/20240613-181153-4zshesjS.webp', 0),
+(44903, 449, 'https://dulich.laichau.gov.vn/DataFiles/2024/06/Places/20240613-180910-TkeNNxSD.webp', 0),
+(44904, 449, 'https://dulich.laichau.gov.vn/DataFiles/2024/06/Places/20240613-181154-v5Wv2Elv.webp', 0),
+(44905, 449, 'https://dulich.laichau.gov.vn/DataFiles/2024/06/Places/20240613-181153-VbURNsJr.webp', 0),
+(44906, 449, 'https://dulich.laichau.gov.vn/DataFiles/2024/06/Places/20240613-181154-GrqxbTcZ.webp', 0),
+(44907, 449, 'https://dulich.laichau.gov.vn/DataFiles/2024/06/Places/20240613-180910-QsSfbgIX.webp', 0);
 
 
 
