@@ -105,7 +105,7 @@
 
       <!-- Ghi chú hỗ trợ URL ảnh -->
       <div v-if="!importResult" class="image-url-hint">
-        <span class="hint-icon">🖼️</span>
+        <span class="hint-icon" style="display: flex; align-items: center; margin-top: 2px;"><ImageIcon :size="14" /></span>
         <span class="hint-text">
           {{ locale === 'vi'
             ? 'File Excel hỗ trợ cột ảnh: imageUrl1, imageUrl2, imageUrl3 — dán link ảnh công khai (Cloudinary, Google Drive, Unsplash...)'
@@ -196,7 +196,7 @@ import { useI18n } from 'vue-i18n'
 import {
   BarChart3, Download, FileSpreadsheet, Upload,
   FolderOpen, CheckCircle2, XCircle, AlertCircle,
-  Check, X, Paperclip
+  Check, X, Paperclip, Image as ImageIcon
 } from 'lucide-vue-next'
 
 const { t, locale } = useI18n()
