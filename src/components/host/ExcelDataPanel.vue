@@ -95,13 +95,25 @@
           <div class="dropzone-format-badge" style="margin-top: 0; margin-left: auto; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; background: #e0eaff; color: #1a6cf7; border-radius: 999px;">{{ $t('host.excel.dropzone_badge') }}</div>
         </div>
 
-        <!-- Trạng thái đang xử lý -->
-        <div v-else class="dropzone-loading">
+        <!-- Loading state: importing file -->
+        <div v-if="importingFile" class="loading-overlay">
           <div class="loading-spinner-lg"></div>
           <p class="loading-text">{{ $t('host.excel.processing') }}</p>
           <p class="loading-subtext">{{ $t('host.excel.processing_sub') }}</p>
         </div>
       </div>
+
+      <!-- Ghi chú hỗ trợ URL ảnh -->
+      <div v-if="!importResult" class="image-url-hint">
+        <span class="hint-icon">🖼️</span>
+        <span class="hint-text">
+          {{ locale === 'vi'
+            ? 'File Excel hỗ trợ cột ảnh: imageUrl1, imageUrl2, imageUrl3 — dán link ảnh công khai (Cloudinary, Google Drive, Unsplash...)'
+            : 'Excel supports image columns: imageUrl1, imageUrl2, imageUrl3 — paste public image links (Cloudinary, Google Drive, Unsplash...)'
+          }}
+        </span>
+      </div>
+
 
       <!-- Kết quả import -->
       <div v-if="importResult" class="import-result">
@@ -195,41 +207,45 @@ const emit = defineEmits(['rooms-updated'])
 // ========================
 // STATE
 // ========================
-const exportingRooms      = ref(false)
-const downloadingTemplate = ref(false)
-const importingFile       = ref(false)
-const isDraggingExcel     = ref(false)
-const excelFileInput      = ref(null)
-const importResult        = ref(null)
+const exportingRooms       = ref(false)
+const downloadingTemplate  = ref(false)
+const importingFile        = ref(false)
+const uploadingImages      = ref(false)
+const isDraggingExcel      = ref(false)
+const excelFileInput       = ref(null)
+const importResult         = ref(null)
+const imageUploadResults   = ref([])  // [{ok, message}]
+const imageUploadProgress  = ref(0)
+const imageUploadTotal     = ref(0)
 
 // ========================
 // HELPERS
 // ========================
-
-/** Trả về ngày hiện tại định dạng YYYY-MM-DD */
 const today = () => {
-  const d    = new Date()
-  const yyyy = d.getFullYear()
-  const mm   = String(d.getMonth() + 1).padStart(2, '0')
-  const dd   = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
-/**
- * Kích hoạt tải file về máy từ Blob (không dùng thư viện ngoài).
- * @param {Blob}   blob     - dữ liệu nhị phân nhận từ server
- * @param {string} filename - tên file khi lưu xuống
- */
 const downloadBlob = (blob, filename) => {
   const url = URL.createObjectURL(blob)
   const a   = document.createElement('a')
-  a.href     = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  a.href = url; a.download = filename
+  document.body.appendChild(a); a.click()
+  document.body.removeChild(a); URL.revokeObjectURL(url)
 }
+
+/**
+ * Tải SheetJS (xlsx) từ CDN một lần, cache vào window.XLSX
+ */
+const loadSheetJS = () => new Promise((resolve, reject) => {
+  if (window.XLSX) return resolve(window.XLSX)
+  const script = document.createElement('script')
+  script.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+  script.crossOrigin = 'anonymous'
+  script.onload  = () => resolve(window.XLSX)
+  script.onerror = () => reject(new Error('Không thể tải SheetJS từ CDN'))
+  document.head.appendChild(script)
+})
 
 // ========================
 // 1) XUẤT DANH SÁCH PHÒNG
@@ -237,9 +253,7 @@ const downloadBlob = (blob, filename) => {
 const exportRooms = async () => {
   exportingRooms.value = true
   try {
-    const res = await axios.get('/excel/host/export-rooms', {
-      responseType: 'blob'
-    })
+    const res = await axios.get('/excel/host/export-rooms', { responseType: 'blob' })
     downloadBlob(res.data, 'MyRooms.xlsx')
   } catch (err) {
     const msg = err.response?.data?.message || err.message || ''
@@ -250,18 +264,111 @@ const exportRooms = async () => {
 }
 
 // ========================
-// 2) TẢI MẪU EXCEL NHẬP PHÒNG
+// 2) TẢI MẪU EXCEL NHẬP PHÒNG (frontend-generated)
 // ========================
+const generateTemplateFrontend = async () => {
+  const XLSX = await loadSheetJS()
+  const wb = XLSX.utils.book_new()
+
+  // ---- Sheet 1: Dữ liệu mẫu ----
+  const headerLabels = [
+    'name', 'roomTypeName', 'city', 'address',
+    'pricePerNight', 'maxGuests', 'description', 'amenities',
+    'imageUrl1', 'imageUrl2', 'imageUrl3'
+  ]
+  const displayLabels = [
+    'Tên phòng *', 'Loại phòng *', 'Thành phố *', 'Địa chỉ *',
+    'Giá/đêm (VNĐ) *', 'Sức chứa *', 'Mô tả phòng', 'Tiện ích (dấu phẩy)',
+    'URL Ảnh 1', 'URL Ảnh 2', 'URL Ảnh 3'
+  ]
+  const sampleRows = [
+    displayLabels,
+    [
+      'Phòng Deluxe view biển Mỹ Khê', 'Deluxe', 'Đà Nẵng', '45 Trường Sa, Hòa Hải, Ngũ Hành Sơn',
+      1500000, 3, 'Phòng sang trọng ban công nhìn thẳng ra biển. Đầy đủ tiện nghi cao cấp.',
+      'WiFi miễn phí, Điều hòa, TV 50 inch, Tủ lạnh, Bồn tắm, Minibar',
+      'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800',
+      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800', ''
+    ],
+    [
+      'Villa ven hồ Đà Lạt', 'Villa', 'Đà Lạt', '123 Hồ Xuân Hương, Phường 1',
+      3500000, 8, 'Villa 4 phòng ngủ view hồ Xuân Hương, hồ bơi riêng, BBQ sân vườn.',
+      'WiFi, Điều hòa, Hồ bơi riêng, Bếp đầy đủ, BBQ, Chỗ đỗ xe, Smart TV',
+      'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800',
+      'https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=800', ''
+    ],
+    [
+      'Căn hộ studio Hà Nội trung tâm', 'Standard', 'Hà Nội', '15 Lý Thường Kiệt, Hoàn Kiếm',
+      700000, 2, 'Studio hiện đại ngay trung tâm, gần hồ Hoàn Kiếm.',
+      'WiFi miễn phí, Điều hòa, TV, Tủ lạnh, Ấm đun nước',
+      'https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=800', '', ''
+    ]
+  ]
+
+  const ws1 = XLSX.utils.aoa_to_sheet(sampleRows)
+  ws1['!cols'] = [35,18,12,40,16,10,55,50,65,65,65].map(w => ({ wch: w }))
+  XLSX.utils.book_append_sheet(wb, ws1, 'Danh sách phòng')
+
+  // ---- Sheet 2: Hướng dẫn ----
+  const guideRows = [
+    ['📋 HƯỚNG DẪN NHẬP DỮ LIỆU PHÒNG — CÓ HỖ TRỢ URL ẢNH'],
+    [''],
+    ['Tên cột (KHÔNG đổi tên)', 'Bắt buộc', 'Mô tả', 'Ví dụ'],
+    ['name', 'CÓ', 'Tên phòng (tối đa 200 ký tự)', 'Phòng Deluxe biển Mỹ Khê'],
+    ['roomTypeName', 'CÓ', 'Loại phòng: Standard | Deluxe | Family Room | Villa | Penthouse | Nhà nguyên căn', 'Deluxe'],
+    ['city', 'CÓ', 'Thành phố: Đà Nẵng | Hà Nội | Hồ Chí Minh | Hội An | Nha Trang | Đà Lạt | Huế...', 'Đà Nẵng'],
+    ['address', 'CÓ', 'Địa chỉ đầy đủ (số nhà, đường, phường, quận)', '45 Trường Sa, Hòa Hải'],
+    ['pricePerNight', 'CÓ', 'Giá mỗi đêm (VNĐ) — chỉ nhập số nguyên, tối thiểu 100000', '1500000'],
+    ['maxGuests', 'CÓ', 'Sức chứa tối đa (1 - 20 người)', '3'],
+    ['description', 'KHÔNG', 'Mô tả chi tiết về phòng (tối đa 2000 ký tự)', 'Phòng sang trọng, view biển đẹp...'],
+    ['amenities', 'KHÔNG', 'Danh sách tiện ích cách nhau bởi dấu phẩy', 'WiFi, Điều hòa, TV, Tủ lạnh'],
+    ['imageUrl1', 'KHÔNG', '⭐ URL ảnh chính (sẽ thành ảnh đại diện). Phải là link ảnh công khai, trực tiếp.', 'https://images.unsplash.com/photo-xxx?w=800'],
+    ['imageUrl2', 'KHÔNG', 'URL ảnh phụ thứ 2', 'https://res.cloudinary.com/demo/image/upload/xxx.jpg'],
+    ['imageUrl3', 'KHÔNG', 'URL ảnh phụ thứ 3', ''],
+    [''],
+    ['📸 HƯỚNG DẪN URL ẢNH:'],
+    ['• URL phải là đường dẫn TRỰC TIẾP đến file ảnh (kết thúc bằng .jpg / .png / .webp hoặc có tham số ?w=)'],
+    ['• Hỗ trợ: Cloudinary, Unsplash, Imgur, hosting cá nhân, Google Drive (xem phía dưới)'],
+    ['• Google Drive: Tải ảnh lên Drive → Chia sẻ "Bất kỳ ai có link" → Lấy ID file → dùng: https://lh3.googleusercontent.com/d/{FILE_ID}'],
+    [''],
+    ['⚠️ LƯU Ý CHUNG:'],
+    ['• Hàng đầu tiên là TÊN CỘT (name, roomTypeName...) — KHÔNG XÓA, KHÔNG ĐỔI TÊN'],
+    ['• Các cột có (*) là bắt buộc — để trống sẽ bị báo lỗi khi import'],
+    ['• Sau khi import, phòng có trạng thái CHỜ DUYỆT và cần Admin phê duyệt trước khi hiển thị'],
+    ['• Mỗi lần import tối đa 50 phòng'],
+    ['• File phải định dạng .xlsx (Excel 2007 trở lên)']
+  ]
+  const ws2 = XLSX.utils.aoa_to_sheet(guideRows)
+  ws2['!cols'] = [22,12,75,55].map(w => ({ wch: w }))
+  XLSX.utils.book_append_sheet(wb, ws2, 'Hướng dẫn')
+
+  const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
+  downloadBlob(
+    new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+    'HotelStay_RoomTemplate.xlsx'
+  )
+}
+
 const downloadRoomTemplate = async () => {
   downloadingTemplate.value = true
   try {
-    const res = await axios.get('/excel/host/room-template', {
-      responseType: 'blob'
-    })
-    downloadBlob(res.data, 'HotelStay_RoomTemplate.xlsx')
-  } catch (err) {
-    const msg = err.response?.data?.message || err.message || ''
-    alert('❌ ' + t('host.excel.download_template_failed') + msg)
+    // Thử backend trước
+    const res = await axios.get('/excel/host/room-template', { responseType: 'blob' })
+    // Kiểm tra nếu backend trả về file thực (không phải JSON lỗi)
+    if (res.data && res.data.size > 0 && res.data.type !== 'application/json') {
+      downloadBlob(res.data, 'HotelStay_RoomTemplate.xlsx')
+      return
+    }
+    throw new Error('Backend returned empty or invalid file')
+  } catch {
+    // Fallback: tạo file template trên frontend
+    try {
+      await generateTemplateFrontend()
+    } catch (genErr) {
+      alert('❌ ' + (locale.value === 'vi'
+        ? 'Không thể tạo file mẫu. Vui lòng kiểm tra kết nối mạng.'
+        : 'Cannot generate template. Please check your internet connection.'))
+    }
   } finally {
     downloadingTemplate.value = false
   }
@@ -277,7 +384,6 @@ const triggerExcelInput = () => {
 const handleExcelSelect = (event) => {
   const file = event.target.files?.[0]
   if (file) processImportFile(file)
-  // Reset để có thể chọn lại cùng một file
   event.target.value = ''
 }
 
@@ -286,33 +392,29 @@ const handleExcelDrop = (event) => {
   const file = event.dataTransfer.files?.[0]
   if (!file) return
   if (!file.name.toLowerCase().endsWith('.xlsx')) {
-    alert('⚠️ ' + t('host.excel.only_xlsx'))
-    return
+    alert('⚠️ ' + t('host.excel.only_xlsx')); return
   }
   processImportFile(file)
 }
 
 const processImportFile = async (file) => {
   if (!file.name.toLowerCase().endsWith('.xlsx')) {
-    alert('⚠️ ' + t('host.excel.only_xlsx'))
-    return
+    alert('⚠️ ' + t('host.excel.only_xlsx')); return
   }
 
   importingFile.value  = true
   importResult.value   = null
 
   const formData = new FormData()
-  formData.append('file', file)      // field name "file" đúng với backend
+  formData.append('file', file)
 
   try {
     const res = await axios.post('/excel/host/import-rooms', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
-
-    // Lưu kết quả — cấu trúc DTO: { totalRows, successCount, errorCount, successes[], errors[] }
     importResult.value = res.data
 
-    // Sau khi import xong, reload danh sách phòng (có thể có phòng PENDING mới)
+    // Reload danh sách phòng
     try {
       const roomsRes = await axios.get('/rooms/host')
       emit('rooms-updated', roomsRes.data ?? [])
@@ -329,11 +431,12 @@ const processImportFile = async (file) => {
 
 const closeImportResult = () => {
   importResult.value = null
+  imageUploadResults.value = []
 }
 
 const resetForNewUpload = () => {
   importResult.value = null
-  // Chờ DOM cập nhật rồi mở hộp thoại chọn file
+  imageUploadResults.value = []
   setTimeout(() => triggerExcelInput(), 60)
 }
 </script>
@@ -556,6 +659,31 @@ const resetForNewUpload = () => {
   font-size: 0.75rem;
   color: #64748b;
   margin: 0.1rem 0 0;
+}
+
+/* ---- Image URL Hint ---- */
+.image-url-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.hint-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.hint-text {
+  font-weight: 500;
 }
 
 /* ---- Excel Dropzone ---- */

@@ -668,7 +668,7 @@
                 </span>
                 <button 
                   class="btn-view-detail" 
-                  @click.stop="openQuickView(room)" 
+                  @click.stop="goToDetail(room.id)" 
                   style="padding: 6px 14px; background: #3b82f6; color: white; border: none; border-radius: 6px; font-weight: 700; font-size: 12.5px; cursor: pointer; transition: all 0.2s;"
                 >
                   {{ locale === 'vi' ? 'Xem thông tin' : 'Details' }}
@@ -901,12 +901,13 @@
           >
             {{ locale === 'vi' ? 'Đặt phòng ngay' : 'Book Now' }}
           </button>
-        </div>
       </div>
     </div>
-    <!-- PROFILE SETTINGS MODAL -->
-    <div class="modal-backdrop" v-if="showProfileModal" style="z-index: 1200; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px;">
-      <div style="background: white; border-radius: 20px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 28px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 24px; position: relative; font-family: inherit;">
+  </div>
+
+  <!-- PROFILE SETTINGS MODAL -->
+  <div class="modal-backdrop" v-if="showProfileModal" style="z-index: 1200; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: white; border-radius: 20px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 28px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 24px; position: relative; font-family: inherit;">
         <!-- Close button -->
         <button type="button" @click="showProfileModal = false" style="position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; font-weight: 300; transition: color 0.2s;" onmouseover="this.style.color='#0f172a'" onmouseout="this.style.color='#94a3b8'">×</button>
         
@@ -1242,7 +1243,24 @@ const filteredRooms = computed(() => {
   }
 
   // Sắp xếp
-  if (sortBy.value === 'priceAsc') {
+  if (sortBy.value === 'default') {
+    list.sort((a, b) => {
+      // Ưu tiên rating trung bình (avgRating) cao hơn
+      const rateA = a.avgRating || 0
+      const rateB = b.avgRating || 0
+      if (rateB !== rateA) {
+        return rateB - rateA
+      }
+      // Cùng rating -> ưu tiên số lượng đánh giá (ratingCount) nhiều hơn
+      const countA = a.ratingCount || 0
+      const countB = b.ratingCount || 0
+      if (countB !== countA) {
+        return countB - countA
+      }
+      // Cùng rating và số lượng -> ưu tiên giá thấp hơn
+      return a.pricePerNight - b.pricePerNight
+    })
+  } else if (sortBy.value === 'priceAsc') {
     list.sort((a, b) => a.pricePerNight - b.pricePerNight)
   } else if (sortBy.value === 'priceDesc') {
     list.sort((a, b) => b.pricePerNight - a.pricePerNight)
@@ -1477,6 +1495,31 @@ const formatPriceVND = (price) => {
   return 'VND ' + new Intl.NumberFormat('vi-VN').format(price)
 }
 
+const saveSearchState = () => {
+  const state = {
+    search: search.value,
+    searched: searched.value,
+    rooms: rooms.value,
+    searchPage: searchPage.value,
+    onlyApartments: onlyApartments.value,
+    filterPrice: filterPrice.value,
+    filterRating: filterRating.value,
+    filterType: filterType.value,
+    filterCity: filterCity.value,
+    sortBy: sortBy.value,
+    isSearchCompact: isSearchCompact.value
+  }
+  sessionStorage.setItem('searchState', JSON.stringify(state))
+}
+
+watch(
+  [search, searched, rooms, searchPage, onlyApartments, filterPrice, filterRating, filterType, filterCity, sortBy, isSearchCompact],
+  () => {
+    saveSearchState()
+  },
+  { deep: true }
+)
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
   document.addEventListener('mousedown', handleOutsideClick)
@@ -1487,6 +1530,34 @@ onMounted(() => {
     fetchUserProfile()
     if (authStore.role === 'CUSTOMER') {
       fetchMyVouchers()
+    }
+  }
+
+  // Restore search state from sessionStorage
+  const savedSearchState = sessionStorage.getItem('searchState')
+  if (savedSearchState) {
+    try {
+      const state = JSON.parse(savedSearchState)
+      search.value = state.search || search.value
+      searched.value = state.searched ?? searched.value
+      rooms.value = state.rooms || []
+      searchPage.value = state.searchPage || 1
+      onlyApartments.value = state.onlyApartments ?? false
+      filterPrice.value = state.filterPrice || 'all'
+      filterRating.value = state.filterRating || 0
+      filterType.value = state.filterType || 'all'
+      filterCity.value = state.filterCity || 'all'
+      sortBy.value = state.sortBy || 'default'
+      isSearchCompact.value = state.isSearchCompact ?? false
+
+      // If they had search results, scroll to search-results-section
+      if (searched.value) {
+        setTimeout(() => {
+          document.getElementById('search-results-section')?.scrollIntoView({ block: 'start' })
+        }, 150)
+      }
+    } catch (e) {
+      console.error('Failed to parse search state', e)
     }
   }
 })

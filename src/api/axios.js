@@ -1,10 +1,7 @@
 import axios from 'axios'
 
-const isDev = import.meta.env.DEV
-const baseUrlFromEnv = import.meta.env.VITE_API_BASE_URL
-
 const instance = axios.create({
-    baseURL: baseUrlFromEnv ? `${baseUrlFromEnv}/api` : (isDev ? '/api' : 'http://localhost:8088/api'),
+    baseURL: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088'}/api`,
     timeout: 10000,
 })
 
