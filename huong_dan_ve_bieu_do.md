@@ -37,19 +37,44 @@ Customer -|> Guest
 rectangle "Hệ thống Đặt phòng Khách sạn" {
     usecase "Đăng ký / Đăng nhập tài khoản" as UC_Auth
     usecase "Tìm kiếm & Xem phòng" as UC_Search
-Guest --> UC_Search
+    usecase "Xem vị trí phòng trên bản đồ" as UC_ViewMap
+    usecase "Đặt phòng" as UC_Book
+    usecase "Thanh toán trực tuyến" as UC_Pay
+    usecase "Quản lý đặt phòng" as UC_ManageBooking
+    usecase "Hủy đặt phòng" as UC_Cancel
+    usecase "Đánh giá phòng" as UC_Review
+    usecase "Đăng thông tin phòng" as UC_RegRoom
+    usecase "Chọn vị trí trên bản đồ" as UC_MapPick
+    usecase "Nhập hàng loạt qua Excel" as UC_ImportExcel
+    usecase "Quản lý phòng" as UC_ManageRoom
+    usecase "Quản lý đơn đặt phòng" as UC_ManageHostBooking
+    usecase "Lọc đơn sắp diễn ra" as UC_UpcomingFilter
+    usecase "Xem báo cáo doanh thu" as UC_HostRevenue
+    usecase "Quản lý người dùng" as UC_ManageUser
+    usecase "Duyệt yêu cầu đăng phòng" as UC_ApproveRoom
+    usecase "Quản lý chương trình khuyến mãi" as UC_ManagePromo
+    usecase "Thống kê doanh thu và hoa hồng" as UC_AdminRevenue
+}
 
+Guest --> UC_Auth
+Guest --> UC_Search
 Customer --> UC_Book
 Customer --> UC_ManageBooking
 Customer --> UC_Cancel
 Customer --> UC_Review
+Customer --> UC_ViewMap
 
 UC_Pay ..> UC_Book : <<extend>>
+UC_ViewMap ..> UC_Search : <<extend>>
+UC_MapPick ..> UC_RegRoom : <<include>>
+UC_ImportExcel ..> UC_RegRoom : <<extend>>
+UC_UpcomingFilter ..> UC_ManageHostBooking : <<extend>>
 
 Host --> UC_RegRoom
 Host --> UC_ManageRoom
 Host --> UC_ManageHostBooking
 Host --> UC_HostRevenue
+Host --> UC_ImportExcel
 
 Admin --> UC_ManageUser
 Admin --> UC_ApproveRoom
@@ -532,13 +557,14 @@ deactivate GUI
 @enduml
 ```
 
-### Biểu đồ 3.9: Chủ phòng đăng thông tin phòng & tải ảnh (có chọn vị trí bản đồ)
+### Biểu đồ 3.9: Chủ phòng đăng thông tin phòng & tải ảnh (có chọn vị trí bản đồ & dán nhiều link ảnh)
 ```plantuml
 @startuml
 autonumber
 actor "Chủ phòng" as Host
 participant "Giao diện Chủ phòng" as GUI
 participant ": Bản đồ / Geocoding" as Map
+participant "Máy chủ Backend (API)" as API
 participant ": Phòng" as Room
 participant ": Ảnh phòng" as Image
 
@@ -554,17 +580,46 @@ end
 
 GUI -> GUI : Kiểm tra tọa độ hợp lệ & không trùng phòng cùng Host (<20m)
 
-Host -> GUI : Gửi thông tin phòng mới và danh sách hình ảnh
-GUI -> Room : Khởi tạo phòng nghỉ mới (Chờ duyệt) với latitude, longitude
+alt Cách 1: Tải ảnh từ thiết bị
+    Host -> GUI : Kéo thả hoặc chọn file ảnh từ máy
+    GUI -> GUI : Thêm file vào danh sách selectedNewFiles (isUrl = false)
+else Cách 2: Dán nhiều link ảnh trực tiếp
+    Host -> GUI : Dán các link ảnh (mỗi dòng hoặc phân tách bằng dấu phẩy)
+    Host -> GUI : Nhấn "Thêm ảnh"
+    GUI -> GUI : Parse các link, thêm vào selectedNewFiles (isUrl = true)
+end
+
+Host -> GUI : Nhấn lưu phòng
+GUI -> API : Gửi POST /api/rooms (thông tin phòng + latitude/longitude)
+activate API
+API -> Room : Khởi tạo phòng nghỉ mới (Chờ duyệt)
 activate Room
-
-Room -> Image : Lưu trữ các hình ảnh mô tả phòng nghỉ
-activate Image
-Image --> Room : Xác nhận lưu ảnh thành công
-deactivate Image
-
-Room --> GUI : Trả về thông tin phòng đã tạo
+Room --> API : Trả về thông tin phòng đã tạo (createdRoomId)
 deactivate Room
+API --> GUI : Trả về thông tin phòng đã tạo (createdRoomId)
+deactivate API
+
+alt Có file ảnh được chọn (isUrl = false)
+    GUI -> API : Gửi POST /api/images/rooms/{createdRoomId}/upload (Multipart FormData)
+    activate API
+    API -> Image : Lưu trữ các hình ảnh mô tả phòng nghỉ vào thư mục / disk
+    activate Image
+    Image --> API : Trả về danh sách URL ảnh vừa lưu
+    deactivate Image
+    API --> GUI : Trả về kết quả upload thành công
+    deactivate API
+end
+
+alt Có link ảnh được dán (isUrl = true)
+    GUI -> API : Gửi POST /api/images/rooms/{createdRoomId}/urls (JSON: imageUrls)
+    activate API
+    API -> Image : Lưu trữ các link ảnh vào cơ sở dữ liệu
+    activate Image
+    Image --> API : Trả về kết quả lưu thành công
+    deactivate Image
+    API --> GUI : Trả về kết quả lưu thành công
+    deactivate API
+end
 
 GUI --> Host : Hiển thị thông báo đăng phòng thành công, đang chờ kiểm duyệt
 deactivate GUI

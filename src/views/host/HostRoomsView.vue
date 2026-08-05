@@ -624,14 +624,14 @@
                 <div class="stat-icon rev-color"><DollarSign :size="24" /></div>
                 <div class="stat-info">
                   <h4>{{ $t('host.revenue.gross_revenue') }}</h4>
-                  <span class="stat-val">{{ formatPrice(revenueData.totalRevenue) }}</span>
+                  <span class="stat-val" :style="{ fontSize: getBalanceFontSize(revenueData.totalRevenue) }">{{ formatPrice(revenueData.totalRevenue) }}</span>
                 </div>
               </div>
               <div class="stat-card host-net-card">
                 <div class="stat-icon net-color"><Wallet :size="24" /></div>
                 <div class="stat-info">
                   <h4>{{ $t('host.revenue.net_revenue') }}</h4>
-                  <span class="stat-val highlight-green">{{ formatPrice(revenueData.totalHostEarning) }}</span>
+                  <span class="stat-val highlight-green" :style="{ fontSize: getBalanceFontSize(revenueData.totalHostEarning) }">{{ formatPrice(revenueData.totalHostEarning) }}</span>
                   <small class="stat-sub">{{ $t('host.revenue.commission_deduction', { percent: getCommissionPercentage }) }}</small>
                 </div>
               </div>
@@ -650,7 +650,7 @@
                 </div>
                 <div class="stat-info" style="flex: 1;">
                   <h4 style="color: #1e3a8a; font-weight: 700;">{{ locale === 'vi' ? 'Số dư khả dụng' : 'Available Balance' }}</h4>
-                  <span class="stat-val" style="color: #2563eb; font-weight: 800;">{{ formatPrice(hostBalance) }}</span>
+                  <span class="stat-val" style="color: #2563eb; font-weight: 800;" :style="{ fontSize: getBalanceFontSize(hostBalance) }">{{ formatPrice(hostBalance) }}</span>
                   <button 
                     type="button" 
                     class="btn-primary" 
@@ -2341,6 +2341,13 @@ const getStatusLabel = (status) => {
 }
 
 const formatPrice = (p) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p)
+
+const getBalanceFontSize = (amount) => {
+  const len = formatPrice(amount || 0).length
+  if (len > 16) return '0.85rem'
+  if (len > 12) return '0.95rem'
+  return '1.15rem'
+}
 
 const formatCheckOut = (dateStr) => {
   if (!dateStr) return '--'
@@ -4278,12 +4285,18 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1.2rem 1rem;
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.75rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
   transition: transform 0.2s, box-shadow 0.2s;
+  min-width: 0;
+}
+
+.stats-grid-rev .stat-info {
+  min-width: 0;
+  flex: 1;
 }
 
 .stats-grid-rev .stat-card:hover {
@@ -4352,6 +4365,8 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   color: #1e293b;
   letter-spacing: -0.01em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dashboard-row-rev {
