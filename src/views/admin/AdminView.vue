@@ -450,65 +450,36 @@
           </table>
 
           <!-- Pagination for Bookings -->
-          <div class="pagination-container" v-if="bookingTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          <div class="pagination-container" v-if="bookingTotalPages > 1">
             <button 
-              class="btn-nav" 
-              :disabled="bookingCurrentPage === 1" 
-              @click="bookingCurrentPage = 1"
-              title="Trang đầu"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="bookingCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-            >
-              &laquo;
-            </button>
-            <button 
-              class="btn-nav" 
+              class="pagination-btn" 
               :disabled="bookingCurrentPage === 1" 
               @click="bookingCurrentPage--"
               title="Trang trước"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="bookingCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
             >
-              &lsaquo;
+              <ChevronLeft :size="16" />
             </button>
             
             <template v-for="p in bookingPageNumbers" :key="p">
-              <span v-if="p === '...'" style="padding: 6px 12px; color: #94a3b8; font-weight: 500;">…</span>
+              <span v-if="p === '...'" class="pagination-ellipsis">…</span>
               <button 
                 v-else
-                class="btn-page"
+                class="pagination-btn"
                 :class="{ active: bookingCurrentPage === p }"
                 @click="bookingCurrentPage = p"
-                style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 500; min-width: 32px; text-align: center; transition: all 0.2s;"
-                :style="bookingCurrentPage === p ? { background: '#3b82f6', borderColor: '#3b82f6', color: 'white' } : { color: '#475569' }"
               >
                 {{ p }}
               </button>
             </template>
             
             <button 
-              class="btn-nav" 
+              class="pagination-btn" 
               :disabled="bookingCurrentPage === bookingTotalPages" 
               @click="bookingCurrentPage++"
               title="Trang sau"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="bookingCurrentPage === bookingTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
             >
-              &rsaquo;
+              <ChevronRight :size="16" />
             </button>
-            <button 
-              class="btn-nav" 
-              :disabled="bookingCurrentPage === bookingTotalPages" 
-              @click="bookingCurrentPage = bookingTotalPages"
-              title="Trang cuối"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="bookingCurrentPage === bookingTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-            >
-              &raquo;
-            </button>
-            <span style="font-size: 13px; font-weight: 600; color: #64748b; margin-left: 8px;">
-              Trang {{ bookingCurrentPage }}/{{ bookingTotalPages }}
-            </span>
           </div>
         </div>
 
@@ -708,65 +679,36 @@
           </table>
 
           <!-- Pagination for Users -->
-          <div class="pagination-container" v-if="userTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          <div class="pagination-container" v-if="userTotalPages > 1">
             <button 
-              class="btn-nav" 
-              :disabled="userCurrentPage === 1" 
-              @click="userCurrentPage = 1"
-              title="Trang đầu"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="userCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-            >
-              &laquo;
-            </button>
-            <button 
-              class="btn-nav" 
+              class="pagination-btn" 
               :disabled="userCurrentPage === 1" 
               @click="userCurrentPage--"
               title="Trang trước"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="userCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
             >
-              &lsaquo;
+              <ChevronLeft :size="16" />
             </button>
             
             <template v-for="p in userPageNumbers" :key="p">
-              <span v-if="p === '...'" style="padding: 6px 12px; color: #94a3b8; font-weight: 500;">…</span>
+              <span v-if="p === '...'" class="pagination-ellipsis">…</span>
               <button 
                 v-else
-                class="btn-page"
+                class="pagination-btn"
                 :class="{ active: userCurrentPage === p }"
                 @click="userCurrentPage = p"
-                style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 500; min-width: 32px; text-align: center; transition: all 0.2s;"
-                :style="userCurrentPage === p ? { background: '#3b82f6', borderColor: '#3b82f6', color: 'white' } : { color: '#475569' }"
               >
                 {{ p }}
               </button>
             </template>
             
             <button 
-              class="btn-nav" 
+              class="pagination-btn" 
               :disabled="userCurrentPage === userTotalPages" 
               @click="userCurrentPage++"
               title="Trang sau"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="userCurrentPage === userTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
             >
-              &rsaquo;
+              <ChevronRight :size="16" />
             </button>
-            <button 
-              class="btn-nav" 
-              :disabled="userCurrentPage === userTotalPages" 
-              @click="userCurrentPage = userTotalPages"
-              title="Trang cuối"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="userCurrentPage === userTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-            >
-              &raquo;
-            </button>
-            <span style="font-size: 13px; font-weight: 600; color: #64748b; margin-left: 8px;">
-              Trang {{ userCurrentPage }}/{{ userTotalPages }}
-            </span>
           </div>
         </div>
 
@@ -952,65 +894,36 @@
         </div>
 
         <!-- Pagination controls -->
-        <div class="pagination-container" v-if="roomTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+        <div class="pagination-container" v-if="roomTotalPages > 1">
           <button 
-            class="btn-pagination-nav" 
-            :disabled="roomCurrentPage === 1" 
-            @click="roomCurrentPage = 1"
-            title="Trang đầu"
-            style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
-            :style="roomCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-          >
-            &laquo;
-          </button>
-          <button 
-            class="btn-pagination-nav" 
+            class="pagination-btn" 
             :disabled="roomCurrentPage === 1" 
             @click="roomCurrentPage--"
             title="Trang trước"
-            style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
-            :style="roomCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
           >
-            &lsaquo;
+            <ChevronLeft :size="16" />
           </button>
           
           <template v-for="p in roomPageNumbers" :key="p">
-            <span v-if="p === '...'" style="padding: 6px 12px; color: #94a3b8; font-weight: 500;">…</span>
+            <span v-if="p === '...'" class="pagination-ellipsis">…</span>
             <button 
               v-else
-              class="btn-pagination-page" 
+              class="pagination-btn" 
               :class="{ active: roomCurrentPage === p }"
               @click="roomCurrentPage = p"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-size: 13.5px; font-weight: 600; transition: all 0.2s;"
-              :style="roomCurrentPage === p ? { background: '#3b82f6', borderColor: '#3b82f6', color: 'white' } : { color: '#475569' }"
             >
               {{ p }}
             </button>
           </template>
 
           <button 
-            class="btn-pagination-nav" 
+            class="pagination-btn" 
             :disabled="roomCurrentPage === roomTotalPages" 
             @click="roomCurrentPage++"
             title="Trang sau"
-            style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
-            :style="roomCurrentPage === roomTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
           >
-            &rsaquo;
+            <ChevronRight :size="16" />
           </button>
-          <button 
-            class="btn-pagination-nav" 
-            :disabled="roomCurrentPage === roomTotalPages" 
-            @click="roomCurrentPage = roomTotalPages"
-            title="Trang cuối"
-            style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
-            :style="roomCurrentPage === roomTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-          >
-            &raquo;
-          </button>
-          <span style="font-size: 13.5px; font-weight: 600; color: #64748b; margin-left: 8px;">
-            Trang {{ roomCurrentPage }}/{{ roomTotalPages }}
-          </span>
         </div>
 
         <div class="empty-state" v-else-if="roomsList.length > 0">
@@ -1119,65 +1032,36 @@
           </table>
 
           <!-- Pagination for Payments -->
-          <div class="pagination-container" v-if="paymentTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          <div class="pagination-container" v-if="paymentTotalPages > 1">
             <button 
-              class="btn-nav" 
-              :disabled="paymentCurrentPage === 1" 
-              @click="paymentCurrentPage = 1"
-              title="Trang đầu"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="paymentCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-            >
-              &laquo;
-            </button>
-            <button 
-              class="btn-nav" 
+              class="pagination-btn" 
               :disabled="paymentCurrentPage === 1" 
               @click="paymentCurrentPage--"
               title="Trang trước"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="paymentCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
             >
-              &lsaquo;
+              <ChevronLeft :size="16" />
             </button>
             
             <template v-for="p in paymentPageNumbers" :key="p">
-              <span v-if="p === '...'" style="padding: 6px 12px; color: #94a3b8; font-weight: 500;">…</span>
+              <span v-if="p === '...'" class="pagination-ellipsis">…</span>
               <button 
                 v-else
-                class="btn-page"
+                class="pagination-btn"
                 :class="{ active: paymentCurrentPage === p }"
                 @click="paymentCurrentPage = p"
-                style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 500; min-width: 32px; text-align: center; transition: all 0.2s;"
-                :style="paymentCurrentPage === p ? { background: '#3b82f6', borderColor: '#3b82f6', color: 'white' } : { color: '#475569' }"
               >
                 {{ p }}
               </button>
             </template>
             
             <button 
-              class="btn-nav" 
+              class="pagination-btn" 
               :disabled="paymentCurrentPage === paymentTotalPages" 
               @click="paymentCurrentPage++"
               title="Trang sau"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="paymentCurrentPage === paymentTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
             >
-              &rsaquo;
+              <ChevronRight :size="16" />
             </button>
-            <button 
-              class="btn-nav" 
-              :disabled="paymentCurrentPage === paymentTotalPages" 
-              @click="paymentCurrentPage = paymentTotalPages"
-              title="Trang cuối"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="paymentCurrentPage === paymentTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-            >
-              &raquo;
-            </button>
-            <span style="font-size: 13px; font-weight: 600; color: #64748b; margin-left: 8px;">
-              Trang {{ paymentCurrentPage }}/{{ paymentTotalPages }}
-            </span>
           </div>
         </div>
 
@@ -1295,65 +1179,36 @@
           </table>
 
           <!-- Pagination for Reviews -->
-          <div class="pagination-container" v-if="reviewTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          <div class="pagination-container" v-if="reviewTotalPages > 1">
             <button 
-              class="btn-nav" 
-              :disabled="reviewCurrentPage === 1" 
-              @click="reviewCurrentPage = 1"
-              title="Trang đầu"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="reviewCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-            >
-              &laquo;
-            </button>
-            <button 
-              class="btn-nav" 
+              class="pagination-btn" 
               :disabled="reviewCurrentPage === 1" 
               @click="reviewCurrentPage--"
               title="Trang trước"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="reviewCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
             >
-              &lsaquo;
+              <ChevronLeft :size="16" />
             </button>
             
             <template v-for="p in reviewPageNumbers" :key="p">
-              <span v-if="p === '...'" style="padding: 6px 12px; color: #94a3b8; font-weight: 500;">…</span>
+              <span v-if="p === '...'" class="pagination-ellipsis">…</span>
               <button 
                 v-else
-                class="btn-page"
+                class="pagination-btn"
                 :class="{ active: reviewCurrentPage === p }"
                 @click="reviewCurrentPage = p"
-                style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 500; min-width: 32px; text-align: center; transition: all 0.2s;"
-                :style="reviewCurrentPage === p ? { background: '#3b82f6', borderColor: '#3b82f6', color: 'white' } : { color: '#475569' }"
               >
                 {{ p }}
               </button>
             </template>
             
             <button 
-              class="btn-nav" 
+              class="pagination-btn" 
               :disabled="reviewCurrentPage === reviewTotalPages" 
               @click="reviewCurrentPage++"
               title="Trang sau"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="reviewCurrentPage === reviewTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
             >
-              &rsaquo;
+              <ChevronRight :size="16" />
             </button>
-            <button 
-              class="btn-nav" 
-              :disabled="reviewCurrentPage === reviewTotalPages" 
-              @click="reviewCurrentPage = reviewTotalPages"
-              title="Trang cuối"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="reviewCurrentPage === reviewTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-            >
-              &raquo;
-            </button>
-            <span style="font-size: 13px; font-weight: 600; color: #64748b; margin-left: 8px;">
-              Trang {{ reviewCurrentPage }}/{{ reviewTotalPages }}
-            </span>
           </div>
         </div>
 
@@ -1459,65 +1314,36 @@
           </table>
 
           <!-- Pagination for Payouts -->
-          <div class="pagination-container" v-if="payoutTotalPages > 1" style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          <div class="pagination-container" v-if="payoutTotalPages > 1">
             <button 
-              class="btn-nav" 
-              :disabled="payoutCurrentPage === 1" 
-              @click="payoutCurrentPage = 1"
-              title="Trang đầu"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="payoutCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-            >
-              &laquo;
-            </button>
-            <button 
-              class="btn-nav" 
+              class="pagination-btn" 
               :disabled="payoutCurrentPage === 1" 
               @click="payoutCurrentPage--"
               title="Trang trước"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="payoutCurrentPage === 1 ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
             >
-              &lsaquo;
+              <ChevronLeft :size="16" />
             </button>
             
             <template v-for="p in payoutPageNumbers" :key="p">
-              <span v-if="p === '...'" style="padding: 6px 12px; color: #94a3b8; font-weight: 500;">…</span>
+              <span v-if="p === '...'" class="pagination-ellipsis">…</span>
               <button 
                 v-else
-                class="btn-page"
+                class="pagination-btn"
                 :class="{ active: payoutCurrentPage === p }"
                 @click="payoutCurrentPage = p"
-                style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; font-weight: 500; min-width: 32px; text-align: center; transition: all 0.2s;"
-                :style="payoutCurrentPage === p ? { background: '#2563eb', borderColor: '#2563eb', color: 'white' } : { color: '#475569' }"
               >
                 {{ p }}
               </button>
             </template>
             
             <button 
-              class="btn-nav" 
+              class="pagination-btn" 
               :disabled="payoutCurrentPage === payoutTotalPages" 
               @click="payoutCurrentPage++"
               title="Trang sau"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="payoutCurrentPage === payoutTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
             >
-              &rsaquo;
+              <ChevronRight :size="16" />
             </button>
-            <button 
-              class="btn-nav" 
-              :disabled="payoutCurrentPage === payoutTotalPages" 
-              @click="payoutCurrentPage = payoutTotalPages"
-              title="Trang cuối"
-              style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; cursor: pointer; transition: all 0.2s;"
-              :style="payoutCurrentPage === payoutTotalPages ? { opacity: 0.5, cursor: 'not-allowed' } : {}"
-            >
-              &raquo;
-            </button>
-            <span style="font-size: 13px; font-weight: 600; color: #64748b; margin-left: 8px;">
-              Trang {{ payoutCurrentPage }}/{{ payoutTotalPages }}
-            </span>
           </div>
         </div>
 
@@ -2191,22 +2017,17 @@ import {
   CreditCard, MessageSquare, Check, Lock, Unlock,
   UploadCloud, CheckCircle, AlertCircle, X,
   LayoutDashboard, BarChart3, Home, LogOut, Tag, Sparkles, Eye,
-  Clock, Save, BarChart2, Wallet
+  Clock, Save, BarChart2, Wallet, ChevronLeft, ChevronRight
 } from 'lucide-vue-next'
 
 const { t, locale } = useI18n()
 
 // Helper function to generate paginated numbers with ellipsis
 const getPageNumbers = (total, cur) => {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  const pages = [1]
-  if (cur > 3) pages.push('...')
-  const s = Math.max(2, cur - 1)
-  const e = Math.min(total - 1, cur + 1)
-  for (let i = s; i <= e; i++) pages.push(i)
-  if (cur < total - 2) pages.push('...')
-  pages.push(total)
-  return pages
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1)
+  if (cur <= 3) return [1, 2, 3, '...', total]
+  if (cur >= total - 2) return [1, '...', total - 2, total - 1, total]
+  return [1, '...', cur, '...', total]
 }
 
 const changeLanguage = (lang) => {
@@ -4914,5 +4735,71 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
 .status-badge-sm.rejected {
   background: #fef2f2;
   color: #ef4444;
+}
+
+/* ===== PAGINATION STYLES ===== */
+.pagination-container {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+.pagination-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.pagination-info {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #64748b;
+  margin-left: 10px;
 }
 </style>
