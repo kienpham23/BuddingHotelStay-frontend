@@ -60,9 +60,9 @@
         </div>
       </div>
 
-      <!-- Dropzone (chỉ hiện khi chưa có kết quả) -->
+      <!-- Dropzone (chỉ hiện khi chưa có kết quả và chưa xem trước) -->
       <div
-        v-if="!importResult"
+        v-if="!importResult && !showPreview"
         class="excel-dropzone"
         :class="{
           'is-dragging': isDraggingExcel,
@@ -104,7 +104,7 @@
       </div>
 
       <!-- Ghi chú hỗ trợ URL ảnh -->
-      <div v-if="!importResult" class="image-url-hint">
+      <div v-if="!importResult && !showPreview" class="image-url-hint">
         <span class="hint-icon" style="display: flex; align-items: center; margin-top: 2px;"><ImageIcon :size="14" /></span>
         <span class="hint-text">
           {{ locale === 'vi'
@@ -112,6 +112,60 @@
             : 'Excel supports image columns: imageUrl1, imageUrl2, imageUrl3 — paste public image links (Cloudinary, Google Drive, Unsplash...)'
           }}
         </span>
+      </div>
+
+      <!-- Giao diện Xem trước dữ liệu (Preview Panel) -->
+      <div v-if="showPreview" class="preview-panel">
+        <div class="preview-header">
+          <div class="preview-title">
+            <span class="preview-icon"><FileSpreadsheet :size="18" /></span>
+            <strong>{{ locale === 'vi' ? 'Xác nhận thông tin nhập' : 'Confirm Import Details' }}</strong>
+          </div>
+          <span class="preview-subtitle">
+            {{ locale === 'vi' ? `Tìm thấy ${previewRooms.length} phòng nghỉ sẵn sàng nhập.` : `Found ${previewRooms.length} rooms ready to import.` }}
+          </span>
+        </div>
+        
+        <div class="preview-table-container">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>{{ locale === 'vi' ? 'Tên phòng' : 'Room Name' }}</th>
+                <th>{{ locale === 'vi' ? 'Loại' : 'Type' }}</th>
+                <th>{{ locale === 'vi' ? 'Thành phố' : 'City' }}</th>
+                <th>{{ locale === 'vi' ? 'Giá/đêm' : 'Price/Night' }}</th>
+                <th>{{ locale === 'vi' ? 'Khách tối đa' : 'Max Guests' }}</th>
+                <th>{{ locale === 'vi' ? 'Tọa độ' : 'Coordinates' }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(room, index) in previewRooms" :key="index">
+                <td style="font-weight: 700; color: #334155;">{{ room.name }}</td>
+                <td><span class="preview-badge">{{ room.roomTypeName }}</span></td>
+                <td>{{ room.city }}</td>
+                <td style="color: #ea580c; font-weight: 700;">{{ formatPrice(room.pricePerNight) }}</td>
+                <td>{{ room.maxGuests }}</td>
+                <td>
+                  <span v-if="room.latitude && room.longitude" style="font-size: 12px; color: #475569;">
+                    {{ room.latitude }}, {{ room.longitude }}
+                  </span>
+                  <span v-else style="color: #64748b; font-style: italic; font-size: 11px;">
+                    {{ locale === 'vi' ? 'Tự động định vị' : 'Auto Geocode' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="preview-actions">
+          <button class="excel-btn-sm excel-btn-sm--ghost" @click="cancelImport">
+            {{ locale === 'vi' ? 'Hủy bỏ' : 'Cancel' }}
+          </button>
+          <button class="excel-btn-sm excel-btn-sm--primary" @click="confirmImport">
+            {{ locale === 'vi' ? 'Nhập vào hệ thống' : 'Confirm Import' }}
+          </button>
+        </div>
       </div>
 
 
@@ -153,7 +207,7 @@
               class="result-item result-item--success"
             >
               <Check :size="13" class="result-item-icon" />
-              <span class="result-item-text">{{ msg }}</span>
+              <span class="result-item-text">{{ translateSuccessMessage(msg) }}</span>
             </div>
           </div>
         </div>
@@ -170,7 +224,7 @@
               class="result-item result-item--error"
             >
               <X :size="13" class="result-item-icon" />
-              <span class="result-item-text">{{ msg }}</span>
+              <span class="result-item-text">{{ translateErrorMessage(msg) }}</span>
             </div>
           </div>
         </div>
@@ -217,6 +271,10 @@ const importResult         = ref(null)
 const imageUploadResults   = ref([])  // [{ok, message}]
 const imageUploadProgress  = ref(0)
 const imageUploadTotal     = ref(0)
+
+const selectedFile         = ref(null)
+const previewRooms         = ref([])
+const showPreview          = ref(false)
 
 // ========================
 // HELPERS
@@ -274,12 +332,14 @@ const generateTemplateFrontend = async () => {
   const headerLabels = [
     'name', 'roomTypeName', 'city', 'address',
     'pricePerNight', 'maxGuests', 'description', 'amenities',
-    'imageUrl1', 'imageUrl2', 'imageUrl3'
+    'imageUrl1', 'imageUrl2', 'imageUrl3',
+    'latitude', 'longitude'
   ]
   const displayLabels = [
     'Tên phòng *', 'Loại phòng *', 'Thành phố *', 'Địa chỉ *',
     'Giá/đêm (VNĐ) *', 'Sức chứa *', 'Mô tả phòng', 'Tiện ích (dấu phẩy)',
-    'URL Ảnh 1', 'URL Ảnh 2', 'URL Ảnh 3'
+    'URL Ảnh 1', 'URL Ảnh 2', 'URL Ảnh 3',
+    'Vĩ độ', 'Kinh độ'
   ]
   const sampleRows = [
     displayLabels,
@@ -288,30 +348,33 @@ const generateTemplateFrontend = async () => {
       1500000, 3, 'Phòng sang trọng ban công nhìn thẳng ra biển. Đầy đủ tiện nghi cao cấp.',
       'WiFi miễn phí, Điều hòa, TV 50 inch, Tủ lạnh, Bồn tắm, Minibar',
       'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800',
-      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800', ''
+      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800', '',
+      '16.05440000', '108.24440000'
     ],
     [
       'Villa ven hồ Đà Lạt', 'Villa', 'Đà Lạt', '123 Hồ Xuân Hương, Phường 1',
       3500000, 8, 'Villa 4 phòng ngủ view hồ Xuân Hương, hồ bơi riêng, BBQ sân vườn.',
       'WiFi, Điều hòa, Hồ bơi riêng, Bếp đầy đủ, BBQ, Chỗ đỗ xe, Smart TV',
       'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=800',
-      'https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=800', ''
+      'https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=800', '',
+      '11.94040000', '108.44040000'
     ],
     [
       'Căn hộ studio Hà Nội trung tâm', 'Standard', 'Hà Nội', '15 Lý Thường Kiệt, Hoàn Kiếm',
       700000, 2, 'Studio hiện đại ngay trung tâm, gần hồ Hoàn Kiếm.',
       'WiFi miễn phí, Điều hòa, TV, Tủ lạnh, Ấm đun nước',
-      'https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=800', '', ''
+      'https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=800', '', '',
+      '21.02850000', '105.80480000'
     ]
   ]
 
   const ws1 = XLSX.utils.aoa_to_sheet(sampleRows)
-  ws1['!cols'] = [35,18,12,40,16,10,55,50,65,65,65].map(w => ({ wch: w }))
+  ws1['!cols'] = [35,18,12,40,16,10,55,50,65,65,65,15,15].map(w => ({ wch: w }))
   XLSX.utils.book_append_sheet(wb, ws1, 'Danh sách phòng')
 
   // ---- Sheet 2: Hướng dẫn ----
   const guideRows = [
-    ['📋 HƯỚNG DẪN NHẬP DỮ LIỆU PHÒNG — CÓ HỖ TRỢ URL ẢNH'],
+    ['📋 HƯỚNG DẪN NHẬP DỮ LIỆU PHÒNG — CÓ HỖ TRỢ URL ẢNH & TỌA ĐỘ'],
     [''],
     ['Tên cột (KHÔNG đổi tên)', 'Bắt buộc', 'Mô tả', 'Ví dụ'],
     ['name', 'CÓ', 'Tên phòng (tối đa 200 ký tự)', 'Phòng Deluxe biển Mỹ Khê'],
@@ -325,6 +388,8 @@ const generateTemplateFrontend = async () => {
     ['imageUrl1', 'KHÔNG', '⭐ URL ảnh chính (sẽ thành ảnh đại diện). Phải là link ảnh công khai, trực tiếp.', 'https://images.unsplash.com/photo-xxx?w=800'],
     ['imageUrl2', 'KHÔNG', 'URL ảnh phụ thứ 2', 'https://res.cloudinary.com/demo/image/upload/xxx.jpg'],
     ['imageUrl3', 'KHÔNG', 'URL ảnh phụ thứ 3', ''],
+    ['latitude', 'KHÔNG', 'Tọa độ Vĩ độ. Nếu để trống, hệ thống sẽ tự động gọi Geocoding lấy tọa độ từ Địa chỉ.', '16.0544'],
+    ['longitude', 'KHÔNG', 'Tọa độ Kinh độ. Nếu để trống, hệ thống sẽ tự động gọi Geocoding lấy tọa độ từ Địa chỉ.', '108.2444'],
     [''],
     ['📸 HƯỚNG DẪN URL ẢNH:'],
     ['• URL phải là đường dẫn TRỰC TIẾP đến file ảnh (kết thúc bằng .jpg / .png / .webp hoặc có tham số ?w=)'],
@@ -397,16 +462,175 @@ const handleExcelDrop = (event) => {
   processImportFile(file)
 }
 
+const formatPrice = (p) => {
+  if (!p) return '0 ₫'
+  return new Intl.NumberFormat('vi-VN').format(p) + ' ₫'
+}
+
+const translateErrorMessage = (msg) => {
+  if (!msg) return ''
+
+  // Phân tích số dòng: "Dòng X: <Nội dung>" hoặc "Row X: <Nội dung>"
+  const match = msg.match(/^(?:Dòng|Row)\s+(\d+):\s*(.*)$/i)
+  if (!match) return msg
+
+  const rowNum = match[1]
+  const content = match[2].trim()
+
+  const prefix = locale.value === 'vi' ? `Dòng ${rowNum}: ` : `Row ${rowNum}: `
+
+  const mappings = [
+    {
+      vi: 'Tên phòng không được để trống',
+      en: 'Room name cannot be empty'
+    },
+    {
+      vi: 'Thành phố không được để trống',
+      en: 'City cannot be empty'
+    },
+    {
+      vi: 'Địa chỉ không được để trống',
+      en: 'Address cannot be empty'
+    },
+    {
+      vi: 'Loại phòng không được để trống',
+      en: 'Room type cannot be empty'
+    },
+    {
+      vi: 'Giá/đêm không được để trống',
+      en: 'Price per night cannot be empty'
+    },
+    {
+      vi: 'Số khách tối đa không được để trống',
+      en: 'Max guests cannot be empty'
+    },
+    {
+      vi: 'Giá/đêm không hợp lệ - phải là số dương',
+      en: 'Invalid price per night - must be a positive number'
+    },
+    {
+      vi: 'Số khách tối đa không hợp lệ - phải là số nguyên dương',
+      en: 'Invalid max guests - must be a positive integer'
+    }
+  ]
+
+  for (const map of mappings) {
+    if (content === map.vi || content.toLowerCase() === map.vi.toLowerCase()) {
+      return prefix + (locale.value === 'vi' ? map.vi : map.en)
+    }
+  }
+
+  // Dịch các lỗi hệ thống / biệt lệ từ database
+  if (content.startsWith('Lỗi không xác định -') || content.startsWith('Lỗi hệ thống -')) {
+    const detail = content.substring(content.indexOf('-') + 1).trim()
+    let translatedDetail = detail
+
+    if (detail.includes('Query did not return a unique result')) {
+      translatedDetail = locale.value === 'vi'
+        ? 'Dữ liệu bị trùng lặp trong hệ thống (tìm thấy nhiều hơn 1 phòng có cùng tên và địa chỉ của bạn).'
+        : 'Duplicate data in the system (found more than 1 room with the same name and address under your account).'
+    } else if (detail.includes('ConstraintViolationException') || detail.includes('Duplicate entry')) {
+      translatedDetail = locale.value === 'vi'
+        ? 'Dữ liệu bị trùng hoặc vi phạm ràng buộc hệ thống.'
+        : 'Data is duplicated or violates system constraints.'
+    }
+
+    const errLabel = locale.value === 'vi' ? 'Lỗi hệ thống' : 'System error'
+    return `${prefix}${errLabel} - ${translatedDetail}`
+  }
+
+  return msg
+}
+
+const translateSuccessMessage = (msg) => {
+  if (!msg) return ''
+
+  const match = msg.match(/^(?:Dòng|Row)\s+(\d+):\s*(.*)$/i)
+  if (!match) return msg
+
+  const rowNum = match[1]
+  const content = match[2].trim()
+
+  const prefix = locale.value === 'vi' ? `Dòng ${rowNum}: ` : `Row ${rowNum}: `
+
+  if (content.includes('Tạo phòng') && content.includes('thành công')) {
+    const nameMatch = content.match(/"([^"]+)"/)
+    const roomName = nameMatch ? nameMatch[1] : ''
+    return prefix + (locale.value === 'vi'
+      ? `Tạo phòng "${roomName}" cùng danh sách ảnh thành công`
+      : `Created room "${roomName}" with images successfully`)
+  }
+
+  if (content.includes('Cập nhật phòng') && content.includes('thành công')) {
+    const nameMatch = content.match(/"([^"]+)"/)
+    const roomName = nameMatch ? nameMatch[1] : ''
+    return prefix + (locale.value === 'vi'
+      ? `Cập nhật phòng "${roomName}" cùng danh sách ảnh mới thành công`
+      : `Updated room "${roomName}" with new images successfully`)
+  }
+
+  return msg
+}
+
 const processImportFile = async (file) => {
   if (!file.name.toLowerCase().endsWith('.xlsx')) {
     alert('⚠️ ' + t('host.excel.only_xlsx')); return
   }
 
-  importingFile.value  = true
-  importResult.value   = null
+  selectedFile.value = file
+  importingFile.value = true
+  importResult.value = null
+  showPreview.value = false
+
+  try {
+    const XLSX = await loadSheetJS()
+    const data = await file.arrayBuffer()
+    const workbook = XLSX.read(data, { type: 'array' })
+    const sheetName = workbook.SheetNames[0]
+    const sheet = workbook.Sheets[sheetName]
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 })
+
+    const rooms = []
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i]
+      if (!row || row.length === 0 || !row[0]) continue
+      rooms.push({
+        name: row[0] || '',
+        roomTypeName: row[1] || '',
+        city: row[2] || '',
+        address: row[3] || '',
+        pricePerNight: row[4] || 0,
+        maxGuests: row[5] || 0,
+        description: row[6] || '',
+        amenities: row[7] || '',
+        imageUrl1: row[8] || '',
+        imageUrl2: row[9] || '',
+        imageUrl3: row[10] || '',
+        latitude: row[11] || null,
+        longitude: row[12] || null
+      })
+    }
+
+    previewRooms.value = rooms
+    showPreview.value = true
+  } catch (err) {
+    alert('❌ ' + (locale.value === 'vi' ? 'Không thể đọc file Excel: ' : 'Failed to read Excel file: ') + err.message)
+    selectedFile.value = null
+    previewRooms.value = []
+    showPreview.value = false
+  } finally {
+    importingFile.value = false
+  }
+}
+
+const confirmImport = async () => {
+  if (!selectedFile.value) return
+
+  importingFile.value = true
+  showPreview.value = false
 
   const formData = new FormData()
-  formData.append('file', file)
+  formData.append('file', selectedFile.value)
 
   try {
     const res = await axios.post('/excel/host/import-rooms', formData, {
@@ -426,17 +650,31 @@ const processImportFile = async (file) => {
     alert('❌ ' + t('host.excel.import_failed_msg') + msg)
   } finally {
     importingFile.value = false
+    selectedFile.value = null
+    previewRooms.value = []
   }
+}
+
+const cancelImport = () => {
+  selectedFile.value = null
+  previewRooms.value = []
+  showPreview.value = false
 }
 
 const closeImportResult = () => {
   importResult.value = null
   imageUploadResults.value = []
+  selectedFile.value = null
+  previewRooms.value = []
+  showPreview.value = false
 }
 
 const resetForNewUpload = () => {
   importResult.value = null
   imageUploadResults.value = []
+  selectedFile.value = null
+  previewRooms.value = []
+  showPreview.value = false
   setTimeout(() => triggerExcelInput(), 60)
 }
 </script>
@@ -999,5 +1237,104 @@ const resetForNewUpload = () => {
   .excel-btn          { min-width: unset; }
   .result-actions     { flex-direction: column-reverse; }
   .excel-btn-sm       { width: 100%; text-align: center; }
+}
+
+/* ---- Preview Panel ---- */
+.preview-panel {
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #f8fbff;
+  padding: 1.2rem;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: fadeSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.preview-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.preview-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1e3a8a;
+  font-size: 0.95rem;
+}
+
+.preview-subtitle {
+  font-size: 0.8rem;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.preview-table-container {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+}
+
+.preview-table-container::-webkit-scrollbar {
+  width: 6px;
+}
+.preview-table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.preview-table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.preview-table th {
+  background: #f1f5f9;
+  padding: 0.6rem 0.85rem;
+  font-weight: 700;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.preview-table td {
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.preview-table tr:last-child td {
+  border-bottom: none;
+}
+
+.preview-badge {
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
 }
 </style>

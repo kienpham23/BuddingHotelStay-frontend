@@ -154,6 +154,38 @@
             </div>
           </div>
 
+          <!-- VỊ TRÍ PHÒNG NGHỈ (Leaflet + OpenStreetMap) -->
+          <div class="card">
+            <h2 class="card-title">📍 {{ locale === 'vi' ? 'Vị trí phòng nghỉ' : 'Room Location' }}</h2>
+            
+            <div v-if="room.locationAvailable">
+              <div id="detail-map" style="height: 350px; border-radius: 8px; border: 1px solid #e2e8f0; position: relative; z-index: 1;">
+                <!-- Placeholder while map loads -->
+                <div v-if="!mapInitialized" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-size: 13px; color: #64748b; font-weight: 500;">
+                  {{ locale === 'vi' ? 'Đang tải bản đồ...' : 'Loading map...' }}
+                </div>
+              </div>
+              
+              <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <span style="font-size: 13px; color: #64748b; font-weight: 600;">
+                  {{ locale === 'vi' ? 'Tọa độ' : 'Coordinates' }}: {{ room.latitude }}, {{ room.longitude }}
+                </span>
+                <a 
+                  :href="`https://www.google.com/maps/search/?api=1&query=${room.latitude},${room.longitude}`" 
+                  target="_blank" 
+                  class="btn-detail-nav"
+                  style="background: #1e293b; color: #ffffff; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"
+                >
+                  🗺️ {{ locale === 'vi' ? 'Chỉ đường (Mở trên Google Maps trong tab mới)' : 'Directions (Open on Google Maps in new tab)' }}
+                </a>
+              </div>
+            </div>
+            
+            <div v-else style="background: #f1f5f9; padding: 20px; border-radius: 8px; text-align: center; color: #64748b; font-style: italic; font-size: 14px;">
+              {{ locale === 'vi' ? 'Chủ phòng chưa cập nhật vị trí' : 'Host has not updated location yet' }}
+            </div>
+          </div>
+
           <!-- REVIEWS -->
           <div class="card">
             <h2 class="card-title">{{ $t('detail.reviews_title', { count: room.reviews?.length || 0 }) }}</h2>
@@ -353,7 +385,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useI18n } from 'vue-i18n'
@@ -482,6 +514,51 @@ const nextImage = () => {
   if (activeImageIdx.value < room.value.imageUrls.length - 1) activeImageIdx.value++
 }
 
+const mapInitialized = ref(false)
+let detailMap = null
+
+const initDetailMap = async () => {
+  mapInitialized.value = false
+  await nextTick()
+  
+  const mapEl = document.getElementById('detail-map')
+  if (!mapEl) return
+
+  if (!window.L) {
+    await new Promise((resolve) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+
+      const script = document.createElement('script')
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+      script.onload = resolve
+      document.head.appendChild(script)
+    })
+  }
+
+  const L = window.L
+
+  if (detailMap) {
+    detailMap.remove()
+    detailMap = null
+  }
+
+  const lat = room.value.latitude || 21.028511
+  const lng = room.value.longitude || 105.804817
+
+  detailMap = L.map('detail-map').setView([lat, lng], 16)
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(detailMap)
+
+  L.marker([lat, lng]).addTo(detailMap)
+
+  mapInitialized.value = true
+}
+
 // Fetch Room details
 const fetchRoomDetails = async () => {
   loading.value = true
@@ -511,6 +588,9 @@ const fetchRoomDetails = async () => {
     console.error(err)
   } finally {
     loading.value = false
+    if (room.value && room.value.locationAvailable) {
+      initDetailMap()
+    }
   }
 }
 

@@ -369,6 +369,7 @@
                 <option value="">{{ $t('host.bookings.status_all') }}</option>
                 <option value="PENDING">{{ $t('host.bookings.status_pending') }}</option>
                 <option value="CONFIRMED">{{ $t('host.bookings.status_confirmed') }}</option>
+                <option value="UPCOMING">{{ locale === 'vi' ? 'Sắp diễn ra' : 'Upcoming' }}</option>
                 <option value="COMPLETED">{{ $t('host.bookings.status_completed') }}</option>
                 <option value="CANCELLED">{{ $t('host.bookings.status_cancelled') }}</option>
               </select>
@@ -1328,23 +1329,51 @@
             <div class="form-group">
               <label>{{ $t('host.rooms.form_price') }}</label>
               <input 
-                type="text" 
+                type="text"
                 inputmode="numeric"
-                :value="roomForm.pricePerNight ? roomForm.pricePerNight.toLocaleString('vi-VN') : ''"
-                @input="(e) => { const raw = e.target.value.replace(/\./g,'').replace(/[^0-9]/g,''); roomForm.pricePerNight = raw ? parseInt(raw) : null; e.target.value = raw ? parseInt(raw).toLocaleString('vi-VN') : ''; }"
+                ref="priceInputRef"
+                @compositionstart="handlePriceCompositionStart"
+                @compositionend="handlePriceCompositionEnd"
+                @input="handlePriceInput"
+                @keypress="handlePriceKeypress"
                 placeholder="VD: 1.500.000"
-                min="10000"
+                autocomplete="off"
                 required 
               />
-              <small v-if="roomForm.pricePerNight" style="color: #10b981; font-weight: 600; font-size: 12px; margin-top: 3px; display: block;">
-                ≈ {{ Number(roomForm.pricePerNight).toLocaleString('vi-VN') }} VND / đêm
-              </small>
             </div>
           </div>
 
           <div class="form-group">
             <label>{{ $t('host.rooms.form_address') }}</label>
             <input v-model="roomForm.address" type="text" :placeholder="$t('host.rooms.form_address_placeholder')" required />
+          </div>
+
+          <!-- BẢN ĐỒ VỊ TRÍ PHÒNG NGHỈ (Leaflet + OpenStreetMap) -->
+          <div class="form-group">
+            <label style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+              <span>📍 {{ locale === 'vi' ? 'Vị trí trên bản đồ' : 'Map Location' }}</span>
+              <button 
+                type="button" 
+                class="btn-geocode-suggest"
+                style="background: #e2e8f0; color: #475569; border: none; font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;"
+                v-if="roomForm.address"
+                @click="suggestLocationByAddress"
+              >
+                🔍 {{ locale === 'vi' ? 'Cập nhật vị trí bản đồ theo địa chỉ mới' : 'Update map position by address' }}
+              </button>
+            </label>
+            
+            <div id="host-map" style="height: 300px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 8px; position: relative; z-index: 1;">
+              <!-- Placeholder khi bản đồ đang tải/chưa sẵn sàng -->
+              <div v-if="!mapInitialized" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-size: 13px; color: #64748b; font-weight: 500;">
+                {{ locale === 'vi' ? 'Đang khởi tạo bản đồ...' : 'Initializing map...' }}
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 12px; color: #475569; background: #f1f5f9; padding: 6px 10px; border-radius: 4px; font-weight: 600;">
+              <div>{{ locale === 'vi' ? 'Vĩ độ (Lat)' : 'Latitude (Lat)' }}: <span style="color: #0f172a; font-family: monospace;">{{ roomForm.latitude != null ? Number(roomForm.latitude).toFixed(8) : '--' }}</span></div>
+              <div>{{ locale === 'vi' ? 'Kinh độ (Lng)' : 'Longitude (Lng)' }}: <span style="color: #0f172a; font-family: monospace;">{{ roomForm.longitude != null ? Number(roomForm.longitude).toFixed(8) : '--' }}</span></div>
+            </div>
           </div>
           <div class="form-group">
             <label>{{ $t('host.rooms.form_amenities') }}</label>
@@ -1380,6 +1409,31 @@
                 <p class="main-text">{{ $t('host.rooms.form_drag_drop') }}</p>
                 <p class="sub-text">{{ $t('host.rooms.form_image_support') }}</p>
               </div>
+            </div>
+
+            <!-- Dán nhiều link ảnh -->
+            <div style="margin-top: 12px;">
+              <label style="font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 5px; display: block;">
+                🔗 {{ locale === 'vi' ? 'Dán link ảnh (mỗi link một dòng hoặc cách nhau bằng dấu phẩy)' : 'Paste image URLs (one per line or comma-separated)' }}
+              </label>
+              <div style="display: flex; gap: 8px; align-items: flex-start;">
+                <textarea
+                  v-model="imageUrlInput"
+                  rows="3"
+                  :placeholder="locale === 'vi' ? 'https://example.com/anh1.jpg\nhttps://example.com/anh2.jpg' : 'https://example.com/photo1.jpg\nhttps://example.com/photo2.jpg'"
+                  style="flex:1; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #dde1e9; font-size: 12.5px; font-family: monospace; resize: vertical; outline: none; background: #fafbfc; color: #1e293b;"
+                  @focus="($event.target.style.borderColor='#3b82f6')"
+                  @blur="($event.target.style.borderColor='#dde1e9')"
+                />
+                <button
+                  type="button"
+                  @click="addImageUrls"
+                  style="padding: 8px 14px; background: #3b82f6; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; margin-top: 0; flex-shrink: 0;"
+                >
+                  {{ locale === 'vi' ? '＋ Thêm ảnh' : '+ Add images' }}
+                </button>
+              </div>
+              <p v-if="imageUrlError" style="color: #ef4444; font-size: 12px; margin-top: 4px; font-weight: 500;">{{ imageUrlError }}</p>
             </div>
 
             <!-- Uploading files list -->
@@ -1630,7 +1684,7 @@
 
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useToastStore } from '../../stores/toast'
@@ -1994,8 +2048,17 @@ const filteredBookings = computed(() => {
     }
 
     // 1. Status Filter
-    if (appliedStatus.value && bk.status !== appliedStatus.value) {
-      return false
+    if (appliedStatus.value) {
+      if (appliedStatus.value === 'UPCOMING') {
+        const todayStr = new Date().toISOString().split('T')[0]
+        if (bk.status !== 'CONFIRMED' || bk.checkIn < todayStr) {
+          return false
+        }
+      } else {
+        if (bk.status !== appliedStatus.value) {
+          return false
+        }
+      }
     }
 
     // 2. Date Range Filter (check-in or check-out within range)
@@ -2226,8 +2289,11 @@ const roomForm = ref({
   pricePerNight: 500000,
   maxGuests: 2,
   amenities: [],
-  description: ''
+  description: '',
+  latitude: null,
+  longitude: null
 })
+const priceInputRef = ref(null)
 const formLoading = ref(false)
 
 // Image Upload & Management States
@@ -2235,6 +2301,8 @@ const isDragging = ref(false)
 const fileInput = ref(null)
 const selectedNewFiles = ref([])
 const roomImages = ref([])
+const imageUrlInput = ref('')
+const imageUrlError = ref('')
 
 const showDeleteModal = ref(false)
 const selectedRoom = ref(null)
@@ -2331,11 +2399,21 @@ const openAddModal = () => {
     pricePerNight: 500000,
     maxGuests: 2,
     amenities: [],
-    description: ''
+    description: '',
+    latitude: null,
+    longitude: null
   }
   selectedNewFiles.value = []
   roomImages.value = []
+  imageUrlInput.value = ''
+  imageUrlError.value = ''
   showFormModal.value = true
+  initMap()
+  nextTick(() => {
+    if (priceInputRef.value) {
+      priceInputRef.value.value = '500.000'
+    }
+  })
 }
 
 const openEditModal = (room) => {
@@ -2349,9 +2427,16 @@ const openEditModal = (room) => {
     pricePerNight: room.pricePerNight,
     maxGuests: room.maxGuests,
     amenities: room.amenities ? room.amenities.split(',').map(a => a.trim()).filter(Boolean) : [],
-    description: room.description
+    description: room.description,
+    latitude: room.latitude || null,
+    longitude: room.longitude || null
   }
   selectedNewFiles.value = []
+  nextTick(() => {
+    if (priceInputRef.value) {
+      priceInputRef.value.value = room.pricePerNight ? room.pricePerNight.toLocaleString('vi-VN') : ''
+    }
+  })
   
   if (room.images && room.images.length > 0) {
     roomImages.value = room.images.map(img => ({
@@ -2369,6 +2454,7 @@ const openEditModal = (room) => {
     roomImages.value = []
   }
   showFormModal.value = true
+  initMap()
 }
 
 // Drag & Drop / File Select Handlers
@@ -2441,8 +2527,46 @@ const uploadOrStoreFiles = async (files) => {
 }
 
 const removeNewFile = (index) => {
-  URL.revokeObjectURL(selectedNewFiles.value[index].previewUrl)
+  const item = selectedNewFiles.value[index]
+  // Only revoke object URLs created from local files (not external URLs)
+  if (item.previewUrl && item.previewUrl.startsWith('blob:')) {
+    URL.revokeObjectURL(item.previewUrl)
+  }
   selectedNewFiles.value.splice(index, 1)
+}
+
+const addImageUrls = () => {
+  imageUrlError.value = ''
+  const raw = imageUrlInput.value.trim()
+  if (!raw) return
+
+  // Split by newlines or commas, clean up
+  const urls = raw
+    .split(/[\n,]+/)
+    .map(u => u.trim())
+    .filter(u => u.length > 0)
+
+  const invalid = urls.filter(u => !u.startsWith('http://') && !u.startsWith('https://'))
+  if (invalid.length > 0) {
+    imageUrlError.value = (locale.value === 'vi'
+      ? `${invalid.length} link không hợp lệ (phải bắt đầu bằng http:// hoặc https://)`
+      : `${invalid.length} invalid URL(s) — must start with http:// or https://`)
+    return
+  }
+
+  urls.forEach(url => {
+    // Avoid duplicates
+    const alreadyAdded = selectedNewFiles.value.some(f => f.previewUrl === url)
+    if (!alreadyAdded) {
+      selectedNewFiles.value.push({
+        file: null,        // No File object — this is a URL-based image
+        previewUrl: url,   // Direct URL used for both preview and submission
+        isUrl: true
+      })
+    }
+  })
+
+  imageUrlInput.value = ''
 }
 
 // Action handlers for existing images
@@ -2502,6 +2626,160 @@ const deleteImageAction = async (img, index) => {
   }
 }
 
+let _priceIsComposing = false
+
+const handlePriceCompositionStart = () => {
+  _priceIsComposing = true
+}
+
+const handlePriceCompositionEnd = (e) => {
+  _priceIsComposing = false
+  // After IME finishes, force-format whatever ended up in the input
+  handlePriceInput(e)
+}
+
+const handlePriceKeypress = (e) => {
+  // Block non-digit characters (except control keys like Backspace handled separately)
+  const charCode = e.which ? e.which : e.keyCode
+  if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+    e.preventDefault()
+  }
+}
+
+const handlePriceInput = (e) => {
+  // If IME (Unikey/Telex) is mid-composition, do NOT touch the DOM value.
+  // compositionend will call us again once the character is committed.
+  if (_priceIsComposing) return
+
+  const input = e.target
+  const raw = input.value.replace(/[^0-9]/g, '')
+
+  if (!raw) {
+    roomForm.value.pricePerNight = null
+    input.value = ''
+    return
+  }
+
+  const num = parseInt(raw, 10)
+  roomForm.value.pricePerNight = num
+
+  const formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+
+  // Only touch the DOM if the displayed value needs to change (avoids re-triggering input)
+  if (input.value !== formatted) {
+    const cursorBefore = input.selectionStart
+    const lenBefore = input.value.length
+    input.value = formatted
+    const lenAfter = formatted.length
+    const newCursor = Math.max(0, cursorBefore + (lenAfter - lenBefore))
+    input.setSelectionRange(newCursor, newCursor)
+  }
+}
+
+const mapInitialized = ref(false)
+let leafletMap = null
+let mapMarker = null
+const geocodingLoading = ref(false)
+
+const initMap = async () => {
+  mapInitialized.value = false
+  await nextTick()
+  
+  const mapEl = document.getElementById('host-map')
+  if (!mapEl) return
+
+  if (!window.L) {
+    await new Promise((resolve) => {
+      const link = document.createElement('link')
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+
+      const script = document.createElement('script')
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+      script.onload = resolve
+      document.head.appendChild(script)
+    })
+  }
+
+  const L = window.L
+
+  if (leafletMap) {
+    leafletMap.remove()
+    leafletMap = null
+    mapMarker = null
+  }
+
+  const defaultLat = roomForm.value.latitude || 21.028511
+  const defaultLng = roomForm.value.longitude || 105.804817
+  const zoomLevel = roomForm.value.latitude ? 16 : 12
+
+  leafletMap = L.map('host-map').setView([defaultLat, defaultLng], zoomLevel)
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(leafletMap)
+
+  mapMarker = L.marker([defaultLat, defaultLng], {
+    draggable: true
+  }).addTo(leafletMap)
+
+  mapMarker.on('dragend', () => {
+    const latLng = mapMarker.getLatLng()
+    roomForm.value.latitude = latLng.lat
+    roomForm.value.longitude = latLng.lng
+  })
+
+  leafletMap.on('click', (e) => {
+    const latLng = e.latlng
+    mapMarker.setLatLng(latLng)
+    roomForm.value.latitude = latLng.lat
+    roomForm.value.longitude = latLng.lng
+  })
+
+  mapInitialized.value = true
+
+  setTimeout(() => {
+    if (leafletMap) {
+      leafletMap.invalidateSize()
+    }
+  }, 300)
+}
+
+const suggestLocationByAddress = async () => {
+  if (!roomForm.value.address) return
+  geocodingLoading.value = true
+  try {
+    const query = `${roomForm.value.address}, ${roomForm.value.city || ''}`
+    const res = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+      params: {
+        q: query,
+        format: 'json',
+        limit: 1
+      }
+    })
+    if (res.data && res.data.length > 0) {
+      const first = res.data[0]
+      const lat = parseFloat(first.lat)
+      const lng = parseFloat(first.lon)
+      roomForm.value.latitude = lat
+      roomForm.value.longitude = lng
+      
+      if (leafletMap && mapMarker) {
+        const latLng = [lat, lng]
+        mapMarker.setLatLng(latLng)
+        leafletMap.setView(latLng, 16)
+      }
+    } else {
+      alert(locale.value === 'vi' ? 'Không tìm thấy vị trí tương ứng với địa chỉ này.' : 'Could not find location for this address.')
+    }
+  } catch (err) {
+    console.error('Geocoding error:', err)
+  } finally {
+    geocodingLoading.value = false
+  }
+}
+
 // Create or update room
 const saveRoom = async () => {
   if (!isEditMode.value && selectedNewFiles.value.length === 0) {
@@ -2511,6 +2789,43 @@ const saveRoom = async () => {
   if (isEditMode.value && roomImages.value.length === 0) {
     toastStore.warning('Vui lòng tải lên ít nhất một hình ảnh cho phòng nghỉ.')
     return
+  }
+
+  // Geocoding fallback nếu chưa chọn vị trí trên bản đồ
+  if (roomForm.value.latitude === null || roomForm.value.longitude === null) {
+    if (roomForm.value.address) {
+      try {
+        const query = `${roomForm.value.address}, ${roomForm.value.city || ''}`
+        const res = await axios.get(`https://nominatim.openstreetmap.org/search`, {
+          params: {
+            q: query,
+            format: 'json',
+            limit: 1
+          }
+        })
+        if (res.data && res.data.length > 0) {
+          const first = res.data[0]
+          roomForm.value.latitude = parseFloat(first.lat)
+          roomForm.value.longitude = parseFloat(first.lon)
+        } else {
+          toastStore.warning(locale.value === 'vi' 
+            ? 'Không thể định vị địa chỉ tự động. Vui lòng chọn vị trí trên bản đồ.' 
+            : 'Could not auto-locate address. Please choose location on the map.')
+          return
+        }
+      } catch (err) {
+        console.error('Auto geocoding failed:', err)
+        toastStore.warning(locale.value === 'vi' 
+          ? 'Không thể kết nối dịch vụ định vị. Vui lòng chọn vị trí thủ công.' 
+          : 'Could not connect to geocoding service. Please choose location manually.')
+        return
+      }
+    } else {
+      toastStore.warning(locale.value === 'vi' 
+        ? 'Vui lòng chọn vị trí phòng nghỉ trên bản đồ.' 
+        : 'Please choose room location on the map.')
+      return
+    }
   }
 
   formLoading.value = true
@@ -2523,7 +2838,9 @@ const saveRoom = async () => {
     maxGuests: roomForm.value.maxGuests,
     amenities: roomForm.value.amenities.join(', '),
     imageUrls: isEditMode.value ? roomImages.value.map(img => img.url) : [],
-    description: roomForm.value.description
+    description: roomForm.value.description,
+    latitude: roomForm.value.latitude,
+    longitude: roomForm.value.longitude
   }
 
   try {
@@ -2537,16 +2854,23 @@ const saveRoom = async () => {
       const res = await axios.post('/rooms', payload)
       const createdRoomId = res.data.id
       
-      if (selectedNewFiles.value.length > 0) {
+      // Separate file uploads from URL-based images
+      const fileItems = selectedNewFiles.value.filter(f => !f.isUrl)
+      const urlItems = selectedNewFiles.value.filter(f => f.isUrl)
+
+      if (fileItems.length > 0) {
         const formData = new FormData()
-        selectedNewFiles.value.forEach(f => {
+        fileItems.forEach(f => {
           formData.append('files', f.file)
         })
-        
         await axios.post(`/images/rooms/${createdRoomId}/upload`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+      }
+
+      if (urlItems.length > 0) {
+        await axios.post(`/images/rooms/${createdRoomId}/urls`, {
+          imageUrls: urlItems.map(f => f.previewUrl)
         })
       }
       

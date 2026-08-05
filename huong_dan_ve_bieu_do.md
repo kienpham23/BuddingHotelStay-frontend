@@ -37,22 +37,6 @@ Customer -|> Guest
 rectangle "Hệ thống Đặt phòng Khách sạn" {
     usecase "Đăng ký / Đăng nhập tài khoản" as UC_Auth
     usecase "Tìm kiếm & Xem phòng" as UC_Search
-    usecase "Đặt phòng" as UC_Book
-    usecase "Thanh toán trực tuyến" as UC_Pay
-    usecase "Quản lý đặt phòng" as UC_ManageBooking
-    usecase "Hủy đặt phòng" as UC_Cancel
-    usecase "Đánh giá phòng" as UC_Review
-    usecase "Đăng thông tin phòng" as UC_RegRoom
-    usecase "Quản lý phòng" as UC_ManageRoom
-    usecase "Quản lý đơn đặt phòng" as UC_ManageHostBooking
-    usecase "Xem báo cáo doanh thu" as UC_HostRevenue
-    usecase "Quản lý người dùng" as UC_ManageUser
-    usecase "Duyệt yêu cầu đăng phòng" as UC_ApproveRoom
-    usecase "Quản lý chương trình khuyến mãi" as UC_ManagePromo
-    usecase "Thống kê doanh thu và hoa hồng" as UC_AdminRevenue
-}
-
-Guest --> UC_Auth
 Guest --> UC_Search
 
 Customer --> UC_Book
@@ -133,7 +117,7 @@ UC_Pay ..> UC_Book : <<extend>>
 ```
 
 #### 1.3. Tác nhân Chủ phòng (Host)
-Chủ phòng trực tiếp thực hiện các ca sử dụng quản trị phòng nghỉ của mình trên hệ thống bao gồm: Đăng thông tin phòng, Quản lý phòng, Quản lý đơn đặt phòng, và Xem báo cáo doanh thu.
+Chủ phòng trực tiếp thực hiện các ca sử dụng quản trị phòng nghỉ của mình trên hệ thống bao gồm: Đăng thông tin phòng (có chọn vị trí bản đồ), Nhập hàng loạt qua Excel, Quản lý phòng, Quản lý đơn đặt phòng (bao gồm lọc đơn sắp diễn ra), và Xem báo cáo doanh thu.
 
 ```plantuml
 @startuml
@@ -146,15 +130,23 @@ actor "Chủ phòng" as Host
 
 rectangle "Hệ thống Đặt phòng Khách sạn" {
     usecase "Đăng thông tin phòng" as UC_RegRoom
+    usecase "Chọn vị trí trên bản đồ" as UC_MapPick
+    usecase "Nhập hàng loạt qua Excel" as UC_ImportExcel
     usecase "Quản lý phòng" as UC_ManageRoom
     usecase "Quản lý đơn đặt phòng" as UC_ManageHostBooking
+    usecase "Lọc đơn sắp diễn ra" as UC_UpcomingFilter
     usecase "Xem báo cáo doanh thu" as UC_HostRevenue
 }
 
 Host --> UC_RegRoom
+Host --> UC_ImportExcel
 Host --> UC_ManageRoom
 Host --> UC_ManageHostBooking
 Host --> UC_HostRevenue
+
+UC_MapPick ..> UC_RegRoom : <<include>>
+UC_ImportExcel ..> UC_RegRoom : <<extend>>
+UC_UpcomingFilter ..> UC_ManageHostBooking : <<extend>>
 @enduml
 ```
 
@@ -219,14 +211,29 @@ stop
 ```
 
 ### Biểu đồ 2.2: Nghiệp vụ Đăng thông tin phòng & Duyệt yêu cầu đăng phòng của Quản trị viên
-Chủ nhà gửi đăng ký thông tin phòng mới lên hệ thống, hệ thống kiểm duyệt và hiển thị công khai lên trang chủ khi được phê duyệt.
+Chủ nhà gửi đăng ký thông tin phòng mới lên hệ thống. Hệ thống hỗ trợ chọn vị trí trên bản đồ Leaflet; nếu chủ phòng chưa chọn thủ công, hệ thống tự động Geocoding từ địa chỉ nhập vào, kiểm tra trùng tọa độ trong phạm vi 20m cùng chủ trước khi lưu. Sau đó hệ thống chờ kiểm duyệt và hiển thị công khai khi được phê duyệt.
 
 ```plantuml
 @startuml
 start
 :Chủ phòng điền thông tin phòng nghỉ\n(Hình ảnh, giá cả, loại phòng, tiện ích, chọn ảnh chính);
-:Gửi yêu cầu đăng ký phòng;
-:Hệ thống lưu yêu cầu đăng ký phòng ở trạng thái Chờ duyệt;
+:Chọn vị trí phòng trên bản đồ (kéo Marker hoặc gợi ý theo địa chỉ);
+if (Đã chọn vị trí thủ công trên bản đồ?) then (Chưa)
+    :Hệ thống tự động Geocoding địa chỉ\n(OpenStreetMap Nominatim, rate limit 1 req/giây);
+    if (Geocoding trả về tọa độ?) then (Không)
+        :Từ chối lưu — Yêu cầu chủ phòng chọn vị trí;
+        stop
+    else (Có)
+    endif
+else (Đã chọn)
+endif
+:Hệ thống kiểm tra trùng tọa độ trong phạm vi 20m (Haversine)\nchỉ so sánh với các phòng cùng chủ sở hữu;
+if (Phòng trùng tọa độ?) then (Có)
+    :Từ chối lưu — Báo lỗi phòng đã tồn tại;
+    stop
+else (Không)
+endif
+:Lưu tọa độ (latitude, longitude) cùng thông tin phòng\nTrạng thái: Chờ duyệt;
 :Thông báo có phòng cần duyệt đến Quản trị viên;
 :Quản trị viên kiểm tra thông tin phòng đăng ký;
 if (Thông tin hợp lệ?) then (Có)
@@ -525,19 +532,30 @@ deactivate GUI
 @enduml
 ```
 
-### Biểu đồ 3.9: Chủ phòng đăng thông tin phòng & tải ảnh
+### Biểu đồ 3.9: Chủ phòng đăng thông tin phòng & tải ảnh (có chọn vị trí bản đồ)
 ```plantuml
 @startuml
 autonumber
 actor "Chủ phòng" as Host
 participant "Giao diện Chủ phòng" as GUI
+participant ": Bản đồ / Geocoding" as Map
 participant ": Phòng" as Room
 participant ": Ảnh phòng" as Image
 
-Host -> GUI : Gửi thông tin phòng mới và danh sách hình ảnh
+Host -> GUI : Điền thông tin phòng mới, chọn vị trí trên bản đồ (kéo Marker)
 activate GUI
 
-GUI -> Room : Khởi tạo phòng nghỉ mới (Chờ duyệt)
+alt Chưa chọn vị trí thủ công
+    GUI -> Map : Gọi Geocoding (Nominatim) để lấy tọa độ từ địa chỉ
+    activate Map
+    Map --> GUI : Trả về latitude, longitude
+    deactivate Map
+end
+
+GUI -> GUI : Kiểm tra tọa độ hợp lệ & không trùng phòng cùng Host (<20m)
+
+Host -> GUI : Gửi thông tin phòng mới và danh sách hình ảnh
+GUI -> Room : Khởi tạo phòng nghỉ mới (Chờ duyệt) với latitude, longitude
 activate Room
 
 Room -> Image : Lưu trữ các hình ảnh mô tả phòng nghỉ
@@ -549,6 +567,40 @@ Room --> GUI : Trả về thông tin phòng đã tạo
 deactivate Room
 
 GUI --> Host : Hiển thị thông báo đăng phòng thành công, đang chờ kiểm duyệt
+deactivate GUI
+@enduml
+```
+
+### Biểu đồ 3.11: Chủ phòng nhập hàng loạt phòng từ file Excel
+```plantuml
+@startuml
+autonumber
+actor "Chủ phòng" as Host
+participant "Giao diện Import Excel" as GUI
+participant ": Geocoding (Nominatim)" as Geocoding
+participant ": Phòng" as Room
+
+Host -> GUI : Tải lên file Excel danh sách phòng
+activate GUI
+
+GUI -> GUI : Đọc từng dòng dữ liệu phòng từ file
+
+loop Với mỗi dòng trong file
+    alt Dòng có tọa độ (latitude, longitude)
+        GUI -> GUI : Sử dụng tọa độ từ file trực tiếp
+    else Dòng không có tọa độ
+        GUI -> Geocoding : Gọi Geocoding từ địa chỉ (rate limit: 1 req/giây)
+        activate Geocoding
+        Geocoding --> GUI : Trả về tọa độ hoặc lỗi
+        deactivate Geocoding
+    end
+    GUI -> Room : Kiểm tra trùng tọa độ (<20m cùng Host) & lưu phòng hợp lệ
+    activate Room
+    Room --> GUI : Xác nhận lưu thành công hoặc lỗi chi tiết
+    deactivate Room
+end
+
+GUI --> Host : Báo cáo kết quả:\nSố dòng thành công / Số dòng lỗi (kèm lý do chi tiết)
 deactivate GUI
 @enduml
 ```
@@ -633,6 +685,8 @@ class PhongNghi {
     - giaMoiDem : Double
     - soKhachToiDa : Integer
     - trangThaiPhieuDuyet : String
+    - viDo : DECIMAL(10,8)
+    - kinhDo : DECIMAL(11,8)
 }
 
 class LoaiPhong {
@@ -775,6 +829,8 @@ entity "rooms" {
     price_per_night : DECIMAL(12,2)
     max_guests : INT
     status : VARCHAR(50)
+    latitude : DECIMAL(10,8)
+    longitude : DECIMAL(11,8)
 }
 
 entity "room_types" {
@@ -1079,8 +1135,8 @@ Dưới đây là các biểu đồ thống kê kết quả mô tả dưới d�
 {
   Tỷ lệ đơn đặt phòng theo trạng thái
   --
-  * CONFIRMED / COMPLETED (Thành công) | [===================] 70%
-  * CANCELLED (Khách hủy)             | [======] 22%
+  * CONFIRMED / COMPLETED (Thành công) | [====================] 72%
+  * CANCELLED (Khách hủy)             | [=====] 20%
   * PENDING (Chờ thanh toán)          | [==] 8%
 }
 @endsalt
@@ -1097,6 +1153,30 @@ Dưới đây là các biểu đồ thống kê kết quả mô tả dưới d�
   3. Executive Suite    | [===============] 150 Triệu VNĐ
   4. Family Bungalow    | [============] 120 Triệu VNĐ
   5. Superior Garden    | [=========] 95 Triệu VNĐ
+}
+@endsalt
+```
+
+### 9.4. Biểu đồ 4: Tỷ lệ phòng có cập nhật vị trí GPS
+```plantuml
+@startsalt
+{
+  Tỷ lệ phòng có tọa độ GPS được cập nhật
+  --
+  * Có vị trí (locationAvailable = true)  | [================] 65%
+  * Chưa có vị trí (chờ host cập nhật)   | [========] 35%
+}
+@endsalt
+```
+
+### 9.5. Biểu đồ 5: Phương thức Import phòng của Host
+```plantuml
+@startsalt
+{
+  Tỷ lệ phương thức đăng phòng của Chủ nhà
+  --
+  * Đăng thủ công qua Form     | [==================] 74%
+  * Nhập hàng loạt qua Excel  | [======] 26%
 }
 @endsalt
 ```
