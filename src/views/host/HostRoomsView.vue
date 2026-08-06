@@ -1,9 +1,12 @@
 <template>
   <div class="host-dashboard-layout">
+    <!-- Sidebar mobile overlay backdrop -->
+    <div class="sidebar-overlay" v-if="isMobileSidebarOpen" @click="isMobileSidebarOpen = false"></div>
+
     <!-- SIDEBAR -->
-    <aside class="host-sidebar">
+    <aside class="host-sidebar" :class="{ 'mobile-open': isMobileSidebarOpen }">
       <div class="sidebar-logo">
-        <RouterLink to="/host/rooms" class="logo" @click="activeSidebarTab = 'dashboard'">
+        <RouterLink to="/host/rooms" class="logo" @click="activeSidebarTab = 'dashboard'; isMobileSidebarOpen = false">
           <svg class="logo-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22" style="width: 22px; height: 22px; flex-shrink: 0; margin-right: 6px;">
             <path d="M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h6M9 11h6M9 15h6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -33,7 +36,7 @@
         <button
           class="menu-item"
           :class="{ active: activeSidebarTab === 'dashboard' }"
-          @click="activeSidebarTab = 'dashboard'"
+          @click="activeSidebarTab = 'dashboard'; isMobileSidebarOpen = false"
         >
           <LayoutDashboard :size="18" />
           <span>{{ $t('host.sidebar.overview') }}</span>
@@ -41,7 +44,7 @@
         <button
           class="menu-item"
           :class="{ active: activeSidebarTab === 'rooms' }"
-          @click="activeSidebarTab = 'rooms'"
+          @click="activeSidebarTab = 'rooms'; isMobileSidebarOpen = false"
         >
           <Hotel :size="18" />
           <span>{{ $t('host.sidebar.rooms') }}</span>
@@ -49,7 +52,7 @@
         <button
           class="menu-item"
           :class="{ active: activeSidebarTab === 'bookings' }"
-          @click="activeSidebarTab = 'bookings'"
+          @click="activeSidebarTab = 'bookings'; isMobileSidebarOpen = false"
         >
           <Users :size="18" />
           <span>{{ $t('host.sidebar.bookings') }}</span>
@@ -57,7 +60,7 @@
         <button
           class="menu-item"
           :class="{ active: activeSidebarTab === 'revenue' }"
-          @click="activeSidebarTab = 'revenue'"
+          @click="activeSidebarTab = 'revenue'; isMobileSidebarOpen = false"
         >
           <BarChart3 :size="18" />
           <span>{{ $t('host.sidebar.revenue') }}</span>
@@ -65,7 +68,7 @@
         <button
           class="menu-item"
           :class="{ active: activeSidebarTab === 'profile' }"
-          @click="activeSidebarTab = 'profile'"
+          @click="activeSidebarTab = 'profile'; isMobileSidebarOpen = false"
         >
           <User :size="18" />
           <span>{{ locale === 'vi' ? 'Tài khoản' : 'Account' }}</span>
@@ -74,11 +77,11 @@
 
       <!-- Sidebar Footer -->
       <div class="sidebar-footer">
-        <RouterLink to="/host/rooms" class="sidebar-link" @click="activeSidebarTab = 'dashboard'">
+        <RouterLink to="/host/rooms" class="sidebar-link" @click="activeSidebarTab = 'dashboard'; isMobileSidebarOpen = false">
           <Home :size="16" />
           <span>{{ $t('host.sidebar.back_home') }}</span>
         </RouterLink>
-        <button class="btn-logout-sidebar" @click="handleLogout">
+        <button class="btn-logout-sidebar" @click="handleLogout(); isMobileSidebarOpen = false">
           <LogOut :size="16" />
           <span>{{ $t('host.sidebar.logout') }}</span>
         </button>
@@ -89,9 +92,14 @@
     <div class="host-main-container">
       <!-- TOP NAV -->
       <header class="host-top-header">
-        <div class="header-title-section">
-          <h1 class="page-title">{{ activePageTitle }}</h1>
-          <p class="page-subtitle">{{ activePageSubtitle }}</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-toggle-btn" @click="isMobileSidebarOpen = !isMobileSidebarOpen">
+            <Menu :size="20" />
+          </button>
+          <div class="header-title-section">
+            <h1 class="page-title">{{ activePageTitle }}</h1>
+            <p class="page-subtitle">{{ activePageSubtitle }}</p>
+          </div>
         </div>
         <div class="header-actions" style="display: flex; align-items: center; gap: 12px;">
           <!-- Language Selector -->
@@ -1692,7 +1700,7 @@ import { useI18n } from 'vue-i18n'
 import axios from '../../api/axios'
 import {
   Building2, FileText, DollarSign, Hotel, Users,
-  Plus, MapPin, Star, Edit2, Trash2, Check, X,
+  Plus, MapPin, Star, Edit2, Trash2, Check, X, Menu,
   UploadCloud, Loader2, RefreshCw, UserCheck, CalendarCheck, BedDouble,
   LayoutDashboard, BarChart3, PieChart, Award, LogOut, Home, Wallet, Calendar, User,
   FileSpreadsheet
@@ -1702,6 +1710,7 @@ import { getMyInvoices, payInvoice } from '../../api/invoices'
 import { getProfile, updateProfile, changePassword } from '../../api/users'
 
 const { t, locale } = useI18n()
+const isMobileSidebarOpen = ref(false)
 const changeLanguage = (lang) => {
   locale.value = lang
   localStorage.setItem('locale', lang)
@@ -4169,6 +4178,10 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   z-index: 90;
 }
 
+.mobile-toggle-btn {
+  display: none;
+}
+
 .header-title-section {
   display: flex;
   flex-direction: column;
@@ -4858,26 +4871,53 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
 }
 
 @media (max-width: 768px) {
+  /* Mobile Sidebar Toggle styling */
   .host-sidebar {
-    width: 70px;
-    padding: 1.5rem 0.5rem;
+    width: 260px;
+    padding: 1.5rem 1.25rem;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    z-index: 100;
   }
-  .sidebar-logo .logo, .sidebar-logo .panel-tag, .sidebar-profile .profile-info, .menu-item span, .sidebar-footer span {
-    display: none;
-  }
-  .sidebar-profile {
-    justify-content: center;
-  }
-  .menu-item {
-    justify-content: center;
-    padding: 0.75rem;
+  .host-sidebar.mobile-open {
+    transform: translateX(0);
   }
   .host-main-container {
-    margin-left: 70px;
+    margin-left: 0 !important;
   }
   .host-top-header {
-    padding: 1rem;
+    padding: 1rem !important;
   }
+  .mobile-toggle-btn {
+    display: flex !important;
+    align-items: center;
+    background: none;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .mobile-toggle-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
+  /* Backdrop overlay */
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+  }
+
   .booking-filters-bar {
     flex-direction: column;
     align-items: stretch;

@@ -4,10 +4,13 @@
     <p>{{ $t('admin.loading') }}</p>
   </div>
   <div class="admin-dashboard-layout" v-else>
+    <!-- Sidebar mobile overlay backdrop -->
+    <div class="sidebar-overlay" v-if="isMobileSidebarOpen" @click="isMobileSidebarOpen = false"></div>
+
     <!-- SIDEBAR -->
-    <aside class="admin-sidebar">
+    <aside class="admin-sidebar" :class="{ 'mobile-open': isMobileSidebarOpen }">
       <div class="sidebar-logo">
-        <RouterLink to="/admin" class="logo" @click="activeTab = 'dashboard'">
+        <RouterLink to="/admin" class="logo" @click="activeTab = 'dashboard'; isMobileSidebarOpen = false">
           <svg class="logo-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
             <path d="M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h6M9 11h6M9 15h6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -34,7 +37,7 @@
         <button
           class="menu-item"
           :class="{ active: activeTab === 'dashboard' }"
-          @click="activeTab = 'dashboard'"
+          @click="activeTab = 'dashboard'; isMobileSidebarOpen = false"
         >
           <LayoutDashboard :size="18" />
           <span>{{ $t('admin.dashboard') }}</span>
@@ -42,7 +45,7 @@
         <button
           class="menu-item"
           :class="{ active: activeTab === 'bookings' }"
-          @click="activeTab = 'bookings'"
+          @click="activeTab = 'bookings'; isMobileSidebarOpen = false"
         >
           <FileText :size="18" />
           <span>{{ $t('admin.bookings') }}</span>
@@ -50,7 +53,7 @@
         <button
           class="menu-item"
           :class="{ active: activeTab === 'users' }"
-          @click="activeTab = 'users'"
+          @click="activeTab = 'users'; isMobileSidebarOpen = false"
         >
           <Users :size="18" />
           <span>{{ $t('admin.users') }}</span>
@@ -58,7 +61,7 @@
         <button
           class="menu-item"
           :class="{ active: activeTab === 'rooms' }"
-          @click="activeTab = 'rooms'"
+          @click="activeTab = 'rooms'; isMobileSidebarOpen = false"
         >
           <Hotel :size="18" />
           <span>{{ $t('admin.rooms') }}</span>
@@ -66,7 +69,7 @@
         <button
           class="menu-item"
           :class="{ active: activeTab === 'payments' }"
-          @click="activeTab = 'payments'"
+          @click="activeTab = 'payments'; isMobileSidebarOpen = false"
         >
           <CreditCard :size="18" />
           <span>{{ $t('admin.payments') }}</span>
@@ -74,7 +77,7 @@
         <button
           class="menu-item"
           :class="{ active: activeTab === 'reviews' }"
-          @click="activeTab = 'reviews'"
+          @click="activeTab = 'reviews'; isMobileSidebarOpen = false"
         >
           <MessageSquare :size="18" />
           <span>{{ $t('admin.reviews') }}</span>
@@ -82,7 +85,7 @@
         <button
           class="menu-item"
           :class="{ active: activeTab === 'payouts' }"
-          @click="activeTab = 'payouts'"
+          @click="activeTab = 'payouts'; isMobileSidebarOpen = false"
         >
           <Wallet :size="18" />
           <span>{{ locale === 'vi' ? 'Duyệt rút tiền' : 'Payout Approvals' }}</span>
@@ -90,11 +93,11 @@
 
         <hr class="sidebar-divider" />
 
-        <RouterLink to="/admin/revenue" class="menu-item menu-item-link">
+        <RouterLink to="/admin/revenue" class="menu-item menu-item-link" @click="isMobileSidebarOpen = false">
           <BarChart3 :size="18" />
           <span>{{ $t('admin.revenue') }}</span>
         </RouterLink>
-        <RouterLink to="/admin/promotions" class="menu-item menu-item-link">
+        <RouterLink to="/admin/promotions" class="menu-item menu-item-link" @click="isMobileSidebarOpen = false">
           <Tag :size="18" />
           <span>{{ $t('admin.promotions') }}</span>
         </RouterLink>
@@ -102,11 +105,11 @@
 
       <!-- Sidebar Footer -->
       <div class="sidebar-footer">
-        <RouterLink to="/admin" class="sidebar-link" @click="activeTab = 'dashboard'">
+        <RouterLink to="/admin" class="sidebar-link" @click="activeTab = 'dashboard'; isMobileSidebarOpen = false">
           <Home :size="16" />
           <span>{{ $t('admin.back_home') }}</span>
         </RouterLink>
-        <button class="btn-logout-sidebar" @click="handleLogout">
+        <button class="btn-logout-sidebar" @click="handleLogout(); isMobileSidebarOpen = false">
           <LogOut :size="16" />
           <span>{{ $t('admin.logout') }}</span>
         </button>
@@ -117,9 +120,14 @@
     <div class="admin-main-container">
       <!-- TOP NAV -->
       <header class="admin-top-header">
-        <div class="header-title-section">
-          <h1 class="page-title">{{ activePageTitle }}</h1>
-          <p class="page-subtitle">{{ activePageSubtitle }}</p>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-toggle-btn" @click="isMobileSidebarOpen = !isMobileSidebarOpen">
+            <Menu :size="20" />
+          </button>
+          <div class="header-title-section">
+            <h1 class="page-title">{{ activePageTitle }}</h1>
+            <p class="page-subtitle">{{ activePageSubtitle }}</p>
+          </div>
         </div>
         <div class="header-actions">
           <!-- Language Selector -->
@@ -2015,12 +2023,13 @@ import { useI18n } from 'vue-i18n'
 import {
   Users, Hotel, FileText, DollarSign, Plus, MapPin, Star, Edit2, Trash2,
   CreditCard, MessageSquare, Check, Lock, Unlock,
-  UploadCloud, CheckCircle, AlertCircle, X,
+  UploadCloud, CheckCircle, AlertCircle, X, Menu,
   LayoutDashboard, BarChart3, Home, LogOut, Tag, Sparkles, Eye,
   Clock, Save, BarChart2, Wallet, ChevronLeft, ChevronRight
 } from 'lucide-vue-next'
 
 const { t, locale } = useI18n()
+const isMobileSidebarOpen = ref(false)
 
 // Helper function to generate paginated numbers with ellipsis
 const getPageNumbers = (total, cur) => {
@@ -3435,6 +3444,10 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   z-index: 90;
 }
 
+.mobile-toggle-btn {
+  display: none;
+}
+
 .header-title-section {
   display: flex;
   flex-direction: column;
@@ -3664,6 +3677,46 @@ body { font-family: 'Inter', sans-serif; background: #f8f9fc; color: #1e293b; }
   .tab-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
   .btn-add-room { width: 100%; justify-content: center; }
   .form-row { flex-direction: column; gap: 1rem; }
+
+  /* Mobile Sidebar Toggle styling */
+  .admin-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  }
+  .admin-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  .admin-main-container {
+    margin-left: 0 !important;
+  }
+  .admin-top-header {
+    padding: 1rem !important;
+  }
+  .mobile-toggle-btn {
+    display: flex !important;
+    align-items: center;
+    background: none;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .mobile-toggle-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
+  /* Backdrop overlay */
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+  }
 }
 
 /* MODAL ROOM FORM */

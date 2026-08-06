@@ -662,4 +662,10 @@ h2 {
   font-size: 10px;
   color: #cbd5e1;
 }
+
+@media (max-width: 480px) {
+  .auth-box {
+    padding: 2rem 1.25rem;
+  }
+}
 </style>

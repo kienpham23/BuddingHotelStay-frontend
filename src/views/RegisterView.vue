@@ -529,6 +529,9 @@ h2 {
 }
 
 @media (max-width: 480px) {
+  .auth-box {
+    padding: 2rem 1.25rem;
+  }
   .form-row {
     flex-direction: column;
     gap: 16px;

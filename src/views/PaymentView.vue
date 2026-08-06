@@ -1543,6 +1543,10 @@ const cdotStyle = (i) => {
   .success-modal{padding:2rem 1.25rem}
   .vib-steps{grid-template-columns:1fr}
 }
+@media(max-width:768px){
+  .header-lang-selector-dropdown { display: none !important; }
+  .logo-word { display: none !important; }
+}
 
 .header-lang-selector {
   display: inline-flex;

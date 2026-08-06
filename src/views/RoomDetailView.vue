@@ -850,9 +850,13 @@ body { font-family: 'Inter', sans-serif; color: #1e293b; background: #f8f9fc; }
   
   /* Header responsive */
   .header-lang-selector-dropdown { display: none !important; }
+  .logo-word { display: none !important; }
   .logo { font-size: 1.15rem; }
   .btn-back { font-size: 0.8rem; }
   .btn-outline { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+}
+@media (max-width: 580px) {
+  .user-name { display: none !important; }
 }
 
 .header-lang-selector {
