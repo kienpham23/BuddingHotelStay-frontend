@@ -17,7 +17,14 @@
               </RouterLink>
             </h1>
             <nav class="desktop-nav">
-              <a v-for="cat in categories.slice(0, 3)" :key="cat.id" href="#" class="nav-cat-link">
+              <a
+                v-for="cat in categories.slice(0, 2)"
+                :key="cat.id"
+                href="#"
+                class="nav-cat-link"
+                :class="{ active: (cat.id === 'hotels' && !onlyApartments) || (cat.id === 'apartments' && onlyApartments) }"
+                @click.prevent="selectCategory(cat.id)"
+              >
                 <component :is="cat.icon" :size="18" /> {{ $t(`search.${cat.id}`) }}
               </a>
             </nav>
@@ -201,7 +208,14 @@
         <button @click="mobileMenuOpen = false"><X :size="24" /></button>
       </div>
       <nav class="mobile-nav">
-        <a v-for="cat in categories" :key="cat.id" href="#" class="mobile-nav-item">
+        <a
+          v-for="cat in categories"
+          :key="cat.id"
+          href="#"
+          class="mobile-nav-item"
+          :class="{ active: (cat.id === 'hotels' && !onlyApartments) || (cat.id === 'apartments' && onlyApartments) }"
+          @click.prevent="selectCategory(cat.id); mobileMenuOpen = false"
+        >
           <span class="mobile-nav-icon"><component :is="cat.icon" :size="20" /></span>
           {{ $t(`search.${cat.id}`) }}
         </a>
@@ -373,7 +387,6 @@
                 <span class="checkmark"></span>
                 {{ $t('search.only_apartments') }}
               </label>
-              <a href="#" class="add-flight-link">{{ $t('search.add_flight') }}</a>
             </div>
 
             <!-- SEARCH BUTTON -->
@@ -1115,6 +1128,22 @@ const handleLogoClick = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+const selectCategory = (catId) => {
+  if (catId === 'hotels') {
+    onlyApartments.value = false
+  } else if (catId === 'apartments') {
+    onlyApartments.value = true
+  } else {
+    toastStore.info(locale.value === 'vi' ? 'Tính năng đang được phát triển!' : 'Feature is under development!')
+    return
+  }
+  // Scroll to search container
+  const el = document.querySelector('.search-container-wrapper')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+}
+
 // ===== STATE =====
 const isScrolled    = ref(false)
 const isSearchCompact = ref(false)
@@ -1304,9 +1333,7 @@ watch([filterPrice, filterRating, filterType, sortBy, filterCity], () => { searc
 // ===== CATEGORIES & DESTINATIONS =====
 const categories = [
   { id: 'hotels',     icon: Hotel,    name: 'Khách sạn' },
-  { id: 'flights',    icon: Plane,    name: 'Vé máy bay' },
   { id: 'apartments', icon: Building2, name: 'Nhà và Căn hộ' },
-  { id: 'deals',      icon: Tag,      name: 'Máy bay + K.sạn' },
   { id: 'activities', icon: Activity, name: 'Hoạt động' },
   { id: 'transports', icon: Car,      name: 'Đưa đón sân bay' },
 ]
@@ -1880,10 +1907,20 @@ const onRegister = () => {
 .nav-cat-link {
   display: flex; align-items: center; gap: 0.4rem;
   color: rgba(255,255,255,0.85); text-decoration: none;
-  font-size: 0.875rem; font-weight: 500; transition: color 0.2s;
+  font-size: 0.875rem; font-weight: 500; transition: all 0.2s;
 }
 .header.scrolled .nav-cat-link { color: #475569; }
 .nav-cat-link:hover { color: var(--blue); }
+.nav-cat-link.active {
+  color: #fff !important;
+  font-weight: 700;
+  border-bottom: 2px solid #fff;
+  padding-bottom: 2px;
+}
+.header.scrolled .nav-cat-link.active {
+  color: var(--blue) !important;
+  border-bottom: 2px solid var(--blue);
+}
 .welcome-text { color: white; font-size: 0.85rem; }
 .header.scrolled .welcome-text { color: var(--dark); }
 .nav-link-btn { color: white; text-decoration: none; font-size: 0.85rem; font-weight: 500; }
@@ -1919,8 +1956,10 @@ const onRegister = () => {
 .mobile-menu-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
 .mobile-menu-header button { background: none; border: none; cursor: pointer; color: #475569; }
 .mobile-nav { display: flex; flex-direction: column; gap: 1rem; }
-.mobile-nav-item { display: flex; align-items: center; gap: 1rem; font-size: 1.1rem; font-weight: 500; color: var(--dark); text-decoration: none; }
-.mobile-nav-icon { width: 40px; height: 40px; background: #f1f5f9; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--blue); }
+.mobile-nav-item { display: flex; align-items: center; gap: 1rem; font-size: 1.1rem; font-weight: 500; color: var(--dark); text-decoration: none; transition: all 0.2s; }
+.mobile-nav-item.active { color: var(--blue) !important; font-weight: 700; }
+.mobile-nav-icon { width: 40px; height: 40px; background: #f1f5f9; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--blue); transition: all 0.2s; }
+.mobile-nav-item.active .mobile-nav-icon { background: var(--blue); color: white; }
 .mobile-divider { height: 1px; background: #e2e8f0; margin: 0.5rem 0; }
 .mobile-btn-filled { padding: 1rem; background: var(--blue); color: white; border: none; border-radius: 12px; text-align: center; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 1rem; }
 .mobile-btn-outline { padding: 1rem; border: 1.5px solid var(--blue); color: var(--blue); background: none; border-radius: 12px; text-align: center; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 1rem; }
