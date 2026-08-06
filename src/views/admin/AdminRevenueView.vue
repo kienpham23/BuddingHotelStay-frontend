@@ -557,7 +557,13 @@ const { t, locale } = useI18n()
 
 const invoices = ref([])
 const invoiceStatusFilter = ref('ALL') // 'ALL' | 'PENDING' | 'OVERDUE' | 'PAID'
-const generateDate = ref(new Date().toISOString().split('T')[0])
+const generateDate = ref((() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})())
 const generateLoading = ref(false)
 
 const filteredInvoices = computed(() => {
@@ -641,8 +647,19 @@ const selectedYear = ref(2026)
 const availableYears = [2026, 2025, 2024]
 const filterMode = ref('BY_YEAR') // 'ALL_TIME' | 'BY_YEAR' | 'BY_QUARTER' | 'CUSTOM_RANGE'
 const selectedQuarter = ref('1') // '1' | '2' | '3' | '4'
-const customStartDate = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
-const customEndDate = ref(new Date().toISOString().split('T')[0])
+const customStartDate = ref((() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  return `${year}-${month}-01`
+})())
+const customEndDate = ref((() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})())
 const loading = ref(false)
 const error = ref('')
 const data = ref(null)

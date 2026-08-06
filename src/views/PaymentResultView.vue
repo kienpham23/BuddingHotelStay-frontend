@@ -127,8 +127,8 @@ onMounted(async () => {
       message.value = e.response?.data?.message || 'Không thể xác thực giao dịch VNPay với máy chủ.'
     }
   }
-  // 2. Kiểm tra nếu là MoMo Callback
-  else if (queryParams.partnerCode !== undefined || queryParams.resultCode !== undefined) {
+  // 2. Kiểm tra nếu là MoMo Callback trực tiếp (có partnerCode)
+  else if (queryParams.partnerCode !== undefined) {
     try {
       const { data } = await verifyMoMoCallback(queryParams)
       orderId.value = data?.bookingId || queryParams.orderId || ''

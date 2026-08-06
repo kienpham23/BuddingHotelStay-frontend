@@ -142,9 +142,9 @@
                 <span class="price-val">{{ formatPrice(booking.totalPrice) }}</span>
               </div>
               <div class="actions-section">
-                <!-- Cancel button only if status is PENDING -->
+                <!-- Cancel button if status is PENDING or (CONFIRMED and check-in is > 24 hours away) -->
                 <button
-                  v-if="booking.status === 'PENDING'"
+                  v-if="canCancelBooking(booking)"
                   class="btn-cancel-booking"
                   @click="confirmCancel(booking)"
                   :disabled="cancellingId === booking.id"
@@ -798,6 +798,18 @@ const formatPriceShort = (val) => {
     return (val / 1000).toFixed(0) + 'K'
   }
   return val + 'đ'
+}
+
+const canCancelBooking = (booking) => {
+  if (booking.status === 'PENDING') return true
+  if (booking.status === 'CONFIRMED') {
+    if (!booking.checkIn) return false
+    const checkInDateTime = new Date(`${booking.checkIn}T14:00:00`)
+    const now = new Date()
+    const diffHours = (checkInDateTime - now) / (1000 * 60 * 60)
+    return diffHours >= 24
+  }
+  return false
 }
 
 const confirmCancel = (booking) => {

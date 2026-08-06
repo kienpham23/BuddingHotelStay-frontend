@@ -1625,7 +1625,7 @@
                 v-model="blockForm.checkIn" 
                 class="select-input" 
                 style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit;"
-                :min="new Date().toISOString().split('T')[0]"
+                :min="todayStr"
               />
             </div>
 
@@ -1636,7 +1636,7 @@
                 v-model="blockForm.checkOut" 
                 class="select-input" 
                 style="padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit;"
-                :min="blockForm.checkIn || new Date().toISOString().split('T')[0]"
+                :min="blockForm.checkIn || todayStr"
               />
             </div>
 
@@ -1709,6 +1709,14 @@ const changeLanguage = (lang) => {
 const router = useRouter()
 const authStore = useAuthStore()
 const toastStore = useToastStore()
+
+const todayStr = (() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})()
 
 const rooms = ref([])
 const bookings = ref([])
@@ -2050,7 +2058,6 @@ const filteredBookings = computed(() => {
     // 1. Status Filter
     if (appliedStatus.value) {
       if (appliedStatus.value === 'UPCOMING') {
-        const todayStr = new Date().toISOString().split('T')[0]
         if (bk.status !== 'CONFIRMED' || bk.checkIn < todayStr) {
           return false
         }

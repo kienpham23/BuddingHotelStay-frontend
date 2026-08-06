@@ -72,6 +72,7 @@
           <template v-if="authStore.isLoggedIn">
             <span class="user-name">{{ authStore.user?.fullName }}</span>
             <RouterLink v-if="authStore.role === 'CUSTOMER'" to="/bookings" class="btn-outline">{{ $t('nav.my_bookings') }}</RouterLink>
+            <button class="btn-outline" @click="handleLogout">{{ $t('nav.logout') }}</button>
           </template>
           <template v-else>
             <button class="btn-outline" @click="showAuth = true">{{ $t('nav.login') }}</button>
@@ -425,7 +426,13 @@ const lightboxOpen = ref(false)
 const activeImageIdx = ref(0)
 
 // Booking form states
-const today = new Date().toISOString().split('T')[0]
+const today = (() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})()
 const bookingForm = ref({
   roomId: null,
   checkIn: '',
@@ -481,6 +488,17 @@ const calculateNights = () => {
 
 const onLoginSuccess = (userData) => {
   authStore.setUser(userData)
+  const role = authStore.role
+  if (role === 'ADMIN') {
+    router.push('/admin')
+  } else if (role === 'HOST') {
+    router.push('/host/rooms')
+  }
+}
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push('/')
 }
 
 const getAmenityIcon = (name) => {
