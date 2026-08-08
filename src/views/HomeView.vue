@@ -13,7 +13,6 @@
                 </svg>
                 <span class="logo-word building">Building</span>
                 <span class="logo-word hotel">Hotel</span>
-                <span class="logo-word stay">Stay</span>
               </RouterLink>
             </h1>
             <nav class="desktop-nav">
@@ -202,7 +201,6 @@
             </svg>
             <span class="logo-word building">Building</span>
             <span class="logo-word hotel">Hotel</span>
-            <span class="logo-word stay">Stay</span>
           </RouterLink>
         </h2>
         <button @click="mobileMenuOpen = false"><X :size="24" /></button>
@@ -766,7 +764,6 @@
                 </svg>
                 <span class="logo-word building">Building</span>
                 <span class="logo-word hotel">Hotel</span>
-                <span class="logo-word stay">Stay</span>
               </RouterLink>
             </h1>
             <p>{{ $t('footer.desc') }}</p>

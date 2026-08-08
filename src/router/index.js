@@ -72,9 +72,34 @@ const router = createRouter({
     routes
 })
 
+// Hàm kiểm tra token JWT đã hết hạn hay chưa
+function isTokenExpired(token) {
+    if (!token) return true
+    try {
+        const parts = token.split('.')
+        if (parts.length !== 3) return true
+        // Decode payload base64
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
+        if (!payload.exp) return false
+        const now = Math.floor(Date.now() / 1000)
+        return payload.exp < now
+    } catch (e) {
+        return true
+    }
+}
+
 // Guard kiểm tra auth
 router.beforeEach((to, from, next) => {
-    const token = localStorage.getItem('token')
+    let token = localStorage.getItem('token')
+    
+    // Nếu có token nhưng đã hết hạn, tự động xóa sạch session
+    if (token && isTokenExpired(token)) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('role')
+        localStorage.removeItem('user')
+        token = null
+    }
+
     const role = localStorage.getItem('role')
 
     if (token) {

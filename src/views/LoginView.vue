@@ -14,7 +14,6 @@
           </svg>
           <span class="logo-word building">Building</span>
           <span class="logo-word hotel">Hotel</span>
-          <span class="logo-word stay">Stay</span>
         </h1>
       </RouterLink>
       

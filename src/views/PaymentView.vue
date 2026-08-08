@@ -10,7 +10,6 @@
           </svg>
           <span class="logo-word building">Building</span>
           <span class="logo-word hotel">Hotel</span>
-          <span class="logo-word stay">Stay</span>
         </RouterLink>
 
         <!-- Language Selector in header -->
@@ -265,7 +264,7 @@
                 </div>
               </div>
 
-              <!-- Thanh toán MoMo -->
+              <!-- Ẩn phương thức MoMo do chưa cấu hình key chạy thật
               <div class="method-item" :class="{ selected: payMethod === 'momo' }" @click="payMethod = 'momo'">
                 <div class="radio-ring" :class="{ active: payMethod === 'momo' }">
                   <div v-if="payMethod === 'momo'" class="radio-dot"></div>
@@ -276,6 +275,7 @@
                 </div>
                 <img src="https://static.mservice.io/img/logo-momo.png" alt="MoMo" class="momo-badge-img" />
               </div>
+              -->
 
               <!-- Tại khách sạn -->
               <div class="method-item" :class="{ selected: payMethod === 'onsite' }" @click="payMethod = 'onsite'">

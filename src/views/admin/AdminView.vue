@@ -16,7 +16,6 @@
           </svg>
           <span class="logo-word building">Building</span>
           <span class="logo-word hotel">Hotel</span>
-          <span class="logo-word stay">Stay</span>
         </RouterLink>
         <span class="panel-tag">{{ $t('admin.system_tag') }}</span>
       </div>

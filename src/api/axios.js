@@ -41,7 +41,7 @@ instance.interceptors.response.use(
     },
     (error) => {
         const isAuthRequest = error.config?.url?.includes('/auth/')
-        if (error.response?.status === 401 && !isAuthRequest) {
+        if ((error.response?.status === 401 || error.response?.status === 403) && !isAuthRequest) {
             localStorage.removeItem('token')
             localStorage.removeItem('role')
             localStorage.removeItem('user')

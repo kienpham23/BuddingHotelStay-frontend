@@ -15,17 +15,16 @@
               </svg>
               <span class="logo-word building">Building</span>
               <span class="logo-word hotel">Hotel</span>
-              <span class="logo-word stay">Stay</span>
             </h1>
           </RouterLink>
           
           <div class="hero-text-group">
             <h2 class="benefits-title">
               <template v-if="locale === 'vi'">
-                Trở thành chủ nhà trên <span class="brand-blue">Building Hotel Stay</span>
+                Trở thành chủ phòng trên <span class="brand-blue">Building Hotel</span>
               </template>
               <template v-else>
-                Become a Host on <span class="brand-blue">Building Hotel Stay</span>
+                Become a Host on <span class="brand-blue">Building Hotel</span>
               </template>
             </h2>
             <p class="benefits-subtitle">{{ locale === 'vi' ? 'Kiếm tiền từ không gian trống của bạn và kết nối với hàng triệu khách du lịch toàn cầu.' : 'Earn money from your spare space and connect with millions of global travelers.' }}</p>
@@ -88,7 +87,7 @@
       <!-- RIGHT PANEL: Register Form -->
       <div class="form-panel">
         <div class="form-card">
-          <h2>{{ locale === 'vi' ? 'Đăng ký Kênh Chủ Nhà' : 'Register Host Account' }}</h2>
+          <h2>{{ locale === 'vi' ? 'Đăng ký Kênh Chủ Phòng' : 'Register Host Account' }}</h2>
           <p class="subtitle">{{ locale === 'vi' ? 'Bắt đầu kinh doanh dịch vụ lưu trú ngay hôm nay' : 'Start your hospitality business today' }}</p>
 
           <form @submit.prevent="handleRegister" class="auth-form">
@@ -111,7 +110,7 @@
             </div>
 
             <div class="field-group">
-              <label>{{ locale === 'vi' ? 'EMAIL CHỦ NHÀ' : 'HOST EMAIL' }}</label>
+              <label>{{ locale === 'vi' ? 'EMAIL CHỦ PHÒNG' : 'HOST EMAIL' }}</label>
               <div class="input-wrap">
                 <span class="icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -190,14 +189,14 @@
               <label for="accept-terms" style="font-size: 13.5px; font-weight: 500; color: #475569; cursor: pointer; text-transform: none; display: inline;">
                 {{ locale === 'vi' ? 'Tôi đồng ý với ' : 'I agree to the ' }}
                 <a href="#" @click.prevent="showTermsModal = true" style="color: #1a6cf7; text-decoration: underline; font-weight: 700;">
-                  {{ locale === 'vi' ? 'Điều khoản hợp tác chủ nhà' : 'Host Partnership Terms' }}
+                  {{ locale === 'vi' ? 'Điều khoản hợp tác chủ phòng' : 'Host Partnership Terms' }}
                 </a>
                 {{ locale === 'vi' ? ' và chính sách hoa hồng.' : ' and commission policy.' }}
               </label>
             </div>
 
             <button type="submit" class="btn-primary" :disabled="loading || pwdMismatch || !acceptTerms">
-              <span v-if="!loading">{{ locale === 'vi' ? 'Đăng ký làm Chủ Nhà' : 'Register as Host' }}</span>
+              <span v-if="!loading">{{ locale === 'vi' ? 'Đăng ký làm Chủ Phòng' : 'Register as Host' }}</span>
               <span v-else class="spinner"></span>
             </button>
 
@@ -213,11 +212,11 @@
                 <path fill="#FBBC05" d="M5.24 14.24a7.15 7.15 0 0 1 0-4.48V6.66H1.27a11.96 11.96 0 0 0 0 10.68l3.97-3.1z"/>
                 <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.22 0 12 0A12 12 0 0 0 1.27 6.66l3.97 3.1c.95-2.88 3.61-5.01 6.76-5.01z"/>
               </svg>
-              {{ locale === 'vi' ? 'Đăng ký chủ nhà bằng Google' : 'Register Host with Google' }}
+              {{ locale === 'vi' ? 'Đăng ký chủ phòng bằng Google' : 'Register Host with Google' }}
             </button>
 
             <p class="switch-text">
-              {{ locale === 'vi' ? 'Đã có tài khoản chủ nhà?' : 'Already have a host account?' }}
+              {{ locale === 'vi' ? 'Đã có tài khoản chủ phòng?' : 'Already have a host account?' }}
               <RouterLink to="/login">{{ locale === 'vi' ? 'Đăng nhập ngay' : 'Login now' }}</RouterLink>
             </p>
           </form>
@@ -231,19 +230,19 @@
       <div style="background: white; border-radius: 18px; max-width: 550px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.15);">
         <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
           <h2 style="font-size: 1.15rem; font-weight: 800; color: #1f2937; margin: 0;">
-            {{ locale === 'vi' ? 'Điều khoản Hợp tác & Lợi ích Chủ nhà' : 'Host Partnership Terms & Benefits' }}
+            {{ locale === 'vi' ? 'Điều khoản Hợp tác & Lợi ích Chủ phòng' : 'Host Partnership Terms & Benefits' }}
           </h2>
           <button @click="showTermsModal = false" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #9ca3af; line-height: 1;">×</button>
         </div>
         <div style="padding: 20px; overflow-y: auto; font-size: 14px; line-height: 1.6; color: #4b5563; text-align: left;">
           <h3 style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 8px;">1. {{ locale === 'vi' ? 'Chính sách Doanh thu & Hoa hồng' : 'Revenue & Commission Policy' }}</h3>
           <p style="margin-bottom: 12px;">
-            {{ locale === 'vi' ? 'Building Hotel Stay cung cấp dịch vụ đăng tin miễn phí hoàn toàn. Chúng tôi chỉ thu phí hoa hồng cố định của hệ thống là 10% (hoặc tỷ lệ được thỏa thuận riêng) trên mỗi giao dịch đặt phòng thành công. Không có bất kỳ phí ẩn hay phí duy trì tài khoản nào.' : 'Building Hotel Stay offers completely free listing services. We only collect a standard system commission rate of 10% (or custom agreed rate) on successful bookings. No hidden fees or monthly subscription fees.' }}
+            {{ locale === 'vi' ? 'Building Hotel cung cấp dịch vụ đăng tin miễn phí hoàn toàn. Chúng tôi chỉ thu phí hoa hồng cố định của hệ thống là 10% (hoặc tỷ lệ được thỏa thuận riêng) trên mỗi giao dịch đặt phòng thành công. Không có bất kỳ phí ẩn hay phí duy trì tài khoản nào.' : 'Building Hotel offers completely free listing services. We only collect a standard system commission rate of 10% (or custom agreed rate) on successful bookings. No hidden fees or monthly subscription fees.' }}
           </p>
           
           <h3 style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 8px;">2. {{ locale === 'vi' ? 'Chu kỳ Đối soát & Thanh toán' : 'Payouts & Settlement Cycle' }}</h3>
           <p style="margin-bottom: 12px;">
-            {{ locale === 'vi' ? 'Doanh thu từ các đơn đặt phòng online (VNPay/Momo) sẽ được đối soát tự động hàng tháng. Chủ nhà có thể theo dõi báo cáo doanh thu trực quan, minh bạch trên Dashboard và nhận tiền về tài khoản ngân hàng liên kết một cách nhanh chóng và an toàn.' : 'Revenues from online bookings (VNPay/Momo) are settled automatically each month. Hosts can track clear, transparent revenue reports on the Dashboard and receive payouts safely to their linked bank accounts.' }}
+            {{ locale === 'vi' ? 'Doanh thu từ các đơn đặt phòng online (VNPay/Momo) sẽ được đối soát tự động hàng tháng. Chủ phòng có thể theo dõi báo cáo doanh thu trực quan, minh bạch trên Dashboard và nhận tiền về tài khoản ngân hàng liên kết một cách nhanh chóng và an toàn.' : 'Revenues from online bookings (VNPay/Momo) are settled automatically each month. Hosts can track clear, transparent revenue reports on the Dashboard and receive payouts safely to their linked bank accounts.' }}
           </p>
 
           <h3 style="font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 8px;">3. {{ locale === 'vi' ? 'Quyền lợi & Lợi ích khi Hợp tác' : 'Benefits & Privileges of Partnership' }}</h3>

@@ -236,7 +236,7 @@ stop
 ```
 
 ### Biểu đồ 2.2: Nghiệp vụ Đăng thông tin phòng & Duyệt yêu cầu đăng phòng của Quản trị viên
-Chủ nhà gửi đăng ký thông tin phòng mới lên hệ thống. Hệ thống hỗ trợ chọn vị trí trên bản đồ Leaflet; nếu chủ phòng chưa chọn thủ công, hệ thống tự động Geocoding từ địa chỉ nhập vào, kiểm tra trùng tọa độ trong phạm vi 20m cùng chủ trước khi lưu. Sau đó hệ thống chờ kiểm duyệt và hiển thị công khai khi được phê duyệt.
+Chủ phòng gửi đăng ký thông tin phòng mới lên hệ thống. Hệ thống hỗ trợ chọn vị trí trên bản đồ Leaflet; nếu chủ phòng chưa chọn thủ công, hệ thống tự động Geocoding từ địa chỉ nhập vào, kiểm tra trùng tọa độ trong phạm vi 20m cùng chủ trước khi lưu. Sau đó hệ thống chờ kiểm duyệt và hiển thị công khai khi được phê duyệt.
 
 ```plantuml
 @startuml
@@ -299,25 +299,35 @@ Biểu đồ trình tự mô tả cách các tác nhân (Actors) tương tác v�
 ```plantuml
 @startuml
 autonumber
-actor "Khách hàng" as User
-participant "Giao diện Đăng nhập" as GUI
-participant ": Tài khoản" as Account
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
 
-User -> GUI : Nhập thông tin đăng nhập (Email, mật khẩu)
-activate GUI
+actor "Người dùng\n(Guest/Customer/Host/Admin)" as User
+participant "Vue/Pinia\n(Frontend)" as Vue
+participant "AuthController\n(Spring Boot)" as API
+database "Database\n(MySQL)" as DB
 
-GUI -> Account : Kiểm tra thông tin đăng nhập
-activate Account
-Account -> Account : Xác thực thông tin
-Account --> GUI : Kết quả xác thực
-deactivate Account
-
+User -> Vue : Nhập email & mật khẩu và nhấn Đăng nhập
+activate Vue
+Vue -> API : HTTP POST /api/auth/login (email, password)
+activate API
+API -> DB : SELECT * FROM users WHERE email = ?
+activate DB
+DB --> API : Thông tin tài khoản (đã băm mật khẩu)
+deactivate DB
+API -> API : Khớp mật khẩu bằng BCrypt & sinh JWT token
 alt Xác thực thành công
-    GUI --> User : Đăng nhập thành công, hiển thị trang cá nhân
-else Thông tin sai / Mật khẩu sai
-    GUI --> User : Hiển thị thông báo lỗi đăng nhập
+    API --> Vue : HTTP 200 OK (JWT Token & thông tin user)
+    Vue -> Vue : Lưu token vào localStorage & cập nhật authStore
+    Vue --> User : Đăng nhập thành công, chuyển hướng trang
+else Xác thực thất bại
+    API --> Vue : HTTP 401 Unauthorized (Error Message)
+    deactivate API
+    Vue --> User : Hiển thị thông báo tài khoản/mật khẩu sai
 end
-deactivate GUI
+deactivate Vue
 @enduml
 ```
 
@@ -325,49 +335,54 @@ deactivate GUI
 ```plantuml
 @startuml
 autonumber
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
+
 actor "Khách hàng" as Customer
-participant "Giao diện Đặt phòng" as GUI
-participant ": Phòng" as Room
-participant ": Khuyến mãi" as Promo
-participant ": Đơn đặt phòng" as Booking
-participant ": Thanh toán" as Payment
+participant "Vue\n(Frontend)" as Vue
+participant "Backend API\n(Spring Boot)" as API
+database "Database\n(MySQL)" as DB
+actor "Cổng VNPAY" as VNPAY
 
-Customer -> GUI : Gửi yêu cầu đặt phòng (mã phòng, ngày đặt, số khách, mã khuyến mãi)
-activate GUI
+Customer -> Vue : Điền thông tin đặt phòng, mã voucher và nhấn Đặt phòng
+activate Vue
+Vue -> API : HTTP POST /api/bookings (đăng nhập JWT)
+activate API
+API -> DB : Khóa phòng (FOR UPDATE), tính giảm giá & lưu Booking, Payment (PENDING)
+activate DB
+DB --> API : Đơn hàng khởi tạo thành công
+deactivate DB
+API --> Vue : HTTP 201 Created (Booking DTO)
+deactivate API
 
-GUI -> Room : Kiểm tra tình trạng phòng trống
-activate Room
-Room --> GUI : Trả về tình trạng phòng trống khả dụng
-deactivate Room
+Vue -> API : HTTP POST /api/payment/vnpay/create?bookingId=...
+activate API
+API -> API : Tạo mã giao dịch & ký HMAC-SHA512
+API --> Vue : HTTP 200 OK (Link thanh toán vnpayUrl)
+deactivate API
 
-GUI -> Promo : Áp dụng mã khuyến mãi
-activate Promo
-Promo --> GUI : Trả về số tiền giảm giá
-deactivate Promo
+Vue --> Customer : Chuyển hướng trình duyệt sang cổng VNPAY
+deactivate Vue
 
-GUI -> Booking : Khởi tạo đơn đặt phòng mới (Chờ thanh toán)
-activate Booking
-Booking --> GUI : Trả về đơn đặt phòng mới
-deactivate Booking
+Customer -> VNPAY : Xác nhận thanh toán (OTP / QR Code)
+activate VNPAY
+VNPAY -> VNPAY : Giao dịch thành công
+VNPAY -> API : HTTP GET /api/payment/vnpay/ipn (Server-to-Server)
+activate API
+API -> DB : Cập nhật Payment -> SUCCESS, Booking -> CONFIRMED
+activate DB
+DB --> API : Lưu thay đổi thành công
+deactivate DB
+API --> VNPAY : RspCode "00" (Xác nhận thành công)
+deactivate API
 
-GUI -> Payment : Thực hiện giao dịch thanh toán
-activate Payment
-
-Payment -> Customer : Yêu cầu xác nhận thanh toán
-Customer -> Payment : Xác nhận thanh toán
-
-Payment -> Payment : Xử lý thanh toán thành công
-
-Payment --> GUI : Trả về kết quả thanh toán thành công
-deactivate Payment
-
-GUI -> Booking : Cập nhật trạng thái đơn sang Đã xác nhận
-activate Booking
-Booking --> GUI : Xác nhận cập nhật thành công
-deactivate Booking
-
-GUI --> Customer : Hiển thị thông báo đặt phòng thành công
-deactivate GUI
+VNPAY --> Customer : Chuyển hướng về Vue callback URL
+deactivate VNPAY
+activate Vue
+Vue --> Customer : Hiển thị màn hình thông báo đặt phòng thành công!
+deactivate Vue
 @enduml
 ```
 
@@ -375,25 +390,32 @@ deactivate GUI
 ```plantuml
 @startuml
 autonumber
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
+
 actor "Chủ phòng" as Host
-participant "Giao diện Chủ phòng" as GUI
-participant ": Phòng" as Room
+participant "Vue\n(Frontend)" as Vue
+participant "Backend API\n(Spring Boot)" as API
+database "Database\n(MySQL)" as DB
 
-Host -> GUI : Chỉnh sửa phòng nghỉ (Giá phòng, tiện ích...)
-activate GUI
-
-GUI -> Room : Lấy thông tin phòng nghỉ
-activate Room
-Room --> GUI : Trả về thông tin phòng nghỉ
-deactivate Room
-
-GUI -> Room : Cập nhật thông tin phòng mới & Chuyển trạng thái chờ duyệt
-activate Room
-Room --> GUI : Xác nhận cập nhật thành công
-deactivate Room
-
-GUI --> Host : Hiển thị thông báo cập nhật thành công
-deactivate GUI
+Host -> Vue : Nhập thông tin phòng nghỉ thay đổi và nhấn Lưu
+activate Vue
+Vue -> API : HTTP PUT /api/rooms/{id} (đăng nhập JWT)
+activate API
+API -> DB : SELECT * FROM rooms WHERE id = ? (Kiểm tra sở hữu)
+activate DB
+DB --> API : Trả về thông tin phòng
+deactivate DB
+API -> DB : Cập nhật phòng và đổi status sang 'PENDING' (chờ duyệt lại)
+activate DB
+DB --> API : Lưu thành công
+deactivate DB
+API --> Vue : HTTP 200 OK (Room Response DTO)
+deactivate API
+Vue --> Host : Hiển thị thông báo "Cập nhật thành công, chờ Admin phê duyệt"
+deactivate Vue
 @enduml
 ```
 
@@ -401,20 +423,28 @@ deactivate GUI
 ```plantuml
 @startuml
 autonumber
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
+
 actor "Quản trị viên" as Admin
-participant "Giao diện Quản trị" as GUI
-participant ": Phòng" as Room
+participant "Vue\n(Frontend)" as Vue
+participant "Backend API\n(Spring Boot)" as API
+database "Database\n(MySQL)" as DB
 
-Admin -> GUI : Chọn duyệt yêu cầu đăng phòng nghỉ
-activate GUI
-
-GUI -> Room : Cập nhật trạng thái phòng thành Đang hoạt động
-activate Room
-Room --> GUI : Xác nhận cập nhật trạng thái thành công
-deactivate Room
-
-GUI --> Admin : Hiển thị danh sách phòng sau khi cập nhật
-deactivate GUI
+Admin -> Vue : Nhấn nút "Duyệt phòng" trong danh sách phòng chờ
+activate Vue
+Vue -> API : HTTP PATCH /api/admin/rooms/{id}/approve (đăng nhập JWT)
+activate API
+API -> DB : UPDATE rooms SET status = 'ACTIVE' WHERE id = ?
+activate DB
+DB --> API : Cập nhật thành công
+deactivate DB
+API --> Vue : HTTP 200 OK (Room Response DTO)
+deactivate API
+Vue --> Admin : Cập nhật danh sách phòng, báo duyệt thành công
+deactivate Vue
 @enduml
 ```
 
@@ -422,21 +452,29 @@ deactivate GUI
 ```plantuml
 @startuml
 autonumber
-actor "Người dùng" as User
-participant "Giao diện Thống kê" as GUI
-participant ": Đơn đặt phòng" as Booking
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
 
-User -> GUI : Chọn thời gian thống kê & yêu cầu xem báo cáo
-activate GUI
+actor "Chủ phòng / Admin" as User
+participant "Vue\n(Frontend)" as Vue
+participant "Backend API\n(Spring Boot)" as API
+database "Database\n(MySQL)" as DB
 
-GUI -> Booking : Yêu cầu thống kê doanh thu
-activate Booking
-Booking -> Booking : Tính toán và tổng hợp dữ liệu doanh thu
-Booking --> GUI : Kết quả thống kê doanh thu
-deactivate Booking
-
-GUI --> User : Hiển thị báo cáo doanh thu trực quan
-deactivate GUI
+User -> Vue : Chọn khoảng thời gian và nhấn Xem thống kê
+activate Vue
+Vue -> API : HTTP GET /api/revenue?startDate=...&endDate=...
+activate API
+API -> DB : SELECT bookings WHERE status = 'COMPLETED'
+activate DB
+DB --> API : Danh sách đơn đặt phòng đã hoàn thành
+deactivate DB
+API -> API : Tính toán doanh thu, hoa hồng, công nợ
+API --> Vue : HTTP 200 OK (Revenue Stats Response)
+deactivate API
+Vue --> User : Vẽ biểu đồ doanh thu bằng Chart.js / ApexCharts
+deactivate Vue
 @enduml
 ```
 
@@ -444,83 +482,81 @@ deactivate GUI
 ```plantuml
 @startuml
 autonumber
-actor "Khách hàng" as Customer
-participant "Giao diện Tìm kiếm" as GUI
-participant ": Phòng" as Room
-participant ": Đánh giá" as Review
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
 
-Customer -> GUI : Nhập bộ lọc tìm kiếm và nhấn Tìm kiếm
-activate GUI
+actor "Khách vãng lai / Khách hàng" as Customer
+participant "Vue\n(Frontend)" as Vue
+participant "Backend API\n(Spring Boot)" as API
+database "Database\n(MySQL)" as DB
 
-GUI -> Room : Tìm kiếm phòng nghỉ còn trống theo bộ lọc
-activate Room
-Room --> GUI : Trả về danh sách phòng nghỉ phù hợp
-deactivate Room
+Customer -> Vue : Nhập bộ lọc tìm kiếm và nhấn Tìm kiếm
+activate Vue
+Vue -> API : HTTP GET /api/rooms?city=...&checkIn=...&checkOut=...
+activate API
+API -> DB : Tìm kiếm phòng trống (JOIN FETCH roomType, images, host)
+activate DB
+DB --> API : Danh sách phòng trống thỏa mãn
+deactivate DB
+API --> Vue : HTTP 200 OK (Danh sách phòng)
+deactivate API
+Vue --> Customer : Hiển thị danh sách các phòng nghỉ kèm ảnh đại diện & giá
+deactivate Vue
 
-GUI --> Customer : Hiển thị danh sách phòng khả dụng
-deactivate GUI
-
-Customer -> GUI : Chọn xem chi tiết một phòng nghỉ cụ thể
-activate GUI
-
-GUI -> Room : Lấy thông tin chi tiết phòng nghỉ
-activate Room
-Room --> GUI : Trả về thông tin phòng chi tiết
-deactivate Room
-
-GUI -> Review : Lấy danh sách nhận xét đánh giá của khách hàng khác
-activate Review
-Review --> GUI : Trả về danh sách nhận xét đánh giá
-deactivate Review
-
-GUI --> Customer : Hiển thị trang chi tiết phòng và các đánh giá
-deactivate GUI
+Customer -> Vue : Click chọn phòng nghỉ cụ thể để xem chi tiết
+activate Vue
+Vue -> API : HTTP GET /api/rooms/{id} (Chi tiết phòng & Review)
+activate API
+API -> DB : SELECT * FROM rooms r LEFT JOIN reviews v ... WHERE id = ?
+activate DB
+DB --> API : Chi tiết phòng nghỉ & danh sách các đánh giá
+deactivate DB
+API --> Vue : HTTP 200 OK (Chi tiết phòng & Review DTO)
+deactivate API
+Vue --> Customer : Hiển thị trang chi tiết phòng kèm bản đồ, ảnh và đánh giá
+deactivate Vue
 @enduml
 ```
 
-### Biểu đồ 3.7: Hủy đặt phòng và Hoàn tiền
+### Biểu đồ 3.7: Hủy đặt phòng
 ```plantuml
 @startuml
 autonumber
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
+
 actor "Khách hàng" as Customer
-participant "Giao diện Đặt phòng" as GUI
-participant ": Đơn đặt phòng" as Booking
-participant "Cổng thanh toán" as PaymentGateway
+participant "Vue\n(Frontend)" as Vue
+participant "Backend API\n(Spring Boot)" as API
+database "Database\n(MySQL)" as DB
 
-Customer -> GUI : Yêu cầu hủy đặt phòng đã đặt
-activate GUI
+Customer -> Vue : Click nút "Hủy phòng" trong danh sách phòng đã đặt
+activate Vue
+Vue -> API : HTTP PATCH /api/bookings/{id}/cancel (đăng nhập JWT)
+activate API
+API -> DB : SELECT * FROM bookings WHERE id = ? (Kiểm tra sở hữu)
+activate DB
+DB --> API : Trả về thông tin đơn đặt phòng
+deactivate DB
+API -> API : Kiểm tra điều kiện thời gian hủy (Trước check-in >= 24h)
 
-GUI -> Booking : Lấy thông tin đơn đặt phòng
-activate Booking
-Booking --> GUI : Trả về thông tin đơn đặt phòng
-deactivate Booking
-
-GUI -> Booking : Kiểm tra điều kiện hủy phòng
-activate Booking
-Booking --> GUI : Kết quả kiểm tra điều kiện hủy (Đủ điều kiện hoàn tiền / Hủy trễ)
-deactivate Booking
-
-alt Đủ điều kiện hủy và được hoàn tiền
-    GUI -> Booking : Đổi trạng thái đơn sang Đã hủy & ghi nhận hoàn tiền
-    activate Booking
-    Booking --> GUI : Xác nhận cập nhật thành công
-    deactivate Booking
-    
-    GUI -> PaymentGateway : Gửi yêu cầu hoàn tiền giao dịch sang Cổng thanh toán
-    activate PaymentGateway
-    PaymentGateway --> GUI : Xác nhận hoàn tiền thành công
-    deactivate PaymentGateway
-    
-    GUI --> Customer : Hiển thị thông báo hủy và hoàn tiền thành công
-else Hủy trễ (không được hoàn tiền theo quy định)
-    GUI -> Booking : Đổi trạng thái đơn sang Đã hủy (giữ nguyên thanh toán)
-    activate Booking
-    Booking --> GUI : Xác nhận cập nhật thành công
-    deactivate Booking
-    
-    GUI --> Customer : Hiển thị thông báo hủy đơn đặt phòng thành công (không hoàn tiền)
+alt Đủ điều kiện hủy (Thành công)
+    API -> DB : Đổi Booking -> CANCELLED, Payment -> REFUNDED (hoặc FAILED)
+    activate DB
+    DB --> API : Lưu thành công
+    deactivate DB
+    API --> Vue : HTTP 200 OK (Hủy thành công)
+    Vue --> Customer : Thông báo hủy thành công, hoàn tiền (nếu đã thanh toán online)
+else Quá hạn hủy (Thất bại)
+    API --> Vue : HTTP 400 Bad Request (Error: Hủy trễ hạn)
+    deactivate API
+    Vue --> Customer : Thông báo lỗi: "Không được hủy phòng trước giờ nhận phòng dưới 24h"
 end
-deactivate GUI
+deactivate Vue
 @enduml
 ```
 
@@ -528,101 +564,77 @@ deactivate GUI
 ```plantuml
 @startuml
 autonumber
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
+
 actor "Khách hàng" as Customer
-participant "Giao diện Đặt phòng" as GUI
-participant ": Đơn đặt phòng" as Booking
-participant ": Đánh giá" as Review
-participant ": Phòng" as Room
+participant "Vue\n(Frontend)" as Vue
+participant "Backend API\n(Spring Boot)" as API
+database "Database\n(MySQL)" as DB
 
-Customer -> GUI : Chọn viết đánh giá (Nhập số sao, nhận xét)
-activate GUI
-
-GUI -> Booking : Kiểm tra điều kiện đơn đặt phòng
-activate Booking
-Booking --> GUI : Xác nhận đơn hàng hợp lệ (đã hoàn tất chuyến đi)
-deactivate Booking
-
-GUI -> Review : Lưu thông tin đánh giá nhận xét mới
-activate Review
-Review --> GUI : Xác nhận lưu đánh giá thành công
-deactivate Review
-
-GUI -> Room : Tính toán và cập nhật số sao đánh giá trung bình mới
-activate Room
-Room --> GUI : Xác nhận cập nhật thành công
-deactivate Room
-
-GUI --> Customer : Hiển thị thông báo đăng nhận xét đánh giá thành công
-deactivate GUI
+Customer -> Vue : Chọn đơn hàng hoàn tất, nhập số sao (1-5), nhận xét và gửi
+activate Vue
+Vue -> API : HTTP POST /api/reviews (đăng nhập JWT)
+activate API
+API -> DB : Kiểm tra đơn đặt phòng status = 'COMPLETED'
+activate DB
+DB --> API : Đơn đặt phòng hợp lệ
+deactivate DB
+API -> DB : Lưu đánh giá mới vào reviews
+activate DB
+DB --> API : Lưu đánh giá thành công
+deactivate DB
+API -> DB : Tính trung bình điểm số và cập nhật avg_rating của phòng
+activate DB
+DB --> API : Cập nhật thành công
+deactivate DB
+API --> Vue : HTTP 201 Created (Review DTO)
+deactivate API
+Vue --> Customer : Hiển thị thông báo đăng nhận xét đánh giá thành công!
+deactivate Vue
 @enduml
 ```
 
-### Biểu đồ 3.9: Chủ phòng đăng thông tin phòng & tải ảnh (có chọn vị trí bản đồ & dán nhiều link ảnh)
+### Biểu đồ 3.9: Chủ phòng đăng phòng mới
 ```plantuml
 @startuml
 autonumber
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
+
 actor "Chủ phòng" as Host
-participant "Giao diện Chủ phòng" as GUI
-participant ": Bản đồ / Geocoding" as Map
-participant "Máy chủ Backend (API)" as API
-participant ": Phòng" as Room
-participant ": Ảnh phòng" as Image
+participant "Vue\n(Frontend)" as Vue
+participant "Backend API\n(Spring Boot)" as API
+database "Database\n(MySQL)" as DB
 
-Host -> GUI : Điền thông tin phòng mới, chọn vị trí trên bản đồ (kéo Marker)
-activate GUI
-
-alt Chưa chọn vị trí thủ công
-    GUI -> Map : Gọi Geocoding (Nominatim) để lấy tọa độ từ địa chỉ
-    activate Map
-    Map --> GUI : Trả về latitude, longitude
-    deactivate Map
-end
-
-GUI -> GUI : Kiểm tra tọa độ hợp lệ & không trùng phòng cùng Host (<20m)
-
-alt Cách 1: Tải ảnh từ thiết bị
-    Host -> GUI : Kéo thả hoặc chọn file ảnh từ máy
-    GUI -> GUI : Thêm file vào danh sách selectedNewFiles (isUrl = false)
-else Cách 2: Dán nhiều link ảnh trực tiếp
-    Host -> GUI : Dán các link ảnh (mỗi dòng hoặc phân tách bằng dấu phẩy)
-    Host -> GUI : Nhấn "Thêm ảnh"
-    GUI -> GUI : Parse các link, thêm vào selectedNewFiles (isUrl = true)
-end
-
-Host -> GUI : Nhấn lưu phòng
-GUI -> API : Gửi POST /api/rooms (thông tin phòng + latitude/longitude)
+Host -> Vue : Điền thông tin phòng nghỉ, chọn tọa độ bản đồ & chọn tải ảnh và Lưu
+activate Vue
+Vue -> API : HTTP POST /api/rooms (đăng nhập JWT)
 activate API
-API -> Room : Khởi tạo phòng nghỉ mới (Chờ duyệt)
-activate Room
-Room --> API : Trả về thông tin phòng đã tạo (createdRoomId)
-deactivate Room
-API --> GUI : Trả về thông tin phòng đã tạo (createdRoomId)
+API -> DB : Lưu thông tin phòng nghỉ mới với status = 'PENDING'
+activate DB
+DB --> API : Lưu thành công (Trả về createdRoomId)
+deactivate DB
+API --> Vue : HTTP 201 Created (Room DTO chứa createdRoomId)
 deactivate API
 
-alt Có file ảnh được chọn (isUrl = false)
-    GUI -> API : Gửi POST /api/images/rooms/{createdRoomId}/upload (Multipart FormData)
+alt Nếu chủ phòng chọn tải ảnh lên từ thiết bị
+    Vue -> API : HTTP POST /api/images/rooms/{createdRoomId}/upload (Multipart FormData)
     activate API
-    API -> Image : Lưu trữ các hình ảnh mô tả phòng nghỉ vào thư mục / disk
-    activate Image
-    Image --> API : Trả về danh sách URL ảnh vừa lưu
-    deactivate Image
-    API --> GUI : Trả về kết quả upload thành công
+    API -> API : Lưu trữ tệp ảnh vật lý vào thư mục cục bộ của máy chủ
+    API -> DB : Lưu danh sách đường dẫn ảnh vào bảng room_images
+    activate DB
+    DB --> API : Lưu thành công
+    deactivate DB
+    API --> Vue : HTTP 200 OK (Upload thành công)
     deactivate API
 end
-
-alt Có link ảnh được dán (isUrl = true)
-    GUI -> API : Gửi POST /api/images/rooms/{createdRoomId}/urls (JSON: imageUrls)
-    activate API
-    API -> Image : Lưu trữ các link ảnh vào cơ sở dữ liệu
-    activate Image
-    Image --> API : Trả về kết quả lưu thành công
-    deactivate Image
-    API --> GUI : Trả về kết quả lưu thành công
-    deactivate API
-end
-
-GUI --> Host : Hiển thị thông báo đăng phòng thành công, đang chờ kiểm duyệt
-deactivate GUI
+Vue --> Host : Hiển thị thông báo "Đăng phòng thành công! Đang chờ Admin kiểm duyệt."
+deactivate Vue
 @enduml
 ```
 
@@ -630,33 +642,59 @@ deactivate GUI
 ```plantuml
 @startuml
 autonumber
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
 actor "Chủ phòng" as Host
-participant "Giao diện Import Excel" as GUI
-participant ": Geocoding (Nominatim)" as Geocoding
-participant ": Phòng" as Room
+participant "Vue (Giao diện)" as Vue
+participant "ExcelController" as Controller
+participant "ExcelService" as Service
+participant "RoomRepository" as RoomRepo
+participant "GeocodingService" as GeoSvc
+database "Database (MySQL)" as DB
 
-Host -> GUI : Tải lên file Excel danh sách phòng
-activate GUI
+Host -> Vue : Tải tệp tin Excel lên hệ thống
+activate Vue
+Vue -> Controller : HTTP POST /api/excel/rooms/import (Multipart File, đăng nhập JWT)
+activate Controller
+Controller -> Service : importRoomsFromExcel(file, hostId)
+activate Service
 
-GUI -> GUI : Đọc từng dòng dữ liệu phòng từ file
-
-loop Với mỗi dòng trong file
-    alt Dòng có tọa độ (latitude, longitude)
-        GUI -> GUI : Sử dụng tọa độ từ file trực tiếp
-    else Dòng không có tọa độ
-        GUI -> Geocoding : Gọi Geocoding từ địa chỉ (rate limit: 1 req/giây)
-        activate Geocoding
-        Geocoding --> GUI : Trả về tọa độ hoặc lỗi
-        deactivate Geocoding
+Service -> Service : Đọc dữ liệu từ file Excel (Apache POI)
+loop Với mỗi dòng dữ liệu phòng
+    alt Dòng không có tọa độ vĩ độ/kinh độ
+        Service -> GeoSvc : getCoordinatesFromAddress(address)
+        activate GeoSvc
+        GeoSvc --> Service : Trả về latitude, longitude
+        deactivate GeoSvc
     end
-    GUI -> Room : Kiểm tra trùng tọa độ (<20m cùng Host) & lưu phòng hợp lệ
-    activate Room
-    Room --> GUI : Xác nhận lưu thành công hoặc lỗi chi tiết
-    deactivate Room
+    Service -> RoomRepo : checkDuplicateRoom(hostId, latitude, longitude)
+    activate RoomRepo
+    RoomRepo -> DB : SELECT COUNT(*) FROM rooms WHERE host_id = ? AND latitude = ? AND longitude = ?
+    activate DB
+    DB --> RoomRepo : Trả về số lượng phòng trùng vị trí
+    deactivate DB
+    RoomRepo --> Service : count
+    deactivate RoomRepo
+
+    alt Hợp lệ (không trùng lặp vị trí)
+        Service -> RoomRepo : save(room) (status = 'PENDING')
+        activate RoomRepo
+        RoomRepo -> DB : INSERT INTO rooms ...
+        activate DB
+        DB --> RoomRepo : Lưu thành công
+        deactivate DB
+        deactivate RoomRepo
+    end
 end
 
-GUI --> Host : Báo cáo kết quả:\nSố dòng thành công / Số dòng lỗi (kèm lý do chi tiết)
-deactivate GUI
+Service --> Controller : Kết quả import (số dòng thành công, số dòng lỗi)
+deactivate Service
+Controller --> Vue : HTTP 200 OK (ExcelImportResult DTO)
+deactivate Controller
+Vue --> Host : Hiển thị bảng tổng kết kết quả nhập dữ liệu (thành công/lỗi chi tiết)
+deactivate Vue
 @enduml
 ```
 
@@ -664,44 +702,40 @@ deactivate GUI
 ```plantuml
 @startuml
 autonumber
+skinparam DefaultFontSize 14
+skinparam MaxMessageSize 120
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
 actor "Quản trị viên" as Admin
-participant "Giao diện Quản trị" as GUI
-participant ": Chương trình khuyến mãi" as Promo
+participant "Vue (Giao diện)" as Vue
+participant "PromotionController" as Controller
+participant "PromotionService" as Service
+participant "PromotionRepository" as Repo
+database "Database (MySQL)" as DB
 
-Admin -> GUI : Nhập mã, giá trị giảm và nhấn Tạo khuyến mãi
-activate GUI
+Admin -> Vue : Nhập mã khuyến mãi, phần trăm giảm giá, thời hạn và bấm Tạo
+activate Vue
+Vue -> Controller : HTTP POST /api/promotions (đăng nhập JWT)
+activate Controller
+Controller -> Service : createPromotion(request)
+activate Service
 
-GUI -> Promo : Lưu thông tin chương trình khuyến mãi mới
-activate Promo
-Promo --> GUI : Trả về thông tin chương trình khuyến mãi mới tạo
-deactivate Promo
+Service -> Repo : save(promotion)
+activate Repo
+Repo -> DB : INSERT INTO promotions (code, discount_type, discount_value, active, ...) VALUES ...
+activate DB
+DB --> Repo : Lưu thành công
+deactivate DB
+Repo --> Service : Saved Promotion
+deactivate Repo
 
-GUI --> Admin : Hiển thị danh sách khuyến mãi mới
-deactivate GUI
-
-Admin -> GUI : Nhấp bật hoặc tắt hoạt động của chương trình khuyến mãi
-activate GUI
-
-GUI -> Promo : Thay đổi trạng thái hoạt động của chương trình khuyến mãi
-activate Promo
-Promo --> GUI : Trả về kết quả cập nhật trạng thái
-deactivate Promo
-
-GUI --> Admin : Hiển thị danh sách khuyến mãi sau khi cập nhật
-deactivate GUI
-
-Admin -> GUI : Yêu cầu xóa chương trình khuyến mãi khỏi hệ thống
-activate GUI
-
-GUI -> Promo : Xóa chương trình khuyến mãi khỏi hệ thống dữ liệu
-activate Promo
-Promo --> GUI : Xác nhận đã xóa chương trình khuyến mãi thành công
-deactivate Promo
-
-GUI --> Admin : Hiển thị danh sách khuyến mãi sau khi xóa
-deactivate GUI
+Service --> Controller : PromotionResponse DTO
+deactivate Service
+Controller --> Vue : HTTP 201 Created (Promotion DTO)
+deactivate Controller
+Vue --> Admin : Cập nhật lại danh sách khuyến mãi, thông báo tạo thành công!
+deactivate Vue
 @enduml
-```
 
 ---
 
@@ -828,12 +862,25 @@ class CauHinhHeThong {
     - tyLeHoaHongMacDinh : Double
 }
 
+class YeuCauRutTien {
+    - id : Long
+    - soTien : Double
+    - tenNganHang : String
+    - soTaiKhoan : String
+    - chuTaiKhoan : String
+    - trangThaiRutTien : String
+    - ghiChu : String
+    - thoiGianTao : DateTime
+    - thoiGianCapNhat : DateTime
+}
+
 ' --- Mối quan hệ giữa các lớp ---
 NguoiDung "1" --> "0..*" PhongNghi : "sở hữu"
 NguoiDung "1" --> "0..*" DonDatPhong : "đặt"
 NguoiDung "1" --> "0..*" DanhGia : "đánh giá"
 NguoiDung "1" --> "0..*" HoaDonHoaHong : "được lập cho"
 NguoiDung "1" --> "0..*" KhuyenMaiNguoiDung : "sở hữu"
+NguoiDung "1" --> "0..*" YeuCauRutTien : "yêu cầu rút tiền"
 LoaiPhong "1" --> "0..*" PhongNghi : "phân loại"
 PhongNghi "1" --> "0..*" AnhPhong : "hình ảnh mô tả"
 PhongNghi "1" --> "0..*" DonDatPhong : "được đặt"
@@ -993,11 +1040,26 @@ entity "system_config" {
     default_commission_rate : DECIMAL(5,2)
 }
 
+entity "payout_requests" {
+    * id : BIGINT <<PK>>
+    --
+    * host_id : BIGINT <<FK>>
+    amount : DECIMAL(12,2)
+    bank_name : VARCHAR(100)
+    account_number : VARCHAR(50)
+    account_holder : VARCHAR(150)
+    status : VARCHAR(50)
+    note : TEXT
+    created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+}
+
 users ||--o{ rooms : "owns"
 users ||--o{ bookings : "makes"
 users ||--o{ reviews : "writes"
 users ||--o{ commission_invoices : "billed_for"
 users ||--o{ user_promotions : "owns_promo"
+users ||--o{ payout_requests : "requests_payout"
 room_types ||--o{ rooms : "categorizes"
 rooms ||--o{ room_images : "contains"
 rooms ||--o{ bookings : "is_booked_in"
@@ -1228,7 +1290,7 @@ Dưới đây là các biểu đồ thống kê kết quả mô tả dưới d�
 ```plantuml
 @startsalt
 {
-  Tỷ lệ phương thức đăng phòng của Chủ nhà
+  Tỷ lệ phương thức đăng phòng của Chủ phòng
   --
   * Đăng thủ công qua Form     | [==================] 74%
   * Nhập hàng loạt qua Excel  | [======] 26%

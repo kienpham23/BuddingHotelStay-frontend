@@ -705,14 +705,14 @@
     "nhatrang": "Nha Trang"
   },
   "chatbot": {
-    "welcome": "Hello 👋\n\nI am the AI Assistant of BuildingHotelStay.\n\nI can help you:\n• Find suitable rooms\n• Answer booking inquiries\n• Support payments\n• Guide on system usage",
+    "welcome": "Hello 👋\n\nI am the AI Assistant of Building Hotel.\n\nI can help you:\n• Find suitable rooms\n• Answer booking inquiries\n• Support payments\n• Guide on system usage",
     "welcome_host": "Hello 👋\n\nI am the Host AI Assistant.\n\nI can help you:\n• Guide on room listing and approval\n• Manage guest bookings\n• Answer questions about revenue reports\n• Support blocking room dates on calendar",
     "welcome_admin": "Hello 👋\n\nI am the Admin AI Assistant.\n\nI can help you:\n• Manage room approvals\n• View system statistics and revenue\n• Setup promotions and system configs\n• Support user management",
     "placeholder": "Ask about rooms, bookings, or the system...",
     "hint": "Enter to send • Shift+Enter for new line",
-    "title": "🤖 BuildingHotelStay AI Assistant",
+    "title": "🤖 Building Hotel AI Assistant",
     "status_online": "Always ready to help",
-    "aria_open": "Open HotelStay assistant",
+    "aria_open": "Open Building Hotel assistant",
     "aria_close": "Close chat",
     "aria_send": "Send message",
     "error_conn": "Sorry, I cannot connect right now. Please try again later! 🙏",
