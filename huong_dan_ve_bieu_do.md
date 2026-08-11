@@ -1177,43 +1177,65 @@ Mô tả luồng người dùng di chuyển từ trang chủ tìm kiếm đến 
 
 ```plantuml
 @startuml
+' Cấu hình giao diện đen trắng (monochrome), không đổ bóng
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 12
+
+skinparam activity {
+  BackgroundColor White
+  BorderColor Black
+  ArrowColor Black
+}
+
+|Khách hàng|
 start
 :Truy cập Trang chủ;
-:Nhập địa điểm, Ngày nhận/trả phòng, Số khách;
+:Nhập địa điểm, ngày nhận/trả phòng, số khách;
 :Nhấn Tìm kiếm;
-:Hiển thị danh sách phòng thỏa mãn;
 repeat
-    if (Lọc phòng tiện ích/giá?) then (Có)
-        :Cập nhật bộ lọc;
-        :Hiển thị danh sách phòng thỏa mãn;
-    else (Không)
-    endif
-    :Chọn phòng phù hợp;
-    :Xem chi tiết phòng & Xem đánh giá;
-    if (Nhấn Đặt phòng?) then (Không)
-        stop
-    else (Có)
-    endif
-    repeat
-        if (Khách hàng đã đăng nhập?) then (Chưa đăng nhập)
-            :Chuyển hướng trang Đăng nhập/Đăng ký;
-        else (Đã đăng nhập)
-        endif
-    backward :Đăng nhập;
-    repeat while (Chưa đăng nhập?) is (Đúng)
-    :Trang thông tin đặt phòng, điền ghi chú & áp dụng mã khuyến mãi;
-    :Chọn phương thức thanh toán qua Cổng thanh toán;
-    :Hệ thống kiểm tra & Khóa phòng nghỉ tạm thời (Chờ thanh toán);
-    :Chuyển hướng sang Cổng thanh toán;
-    if (Giao dịch thanh toán thành công?) then (Không)
-        :Báo lỗi đặt phòng - Giải phóng phòng nghỉ;
-    else (Có)
-        :Cập nhật Đơn đặt phòng thành Đã xác nhận\nGhi nhận thanh toán thành công;
-        :Gửi thông báo cho Chủ phòng & Khách hàng;
-        stop
-    endif
-repeat while (Quay lại danh sách?)
-stop
+  :Hiển thị danh sách phòng phù hợp;
+  backward:Áp dụng bộ lọc\n(giá, tiện nghi, loại phòng);
+repeat while (Có lọc thêm?) is (Có) not (Không)
+
+:Chọn phòng, xem chi tiết và đánh giá;
+
+if (Nhấn Đặt phòng?) then (Có)
+  if (Đã đăng nhập?) then (Chưa)
+    :Chuyển hướng trang Đăng nhập / Đăng ký\n(Sau khi đăng nhập xong quay lại);
+  else (Đã đăng nhập)
+  endif
+  
+  :Điền ghi chú, áp dụng mã khuyến mãi (nếu có);
+  :Chọn phương thức thanh toán;
+  
+  |Hệ thống|
+  :Hệ thống tạo đơn đặt phòng\n(trạng thái PENDING);
+  :Chuyển hướng sang\ncổng thanh toán VNPAY;
+  
+  |Cổng thanh toán VNPAY|
+  if (Thanh toán thành công?) then (Có)
+    |Hệ thống|
+    :Cập nhật đơn đặt phòng sang CONFIRMED,\nghi nhận thanh toán thành công;
+    :Gửi thông báo cho Chủ phòng và Khách hàng;
+    
+    |Khách hàng|
+    :Kết thúc\n(Đặt phòng thành công);
+    stop
+  else (Không)
+    |Hệ thống|
+    :Báo lỗi thanh toán,\ngiữ nguyên trạng thái PENDING;
+    
+    |Khách hàng|
+    :Kết thúc\n(Hủy xem phòng);
+    stop
+  endif
+else (Không)
+  |Khách hàng|
+  :Kết thúc\n(Hủy xem phòng);
+  stop
+endif
 @enduml
 ```
 
