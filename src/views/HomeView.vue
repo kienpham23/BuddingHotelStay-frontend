@@ -796,24 +796,24 @@
         <div class="footer-grid">
           <div class="footer-col">
             <h4>{{ $t('footer.help') }}</h4>
-            <a href="#">{{ $t('footer.support_center') }}</a>
-            <a href="#">{{ $t('footer.faqs') }}</a>
-            <a href="#">{{ $t('footer.privacy') }}</a>
-            <a href="#">{{ $t('footer.terms') }}</a>
+            <a href="#" @click.prevent="handleLinkClick">{{ $t('footer.support_center') }}</a>
+            <a href="#" @click.prevent="handleLinkClick">{{ $t('footer.faqs') }}</a>
+            <a href="#" @click.prevent="handleLinkClick">{{ $t('footer.privacy') }}</a>
+            <a href="#" @click.prevent="handleLinkClick">{{ $t('footer.terms') }}</a>
           </div>
           <div class="footer-col">
             <h4>{{ $t('footer.about_us') }}</h4>
-            <a href="#">{{ $t('footer.intro') }}</a>
-            <a href="#">{{ $t('footer.careers') }}</a>
-            <a href="#">{{ $t('footer.blog') }}</a>
-            <a href="#">{{ $t('footer.press') }}</a>
+            <a href="#" @click.prevent="handleLinkClick">{{ $t('footer.intro') }}</a>
+            <a href="#" @click.prevent="handleLinkClick">{{ $t('footer.careers') }}</a>
+            <RouterLink to="/deals">{{ $t('footer.blog') }}</RouterLink>
+            <a href="#" @click.prevent="handleLinkClick">{{ $t('footer.press') }}</a>
           </div>
           <div class="footer-col">
             <h4>{{ $t('footer.destinations') }}</h4>
-            <a href="#">Hà Nội</a>
-            <a href="#">Đà Nẵng</a>
-            <a href="#">Hồ Chí Minh</a>
-            <a href="#">Phú Quốc</a>
+            <a href="#" @click.prevent="quickSearch('Hà Nội')">Hà Nội</a>
+            <a href="#" @click.prevent="quickSearch('Đà Nẵng')">Đà Nẵng</a>
+            <a href="#" @click.prevent="quickSearch('Hồ Chí Minh')">Hồ Chí Minh</a>
+            <a href="#" @click.prevent="quickSearch('Phú Quốc')">Phú Quốc</a>
           </div>
           <div class="footer-col">
             <h4>{{ locale === 'vi' ? 'Liên hệ' : 'Contact Us' }}</h4>
@@ -1160,6 +1160,10 @@ const changeLanguage = (lang) => {
 
 const handleSubscribe = () => {
   toastStore.success(locale.value === 'vi' ? 'Đăng ký nhận tin thành công! Cảm ơn bạn.' : 'Successfully subscribed! Thank you.')
+}
+
+const handleLinkClick = () => {
+  toastStore.info(locale.value === 'vi' ? 'Tính năng đang được phát triển!' : 'Feature is under development!')
 }
 
 const handleLogoClick = () => {
