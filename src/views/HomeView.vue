@@ -753,27 +753,47 @@
     </section>
 
     <!-- FOOTER -->
+    <!-- FOOTER -->
     <footer class="footer">
       <div class="container">
-        <div class="footer-grid">
+        <!-- Top Footer Row (Brand & Newsletter) -->
+        <div class="footer-top">
           <div class="footer-brand">
-            <h1 style="margin: 0 0 1rem 0; font-size: inherit; font-weight: inherit; line-height: 1;">
-              <RouterLink to="/" class="logo" @click="handleLogoClick">
-                <svg class="logo-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
-                  <path d="M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h6M9 11h6M9 15h6" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="logo-word building">Building</span>
-                <span class="logo-word hotel">Hotel</span>
-              </RouterLink>
-            </h1>
+            <RouterLink to="/" class="logo" @click="handleLogoClick">
+              <svg class="logo-brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="22" height="22">
+                <path d="M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h6M9 11h6M9 15h6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="logo-word building">Building</span>
+              <span class="logo-word hotel">Hotel</span>
+            </RouterLink>
             <p>{{ $t('footer.desc') }}</p>
             <div class="social-links">
-              <a href="#"><Facebook :size="18" /></a>
-              <a href="#"><Twitter :size="18" /></a>
-              <a href="#"><Instagram :size="18" /></a>
-              <a href="#"><Linkedin :size="18" /></a>
+              <a href="#" class="social-icon facebook"><Facebook :size="18" /></a>
+              <a href="#" class="social-icon twitter"><Twitter :size="18" /></a>
+              <a href="#" class="social-icon instagram"><Instagram :size="18" /></a>
+              <a href="#" class="social-icon linkedin"><Linkedin :size="18" /></a>
             </div>
           </div>
+          
+          <div class="footer-newsletter">
+            <h4>{{ locale === 'vi' ? 'Đăng ký nhận ưu đãi' : 'Subscribe to Newsletter' }}</h4>
+            <p>{{ locale === 'vi' ? 'Nhận thông báo về các ưu đãi đặc biệt và điểm đến mới nhất của chúng tôi.' : 'Get notifications about special deals and our latest hot destinations.' }}</p>
+            <form @submit.prevent="handleSubscribe" class="newsletter-form">
+              <div class="newsletter-input-group">
+                <Mail class="input-icon" :size="18" />
+                <input type="email" :placeholder="locale === 'vi' ? 'Email của bạn...' : 'Your email address...'" required />
+                <button type="submit" class="btn-subscribe">
+                  {{ locale === 'vi' ? 'Đăng ký' : 'Subscribe' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <hr class="footer-divider" />
+
+        <!-- Middle Columns Row -->
+        <div class="footer-grid">
           <div class="footer-col">
             <h4>{{ $t('footer.help') }}</h4>
             <a href="#">{{ $t('footer.support_center') }}</a>
@@ -795,13 +815,42 @@
             <a href="#">Hồ Chí Minh</a>
             <a href="#">Phú Quốc</a>
           </div>
+          <div class="footer-col">
+            <h4>{{ locale === 'vi' ? 'Liên hệ' : 'Contact Us' }}</h4>
+            <p class="contact-item" style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.75rem;">📍 123 Cầu Giấy, Hà Nội</p>
+            <p class="contact-item" style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.75rem;">📞 +84 (024) 6688 999</p>
+            <p class="contact-item" style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.75rem;">✉️ support@buildinghotel.com</p>
+          </div>
         </div>
+
+        <hr class="footer-divider" />
+
+        <!-- Bottom Footer Row (Copyright & Payments) -->
         <div class="footer-bottom">
           <p>{{ $t('footer.all_rights') }}</p>
-          <div class="footer-links">
-            <a href="#">{{ $t('footer.rights_link') }}</a>
-            <a href="#">{{ $t('footer.cookie_settings') }}</a>
-            <a href="#">{{ $t('footer.sitemap') }}</a>
+          <div class="payment-partners">
+            <span style="font-size: 0.8rem; margin-right: 4px; color: #64748b;">{{ locale === 'vi' ? 'Đối tác thanh toán:' : 'Payment Partners:' }}</span>
+            <!-- Visa SVG -->
+            <svg class="payment-logo" viewBox="0 0 32 20" width="34" height="20" style="margin-right: 4px;">
+              <rect width="32" height="20" rx="3" fill="#1A1F71"/>
+              <path d="M10.1 6.2L8.5 12.8H6.9L5.3 6.2h1.6l1 4.5.9-4.5h1.3zm4.5 3.3c0-1-.6-1.5-1.4-1.8l-.3-.1c-.4-.1-.6-.3-.6-.5s.2-.4.6-.4c.5 0 .8.2 1 .3l.3-1.2c-.3-.1-.8-.3-1.4-.3-1.5 0-2.5.8-2.5 1.9 0 1 .7 1.5 1.5 1.8l.3.1c.4.2.6.3.6.5s-.2.4-.7.4c-.6 0-1-.2-1.2-.3L9.9 13c.4.2.9.3 1.5.3 1.5 0 2.5-.8 2.5-1.9v-.9c.7-.6.7-1.2.7-1.9zm5.3-3.3h-1.2c-.4 0-.7.2-.9.6L15.3 13h1.7l.3-1h2.1l.2 1h1.5l-1.2-6.8zm-1.8 4.5l.8-2.5.5 2.5h-1.3zm8.3-4.5l-1.3 6.8H28l1.3-6.8h-1.4z" fill="#FFF"/>
+            </svg>
+            <!-- Mastercard SVG -->
+            <svg class="payment-logo" viewBox="0 0 32 20" width="34" height="20" style="margin-right: 4px;">
+              <rect width="32" height="20" rx="3" fill="#222"/>
+              <circle cx="13" cy="10" r="6" fill="#EB001B"/>
+              <circle cx="19" cy="10" r="6" fill="#F79E1B" fill-opacity="0.8"/>
+            </svg>
+            <!-- MoMo SVG -->
+            <svg class="payment-logo" viewBox="0 0 32 20" width="34" height="20" style="margin-right: 4px;">
+              <rect width="32" height="20" rx="3" fill="#A50064"/>
+              <text x="6" y="14" fill="#FFF" font-family="Arial" font-weight="900" font-size="9px">MoMo</text>
+            </svg>
+            <!-- VNPay SVG -->
+            <svg class="payment-logo" viewBox="0 0 32 20" width="34" height="20">
+              <rect width="32" height="20" rx="3" fill="#005BAA"/>
+              <text x="3" y="13" fill="#FFF" font-family="Arial" font-weight="900" font-size="8px">VNPay</text>
+            </svg>
           </div>
         </div>
       </div>
@@ -1009,7 +1058,7 @@ import {
   MapPin, Calendar, Users, Search,
   Menu, X, ChevronRight, ChevronLeft, ArrowUp,
   Star, Smartphone,
-  Facebook, Twitter, Instagram, Linkedin,
+  Facebook, Twitter, Instagram, Linkedin, Mail,
   Activity, Car, ChevronDown, Plus, Minus
 } from 'lucide-vue-next'
 
@@ -1107,6 +1156,10 @@ const handleUpdatePassword = async () => {
 const changeLanguage = (lang) => {
   locale.value = lang
   localStorage.setItem('locale', lang)
+}
+
+const handleSubscribe = () => {
+  toastStore.success(locale.value === 'vi' ? 'Đăng ký nhận tin thành công! Cảm ơn bạn.' : 'Successfully subscribed! Thank you.')
 }
 
 const handleLogoClick = () => {
@@ -2381,19 +2434,216 @@ const onRegister = () => {
 .review-card small { font-size: 0.7rem; color: rgba(255,255,255,0.6); }
 
 /* FOOTER */
-.footer { background: white; padding: 5rem 0 2rem; border-top: 1px solid #f1f5f9; font-family: 'Inter', sans-serif; }
-.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 4rem; }
-.footer-brand p { font-size: 0.875rem; color: #64748b; line-height: 1.6; max-width: 280px; margin-bottom: 1.5rem; }
-.social-links { display: flex; gap: 0.75rem; }
-.social-links a { width: 40px; height: 40px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #475569; transition: all 0.2s; }
-.social-links a:hover { background: var(--blue); color: white; }
-.footer-col h4 { font-weight: 700; color: var(--dark); margin-bottom: 1.5rem; }
-.footer-col a { display: block; color: #64748b; text-decoration: none; font-size: 0.875rem; margin-bottom: 1rem; transition: color 0.2s; }
-.footer-col a:hover { color: var(--blue); }
-.footer-bottom { padding-top: 2rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; color: #94a3b8; font-size: 0.8rem; }
-.footer-links { display: flex; gap: 1.5rem; }
-.footer-links a { color: #94a3b8; text-decoration: none; }
-.footer-links a:hover { color: #475569; }
+.footer {
+  background: #0f172a;
+  color: #94a3b8;
+  padding: 4rem 0 2rem;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+}
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+}
+.footer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+.footer-brand {
+  flex: 1.2;
+  max-width: 400px;
+}
+.footer-brand .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-decoration: none;
+  margin-bottom: 1rem;
+}
+.footer-brand .logo-brand-icon {
+  color: #3b82f6;
+}
+.footer-brand .logo-word.building {
+  color: #ffffff;
+}
+.footer-brand .logo-word.hotel {
+  color: #60a5fa;
+}
+.footer-brand p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #94a3b8;
+  margin-bottom: 1.5rem;
+}
+.social-links {
+  display: flex;
+  gap: 0.75rem;
+}
+.social-icon {
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.social-icon:hover {
+  transform: translateY(-4px);
+  color: #ffffff;
+}
+.social-icon.facebook:hover { background: #1877f2; border-color: #1877f2; box-shadow: 0 8px 20px rgba(24, 119, 242, 0.4); }
+.social-icon.twitter:hover { background: #1da1f2; border-color: #1da1f2; box-shadow: 0 8px 20px rgba(29, 161, 242, 0.4); }
+.social-icon.instagram:hover { background: #e1306c; border-color: #e1306c; box-shadow: 0 8px 20px rgba(225, 48, 108, 0.4); }
+.social-icon.linkedin:hover { background: #0077b5; border-color: #0077b5; box-shadow: 0 8px 20px rgba(0, 119, 181, 0.4); }
+
+.footer-newsletter {
+  flex: 1.5;
+  max-width: 480px;
+}
+.footer-newsletter h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+.footer-newsletter p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-bottom: 1.25rem;
+}
+.newsletter-form {
+  width: 100%;
+}
+.newsletter-input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+  padding: 4px 6px 4px 16px;
+  transition: all 0.3s ease;
+}
+.newsletter-input-group:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+.newsletter-input-group .input-icon {
+  color: #64748b;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+.newsletter-input-group input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 0.9rem;
+  flex: 1;
+  padding: 8px 0;
+}
+.newsletter-input-group input::placeholder {
+  color: #64748b;
+}
+.btn-subscribe {
+  background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+  color: #ffffff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.btn-subscribe:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.footer-divider {
+  border: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 2rem 0;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.footer-col h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  padding-bottom: 8px;
+}
+.footer-col h4::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 24px;
+  height: 2px;
+  background: #3b82f6;
+}
+.footer-col a, .footer-col p {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 0.75rem;
+  transition: all 0.25s ease;
+}
+.footer-col a:hover {
+  color: #60a5fa;
+  transform: translateX(4px);
+}
+.footer-bottom {
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #64748b;
+  font-size: 0.8rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+.payment-partners {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.payment-logo {
+  opacity: 0.65;
+  transition: opacity 0.25s;
+  cursor: pointer;
+}
+.payment-logo:hover {
+  opacity: 1;
+}
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
