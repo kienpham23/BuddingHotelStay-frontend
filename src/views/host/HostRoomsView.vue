@@ -570,7 +570,10 @@
                       <span style="font-weight: 600;">{{ calculateDuration(bk.checkIn, bk.checkOut) }} {{ locale === 'en' ? 'nights' : 'đêm' }}</span>
                     </td>
                     <td>
-                      <span class="status-badge" style="background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.72rem;">
+                      <span v-if="isBlockExpired(bk.checkOut)" class="status-badge" style="background: #f1f5f9; color: #475569; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.72rem;">
+                        {{ locale === 'vi' ? 'Hết hạn' : 'Expired' }}
+                      </span>
+                      <span v-else class="status-badge" style="background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.72rem;">
                         {{ locale === 'vi' ? 'Đã chặn' : 'Blocked' }}
                       </span>
                     </td>
@@ -2343,6 +2346,14 @@ const formatDate = (dateStr) => {
 const calculateDuration = (inStr, outStr) => {
   const diff = new Date(outStr) - new Date(inStr)
   return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+}
+
+const isBlockExpired = (checkOutStr) => {
+  if (!checkOutStr) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const checkOutDate = new Date(checkOutStr)
+  return checkOutDate < today
 }
 
 const getStatusLabel = (status) => {
