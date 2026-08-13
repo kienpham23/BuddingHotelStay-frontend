@@ -317,7 +317,9 @@
                   <span class="req">*</span>
                 </label>
                 <input
-                  :value="form.discountType === 'PERCENT' ? form.discountValue : formatMoney(form.discountValue)"
+                  :value="form.discountType === 'PERCENT' ? form.discountValue : (isFocusedDiscountValue ? form.discountValue : formatMoney(form.discountValue))"
+                  @focus="isFocusedDiscountValue = true"
+                  @blur="isFocusedDiscountValue = false"
                   @input="handleDiscountValueInput"
                   type="text"
                   inputmode="numeric"
@@ -329,8 +331,10 @@
                 <div class="fgroup" v-if="form.discountType === 'PERCENT'" :class="{ ferr: formErr.maxDiscountAmount }">
                   <label>{{ $t('admin.max_discount_label') }}</label>
                   <input
-                    :value="formatMoney(form.maxDiscountAmount)"
-                    @input="handleMoneyInput($event, 'maxDiscountAmount')"
+                    :value="isFocusedMaxDiscount ? form.maxDiscountAmount : formatMoney(form.maxDiscountAmount)"
+                    @focus="isFocusedMaxDiscount = true"
+                    @blur="isFocusedMaxDiscount = false"
+                    @input="handleMoneyRawInput($event, 'maxDiscountAmount')"
                     type="text"
                     inputmode="numeric"
                     :placeholder="$t('admin.max_discount_placeholder')"
@@ -348,8 +352,10 @@
               <div class="fgroup" :class="{ ferr: formErr.minOrderAmount }">
                 <label>{{ $t('admin.min_order_label') }}</label>
                 <input
-                  :value="formatMoney(form.minOrderAmount)"
-                  @input="handleMoneyInput($event, 'minOrderAmount')"
+                  :value="isFocusedMinOrder ? form.minOrderAmount : formatMoney(form.minOrderAmount)"
+                  @focus="isFocusedMinOrder = true"
+                  @blur="isFocusedMinOrder = false"
+                  @input="handleMoneyRawInput($event, 'minOrderAmount')"
                   type="text"
                   inputmode="numeric"
                   placeholder="VD: 500.000"
@@ -374,7 +380,7 @@
                 <label>{{ $t('admin.start_date_label') }} <span class="req">*</span></label>
                 <div class="inp-wrap">
                   <Calendar :size="15" class="inp-ico" />
-                  <input v-model="form.startDate" type="date" :max="form.endDate || undefined" />
+                  <input v-model="form.startDate" type="date" :min="isEditMode ? undefined : todayStr" :max="form.endDate || undefined" />
                 </div>
                 <span class="emsg" v-if="formErr.startDate">{{ formErr.startDate }}</span>
               </div>
@@ -382,7 +388,7 @@
                 <label>{{ $t('admin.end_date_label') }} <span class="req">*</span></label>
                 <div class="inp-wrap">
                   <Calendar :size="15" class="inp-ico" />
-                  <input v-model="form.endDate" type="date" :min="form.startDate || undefined" />
+                  <input v-model="form.endDate" type="date" :min="form.startDate || (isEditMode ? undefined : todayStr)" />
                 </div>
                 <span class="emsg" v-if="formErr.endDate">{{ formErr.endDate }}</span>
               </div>
@@ -504,6 +510,18 @@ const changeLanguage = (lang) => {
 const router = useRouter()
 const authStore = useAuthStore()
 
+const todayStr = (() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})()
+
+const isFocusedDiscountValue = ref(false)
+const isFocusedMaxDiscount = ref(false)
+const isFocusedMinOrder = ref(false)
+
 // ─── Data
 const promotions = ref([])
 const loading = ref(true)
@@ -555,40 +573,26 @@ const handleDiscountTypeChange = () => {
 
 const formatMoney = (val) => {
   if (val === null || val === undefined || val === '') return ''
-  const num = parseInt(String(val).replace(/\D/g, ''), 10)
+  const num = Math.round(parseFloat(val))
   if (isNaN(num)) return ''
   return new Intl.NumberFormat('vi-VN').format(num)
 }
 
-const handleMoneyInput = (event, fieldName) => {
-  const input = event.target
-  const origValue = input.value
-  const selectionStart = input.selectionStart
-  
-  const cleanVal = origValue.replace(/\D/g, '')
+const handleMoneyRawInput = (event, fieldName) => {
+  const cleanVal = event.target.value.replace(/\D/g, '')
   if (!cleanVal) {
     form.value[fieldName] = null
-    input.value = ''
-    return
+    event.target.value = ''
+  } else {
+    const num = parseInt(cleanVal, 10)
+    form.value[fieldName] = num
+    event.target.value = cleanVal
   }
-  
-  const num = parseInt(cleanVal, 10)
-  form.value[fieldName] = num
-  
-  const formatted = new Intl.NumberFormat('vi-VN').format(num)
-  input.value = formatted
-  
-  const addedChars = formatted.length - origValue.length
-  const newPos = Math.max(0, selectionStart + addedChars)
-  setTimeout(() => {
-    input.setSelectionRange(newPos, newPos)
-  }, 0)
 }
 
 const handleDiscountValueInput = (event) => {
   const input = event.target
   const origValue = input.value
-  const selectionStart = input.selectionStart
   
   if (form.value.discountType === 'PERCENT') {
     const cleanVal = origValue.replace(/\D/g, '')
@@ -601,29 +605,8 @@ const handleDiscountValueInput = (event) => {
     if (num > 100) num = 100
     form.value.discountValue = num
     input.value = String(num)
-    
-    const addedChars = String(num).length - origValue.length
-    const newPos = Math.max(0, selectionStart + addedChars)
-    setTimeout(() => {
-      input.setSelectionRange(newPos, newPos)
-    }, 0)
   } else {
-    const cleanVal = origValue.replace(/\D/g, '')
-    if (!cleanVal) {
-      form.value.discountValue = null
-      input.value = ''
-      return
-    }
-    const num = parseInt(cleanVal, 10)
-    form.value.discountValue = num
-    const formatted = new Intl.NumberFormat('vi-VN').format(num)
-    input.value = formatted
-    
-    const addedChars = formatted.length - origValue.length
-    const newPos = Math.max(0, selectionStart + addedChars)
-    setTimeout(() => {
-      input.setSelectionRange(newPos, newPos)
-    }, 0)
+    handleMoneyRawInput(event, 'discountValue')
   }
 }
 
@@ -788,9 +771,13 @@ const validateForm = () => {
   
   if (!form.value.startDate) {
     e.startDate = isEn ? 'Please choose start date' : 'Vui lòng chọn ngày bắt đầu'
+  } else if (!isEditMode.value && form.value.startDate < todayStr) {
+    e.startDate = isEn ? 'Start date cannot be in the past' : 'Ngày bắt đầu không được ở quá khứ'
   }
   if (!form.value.endDate) {
     e.endDate = isEn ? 'Please choose end date' : 'Vui lòng chọn ngày kết thúc'
+  } else if (!isEditMode.value && form.value.endDate < todayStr) {
+    e.endDate = isEn ? 'End date cannot be in the past' : 'Ngày kết thúc không được ở quá khứ'
   }
   
   if (form.value.startDate && form.value.endDate && form.value.startDate > form.value.endDate) {
