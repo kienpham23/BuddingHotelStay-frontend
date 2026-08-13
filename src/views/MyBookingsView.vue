@@ -154,7 +154,7 @@
 
                 <!-- Continue payment button: for PENDING/CONFIRMED + not paid -->
                 <button
-                  v-if="(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && !booking.paid"
+                  v-if="(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && !booking.paid && booking.paymentMethod !== 'CASH'"
                   class="btn-continue-pay"
                   @click="continuePayment(booking)"
                 >
@@ -327,11 +327,39 @@
           <div class="receipt-section billing">
             <h4>{{ locale === 'vi' ? 'Chi tiết thanh toán' : 'Payment Details' }}</h4>
             <div class="billing-row">
+              <span>{{ locale === 'vi' ? 'Phương thức thanh toán' : 'Payment Method' }}</span>
+              <strong style="color: #475569;">
+                {{ 
+                  receiptBooking.paymentMethod === 'CASH' 
+                    ? (locale === 'vi' ? 'Tiền mặt tại khách sạn' : 'Cash at property')
+                    : (receiptBooking.paymentMethod || '—')
+                }}
+              </strong>
+            </div>
+            <div class="billing-row">
+              <span>{{ locale === 'vi' ? 'Trạng thái thanh toán' : 'Payment Status' }}</span>
+              <span :style="{ color: receiptBooking.paid ? '#10b981' : '#f59e0b', fontWeight: 'bold' }">
+                {{ 
+                  receiptBooking.paid 
+                    ? (locale === 'vi' ? 'Đã thanh toán' : 'Chưa thanh toán') 
+                    : (locale === 'vi' ? 'Chưa thanh toán' : 'Unpaid')
+                }}
+              </span>
+            </div>
+            <div class="billing-row">
               <span>{{ locale === 'vi' ? 'Đơn giá phòng' : 'Room rate' }}</span>
               <span>{{ locale === 'vi' ? 'Đã bao gồm trong tổng thanh toán' : 'Included in total' }}</span>
             </div>
             <div class="billing-row total">
-              <span>{{ locale === 'vi' ? 'Tổng chi phí đã thanh toán' : 'Total cost paid' }}</span>
+              <span>
+                {{ 
+                  receiptBooking.paid 
+                    ? (locale === 'vi' ? 'Tổng chi phí đã thanh toán' : 'Total cost paid') 
+                    : (receiptBooking.paymentMethod === 'CASH' 
+                        ? (locale === 'vi' ? 'Tổng chi phí cần thanh toán (Tiền mặt)' : 'Total cost to pay (Cash)')
+                        : (locale === 'vi' ? 'Tổng chi phí cần thanh toán' : 'Total cost to pay'))
+                }}
+              </span>
               <span class="total-val">{{ formatPrice(receiptBooking.totalPrice) }}</span>
             </div>
           </div>
