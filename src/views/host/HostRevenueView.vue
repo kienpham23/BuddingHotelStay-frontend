@@ -511,6 +511,29 @@
               placeholder="e.g. Vietcombank, Techcombank"
               required
             />
+            
+            <!-- Suggested banks -->
+            <div style="margin-top: 6px;">
+              <span style="font-size: 11px; color: #64748b; font-weight: 700; display: block; margin-bottom: 6px;">
+                {{ locale === 'vi' ? 'Ngân hàng đề xuất:' : 'Suggested banks:' }}
+              </span>
+              <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
+                <div
+                  v-for="bank in SUGGESTED_BANKS"
+                  :key="bank.code"
+                  @click="selectBank(bank.name)"
+                  :style="{
+                    border: payoutForm.bankName.toLowerCase() === bank.name.toLowerCase() ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                    background: payoutForm.bankName.toLowerCase() === bank.name.toLowerCase() ? '#eff6ff' : 'white',
+                    transform: payoutForm.bankName.toLowerCase() === bank.name.toLowerCase() ? 'scale(1.02)' : 'none'
+                  }"
+                  style="padding: 6px 4px; border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.15s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"
+                >
+                  <img :src="bank.logo" :alt="bank.name" style="width: 32px; height: 16px; object-fit: contain; flex-shrink: 0;" />
+                  <span style="font-size: 9px; font-weight: 800; color: #334155; white-space: nowrap;">{{ bank.code }}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="form-group" style="display: flex; flex-direction: column; gap: 4px;">
@@ -873,6 +896,23 @@ const hostBalance = ref(0)
 const payouts = ref([])
 const showPayoutModal = ref(false)
 const payoutSubmitting = ref(false)
+
+const SUGGESTED_BANKS = [
+  { name: 'Vietcombank', code: 'VCB', logo: 'https://api.vietqr.io/img/VCB.png' },
+  { name: 'Techcombank', code: 'TCB', logo: 'https://api.vietqr.io/img/TCB.png' },
+  { name: 'MB Bank', code: 'MB', logo: 'https://api.vietqr.io/img/MB.png' },
+  { name: 'VietinBank', code: 'CTG', logo: 'https://api.vietqr.io/img/ICB.png' },
+  { name: 'BIDV', code: 'BIDV', logo: 'https://api.vietqr.io/img/BIDV.png' },
+  { name: 'Agribank', code: 'AGR', logo: 'https://api.vietqr.io/img/VBA.png' },
+  { name: 'ACB', code: 'ACB', logo: 'https://api.vietqr.io/img/ACB.png' },
+  { name: 'TPBank', code: 'TPB', logo: 'https://api.vietqr.io/img/TPB.png' },
+  { name: 'Sacombank', code: 'STB', logo: 'https://api.vietqr.io/img/STB.png' },
+  { name: 'VPBank', code: 'VPB', logo: 'https://api.vietqr.io/img/VPB.png' }
+]
+
+const selectBank = (bankName) => {
+  payoutForm.value.bankName = bankName
+}
 const payoutForm = ref({
   amount: null,
   bankName: '',
