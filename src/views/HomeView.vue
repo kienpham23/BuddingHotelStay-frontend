@@ -1586,8 +1586,9 @@ const claimVoucher = async (code) => {
   try {
     const res = await axios.post('/promotions/claim', { code })
     myVouchers.value.push(res.data)
+    toastStore.success(locale.value === 'vi' ? 'Lưu mã khuyến mãi thành công!' : 'Promotion code saved successfully!')
   } catch (err) {
-    alert(err.response?.data?.message || 'Lưu mã khuyến mãi thất bại')
+    toastStore.error(err.response?.data?.message || (locale.value === 'vi' ? 'Lưu mã khuyến mãi thất bại' : 'Failed to save promotion code'))
   }
 }
 
