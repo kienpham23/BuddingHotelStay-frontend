@@ -126,9 +126,9 @@
             <div class="compact-field dates-field">
               <Calendar :size="16" class="compact-ico" />
               <div class="compact-date-inputs">
-                <input v-model="search.checkIn" type="date" :title="$t('search.check_in')" />
+                <input v-model="search.checkIn" type="date" :min="todayStr" :title="$t('search.check_in')" />
                 <span class="compact-arrow">→</span>
-                <input v-model="search.checkOut" type="date" :title="$t('search.check_out')" />
+                <input v-model="search.checkOut" type="date" :min="minCheckOutStr" :title="$t('search.check_out')" />
               </div>
             </div>
             
@@ -289,7 +289,7 @@
                     <Calendar :size="18" class="field-ico" />
                     <div class="date-info">
                       <label>{{ $t('search.check_in') }}</label>
-                      <input v-model="search.checkIn" type="date" @focus="focus='date'" @blur="focus=''" />
+                      <input v-model="search.checkIn" type="date" :min="todayStr" @focus="focus='date'" @blur="focus=''" />
                     </div>
                   </div>
                   <div class="date-divider">→</div>
@@ -297,7 +297,7 @@
                     <Calendar :size="18" class="field-ico" />
                     <div class="date-info">
                       <label>{{ $t('search.check_out') }}</label>
-                      <input v-model="search.checkOut" type="date" @focus="focus='date'" @blur="focus=''" />
+                      <input v-model="search.checkOut" type="date" :min="minCheckOutStr" @focus="focus='date'" @blur="focus=''" />
                     </div>
                   </div>
                 </div>
@@ -1224,7 +1224,24 @@ const compactCitySelectRef = ref(null)
 const availableCities = ['Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Phú Quốc', 'Đà Lạt', 'Nha Trang', 'Vũng Tàu']
 
 // Ngày mặc định: hôm nay và ngày mai
-const formatDate = (d) => d.toISOString().split('T')[0]
+const formatDate = (d) => {
+  if (!d) return ''
+  const dateObj = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d
+  if (isNaN(dateObj.getTime())) return ''
+  const year = dateObj.getFullYear()
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0')
+  const day = String(dateObj.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const todayStr = (() => {
+  const d = new Date()
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})()
+
 const today    = new Date()
 const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1)
 
@@ -1235,6 +1252,44 @@ const search = ref({
   guests: 2,
   children: 0,
   rooms: 1
+})
+
+const minCheckOutStr = computed(() => {
+  if (!search.value.checkIn) return todayStr
+  const d = new Date(search.value.checkIn)
+  d.setDate(d.getDate() + 1)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+})
+
+// Watch to keep checkIn and checkOut dates valid and prevent past date selection
+watch(() => search.value.checkIn, (newVal) => {
+  if (!newVal) return
+  if (newVal < todayStr) {
+    search.value.checkIn = todayStr
+  }
+  if (search.value.checkOut && search.value.checkOut <= search.value.checkIn) {
+    const d = new Date(search.value.checkIn)
+    d.setDate(d.getDate() + 1)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    search.value.checkOut = `${year}-${month}-${day}`
+  }
+})
+
+watch(() => search.value.checkOut, (newVal) => {
+  if (!newVal) return
+  if (search.value.checkIn && newVal <= search.value.checkIn) {
+    const d = new Date(search.value.checkIn)
+    d.setDate(d.getDate() + 1)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    search.value.checkOut = `${year}-${month}-${day}`
+  }
 })
 
 const guestSummary = computed(() => {
