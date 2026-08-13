@@ -718,7 +718,8 @@ const fetchAvailablePromos = async () => {
   promosLoading.value = true
   try {
     const res = await axiosInst.get('/promotions/my-wallet')
-    availablePromos.value = res.data || []
+    const list = res.data || []
+    availablePromos.value = list.filter(p => !p.used)
   } catch (err) {
     console.error('Lỗi khi lấy danh sách ví voucher:', err)
     availablePromos.value = []

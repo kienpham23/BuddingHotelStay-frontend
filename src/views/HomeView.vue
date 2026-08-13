@@ -438,7 +438,7 @@
     </section>
 
     <!-- CHƯƠNG TRÌNH KHUYẾN MÃI CHỖ Ở (Agoda Style) -->
-    <section class="container" v-if="availablePromos.length > 0" style="margin-top: 0.5rem; margin-bottom: 3.5rem;">
+    <section class="container" v-if="filteredAvailablePromos.length > 0" style="margin-top: 0.5rem; margin-bottom: 3.5rem;">
       <div class="section-header-simple promo-header-flex" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.25rem;">
         <div>
           <h2 class="section-title" style="margin-bottom: 0.25rem;">{{ $t('home.promos') }}</h2>
@@ -481,7 +481,7 @@
 
           <!-- Danh sách các voucher khả dụng -->
           <div
-            v-for="(promo, index) in availablePromos"
+            v-for="(promo, index) in filteredAvailablePromos"
             :key="promo.id || promo.code"
             class="promo-banner-card dynamic-promo-card"
             :style="getPromoCardStyle(promo, index)"
@@ -1500,6 +1500,12 @@ const fetchCityStats = async () => {
 // ===== PROMOTIONS STATE & METHODS =====
 const availablePromos = ref([])
 const myVouchers = ref([])
+const filteredAvailablePromos = computed(() => {
+  return availablePromos.value.filter(promo => {
+    const myVoucher = myVouchers.value.find(v => v.code && v.code.toUpperCase() === promo.code.toUpperCase())
+    return !(myVoucher && myVoucher.used)
+  })
+})
 const promosLoading = ref(false)
 const promoTrackRef = ref(null)
 

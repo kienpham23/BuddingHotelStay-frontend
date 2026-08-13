@@ -745,7 +745,8 @@ const fetchMyVouchers = async () => {
   vouchersLoading.value = true
   try {
     const res = await axios.get('/promotions/my-wallet')
-    myVouchers.value = Array.isArray(res.data) ? res.data : []
+    const list = Array.isArray(res.data) ? res.data : []
+    myVouchers.value = list.filter(v => !v.used)
   } catch (err) {
     console.error('Lấy danh sách ví voucher thất bại:', err)
   } finally {

@@ -338,6 +338,12 @@ const filteredPromos = computed(() => {
   if (!filterType.value.includes('coupon') && !filterType.value.includes('limited')) {
     return []
   }
+
+  // Filter out claimed and used promotions
+  list = list.filter(promo => {
+    const myVoucher = myVouchers.value.find(v => v.code && v.code.toUpperCase() === promo.code.toUpperCase())
+    return !(myVoucher && myVoucher.used)
+  })
   
   return list
 })
