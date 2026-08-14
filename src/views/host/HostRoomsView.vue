@@ -245,6 +245,9 @@
                   <span v-if="room.isAvailableToday" class="avail-badge avail-badge--green">
                     <span class="badge-dot"></span> {{ $t('host.today.status_available') }}
                   </span>
+                  <span v-else-if="room.isBlockedToday" class="avail-badge" style="background: #ef4444; color: white;">
+                    <span class="badge-dot" style="background: white;"></span> {{ locale === 'vi' ? 'Đang chặn' : 'Blocked' }}
+                  </span>
                   <span v-else class="avail-badge avail-badge--orange">
                     <span class="badge-dot"></span> {{ $t('host.today.status_occupied') }}
                   </span>
@@ -267,13 +270,24 @@
 
                   <!-- Occupied: show guest info -->
                   <div v-else class="today-card-guest">
-                    <div class="guest-row">
-                      <UserCheck :size="13" />
-                      <span>{{ $t('host.today.guest_label') }}: <strong>{{ room.guestName }}</strong></span>
+                    <div v-if="room.isBlockedToday">
+                      <div class="guest-row" style="color: #ef4444; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                        <span>🚫 {{ locale === 'vi' ? 'Phòng đang chặn ngày' : 'Blocked Dates' }}</span>
+                      </div>
+                      <div class="guest-row checkout-row">
+                        <CalendarCheck :size="13" />
+                        <span>{{ locale === 'vi' ? 'Đến ngày' : 'Until' }}: <strong>{{ formatCheckOut(room.checkOutDate) }}</strong></span>
+                      </div>
                     </div>
-                    <div class="guest-row checkout-row">
-                      <CalendarCheck :size="13" />
-                      <span>{{ $t('host.today.checkout_label') }}: <strong>{{ formatCheckOut(room.checkOutDate) }}</strong></span>
+                    <div v-else>
+                      <div class="guest-row">
+                        <UserCheck :size="13" />
+                        <span>{{ $t('host.today.guest_label') }}: <strong>{{ room.guestName }}</strong></span>
+                      </div>
+                      <div class="guest-row checkout-row">
+                        <CalendarCheck :size="13" />
+                        <span>{{ $t('host.today.checkout_label') }}: <strong>{{ formatCheckOut(room.checkOutDate) }}</strong></span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2488,6 +2502,8 @@ const openEditModal = (room) => {
     longitude: room.longitude || null
   }
   selectedNewFiles.value = []
+  showFormModal.value = true
+  
   nextTick(() => {
     if (priceInputRef.value) {
       priceInputRef.value.value = room.pricePerNight ? room.pricePerNight.toLocaleString('vi-VN') : ''
@@ -2509,7 +2525,6 @@ const openEditModal = (room) => {
   } else {
     roomImages.value = []
   }
-  showFormModal.value = true
   initMap()
 }
 
