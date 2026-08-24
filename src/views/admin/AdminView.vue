@@ -2518,7 +2518,8 @@ const filteredBookings = computed(() => {
     list = list.filter(bk => bk.status === bookingStatusFilter.value)
   }
 
-  return list
+  // Sắp xếp đơn đặt phòng mới nhất lên đầu (ID giảm dần)
+  return [...list].sort((a, b) => (b.id || 0) - (a.id || 0))
 })
 
 const paginatedBookings = computed(() => {

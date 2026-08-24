@@ -19,7 +19,7 @@
       <!-- User profile in sidebar -->
       <div class="sidebar-profile" v-if="authStore.isLoggedIn">
         <div class="profile-avatar" style="overflow: hidden; display: flex; align-items: center; justify-content: center;">
-          <img v-if="authStore.user?.avatarUrl" :src="authStore.user.avatarUrl" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;" />
+          <img v-if="authStore.user?.avatarUrl" :src="formatGoogleDriveUrl(authStore.user.avatarUrl)" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;" />
           <template v-else>
             {{ authStore.user?.fullName ? authStore.user.fullName.charAt(0).toUpperCase() : 'H' }}
           </template>
@@ -63,6 +63,14 @@
         >
           <BarChart3 :size="18" />
           <span>{{ $t('host.sidebar.revenue') }}</span>
+        </button>
+        <button
+          class="menu-item"
+          :class="{ active: activeSidebarTab === 'reviews' }"
+          @click="activeSidebarTab = 'reviews'; isMobileSidebarOpen = false"
+        >
+          <MessageSquare :size="18" />
+          <span>{{ locale === 'vi' ? 'Đánh giá' : 'Reviews' }}</span>
         </button>
         <button
           class="menu-item"
@@ -1082,6 +1090,77 @@
             </form>
           </div>
         </div>
+
+        <!-- 6. REVIEWS TAB -->
+        <div v-if="activeSidebarTab === 'reviews'" class="fade-in-tab" style="display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+          <div class="card table-card" style="background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;">
+            <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+              <MessageSquare :size="20" style="color: #2563eb;" />
+              {{ locale === 'vi' ? 'Quản lý đánh giá từ Khách hàng' : 'Guest Reviews Management' }}
+            </h3>
+            <p class="subtitle" style="margin: 0 0 20px 0; font-size: 13.5px; color: #64748b; line-height: 1.5;">
+              {{ locale === 'vi' ? 'Xem phản ánh, điểm số và viết câu trả lời phản hồi trực tiếp cho khách hàng.' : 'Check guest ratings, comments and write responses directly to them.' }}
+            </p>
+
+            <div v-if="loadingReviews" style="text-align: center; padding: 40px;">
+              <div class="spinner" style="margin: 0 auto 10px auto;"></div>
+              <p style="color: #64748b; font-size: 13.5px;">{{ locale === 'vi' ? 'Đang tải danh sách đánh giá...' : 'Loading reviews list...' }}</p>
+            </div>
+
+            <div v-else-if="!reviews || reviews.length === 0" style="text-align: center; padding: 48px 16px; border: 1.5px dashed #cbd5e1; border-radius: 12px; background: #f8fafc;">
+              <span style="font-size: 2.2rem; margin-bottom: 8px; display: block;">💬</span>
+              <p style="color: #64748b; font-size: 0.9rem; font-weight: 600; margin: 0;">
+                {{ locale === 'vi' ? 'Chưa có đánh giá nào cho các phòng của bạn.' : 'No reviews found for your rooms.' }}
+              </p>
+            </div>
+
+            <div v-else class="table-responsive">
+              <table class="report-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #e2e8f0; text-align: left;">
+                    <th style="padding: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Phòng / Khách hàng' : 'Room / Guest' }}</th>
+                    <th style="padding: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Đánh giá' : 'Rating' }}</th>
+                    <th style="padding: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Nội dung bình luận' : 'Comment' }}</th>
+                    <th style="padding: 12px; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Phản hồi của bạn' : 'Your Response' }}</th>
+                    <th style="padding: 12px; font-weight: 700; color: #475569; text-align: center;">{{ locale === 'vi' ? 'Thao tác' : 'Actions' }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="rev in reviews" :key="rev.id" style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 14px 12px;">
+                      <div style="font-weight: 700; color: #1e293b;">{{ rev.roomName }}</div>
+                      <div style="font-size: 11.5px; color: #64748b; margin-top: 3px; font-weight: 500;">
+                        Khách: {{ rev.customerName }} | {{ formatDate(rev.createdAt) }}
+                      </div>
+                    </td>
+                    <td style="padding: 14px 12px;">
+                      <div style="display: flex; align-items: center; gap: 4px; background: #fffbeb; border: 1px solid #fde68a; padding: 3px 8px; border-radius: 6px; width: fit-content;">
+                        <Star :size="13" fill="#ffb703" color="#ffb703" />
+                        <span style="font-size: 12.5px; font-weight: 800; color: #b45309;">{{ rev.rating }}.0</span>
+                      </div>
+                    </td>
+                    <td style="padding: 14px 12px; font-size: 13.5px; color: #334155; max-width: 250px; line-height: 1.4;">
+                      "{{ rev.comment || '-' }}"
+                    </td>
+                    <td style="padding: 14px 12px; font-size: 13.5px; color: #475569; max-width: 250px; line-height: 1.4; font-style: italic;">
+                      <span v-if="rev.hostReply">"{{ rev.hostReply }}"</span>
+                      <span v-else style="color: #94a3b8; font-size: 12.5px;">{{ locale === 'vi' ? 'Chưa phản hồi' : 'No response yet' }}</span>
+                    </td>
+                    <td style="padding: 14px 12px; text-align: center;">
+                      <button 
+                        class="btn-primary-sm" 
+                        style="padding: 0.35rem 0.85rem; font-size: 0.8rem; border-radius: 6px; font-weight: 700; background: #2563eb; display: inline-flex; align-items: center; gap: 4px;"
+                        @click="openReplyModal(rev)"
+                      >
+                        ✏️ {{ rev.hostReply ? (locale === 'vi' ? 'Sửa' : 'Edit') : (locale === 'vi' ? 'Trả lời' : 'Reply') }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
 
@@ -1707,6 +1786,50 @@
       </div>
     </div>
 
+    <!-- REPLY REVIEW MODAL -->
+    <div class="modal-backdrop" v-if="showReplyModal && selectedReviewToReply" style="z-index: 1250;">
+      <div class="confirm-modal" style="max-width: 500px; width: 90%; background: white; border-radius: 18px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 16px; font-family: inherit; text-align: left;">
+        <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>💬</span>
+          {{ locale === 'vi' ? 'Phản hồi đánh giá' : 'Reply to Review' }}
+        </h3>
+        
+        <div style="background: #f8fafc; border-radius: 10px; padding: 12px; border: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 6px;">
+          <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: 700;">{{ locale === 'vi' ? 'Đánh giá của khách:' : 'Guest review:' }}</p>
+          <p style="margin: 0; font-size: 13.5px; font-weight: 700; color: #1e293b;">
+            {{ selectedReviewToReply.customerName }} ({{ selectedReviewToReply.roomName }})
+          </p>
+          <div style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+            <Star v-for="i in 5" :key="i" :size="12" fill="#ffb703" :color="i <= selectedReviewToReply.rating ? '#ffb703' : '#e2e8f0'" />
+          </div>
+          <p style="margin: 4px 0 0 0; font-size: 13px; color: #475569; font-style: italic;">
+            "{{ selectedReviewToReply.comment || '-' }}"
+          </p>
+        </div>
+
+        <form @submit.prevent="submitReviewReply" style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 0.85rem; font-weight: 700; color: #475569;">{{ locale === 'vi' ? 'Nội dung phản hồi' : 'Your Response' }}</label>
+            <textarea 
+              v-model="replyText" 
+              rows="4" 
+              class="select-input" 
+              style="padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13.5px; width: 100%; font-family: inherit; resize: vertical;" 
+              :placeholder="locale === 'vi' ? 'Cảm ơn quý khách đã phản hồi. Chúng tôi sẽ...' : 'Thank you for your feedback. We will...'"
+              required
+            ></textarea>
+          </div>
+          <div class="modal-actions" style="margin-top: 12px; display: flex; gap: 8px;">
+            <button type="button" class="btn-cancel" @click="closeReplyModal" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; font-weight: 700; cursor: pointer; color: #475569;">{{ locale === 'vi' ? 'Đóng' : 'Close' }}</button>
+            <button type="submit" class="btn-submit" :disabled="replySubmitting" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: #2563eb; color: white; font-weight: 700; cursor: pointer;">
+              <span v-if="!replySubmitting">{{ locale === 'vi' ? 'Lưu phản hồi' : 'Submit Response' }}</span>
+              <span v-else class="spinner-small"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- GENERAL CUSTOM CONFIRM MODAL -->
     <div class="modal-backdrop" v-if="showConfirmModal" style="z-index: 2200;">
       <div class="confirm-modal" style="animation: pop 0.25s ease-out;">
@@ -1731,7 +1854,7 @@
 
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useToastStore } from '../../stores/toast'
@@ -1742,7 +1865,7 @@ import {
   Plus, MapPin, Star, Edit2, Trash2, Check, X, Menu,
   UploadCloud, Loader2, RefreshCw, UserCheck, CalendarCheck, BedDouble,
   LayoutDashboard, BarChart3, PieChart, Award, LogOut, Home, Wallet, Calendar, User,
-  FileSpreadsheet
+  FileSpreadsheet, MessageSquare
 } from 'lucide-vue-next'
 import ExcelDataPanel from '../../components/host/ExcelDataPanel.vue'
 import { getMyInvoices, payInvoice } from '../../api/invoices'
@@ -2092,7 +2215,7 @@ const exportBookingsToExcel = async () => {
 }
 
 const filteredBookings = computed(() => {
-  return bookings.value.filter(bk => {
+  const list = bookings.value.filter(bk => {
     // Không hiển thị các lệnh chặn phòng (chỉ hiển thị khách đặt thực tế)
     if (bk.note === 'HOST_BLOCKED') {
       return false
@@ -2155,6 +2278,8 @@ const filteredBookings = computed(() => {
 
     return true
   })
+  // Sắp xếp các đơn đặt phòng mới nhất lên trên cùng (ID giảm dần)
+  return list.sort((a, b) => b.id - a.id)
 })
 
 // Revenue state variables & functions
@@ -2626,12 +2751,14 @@ const addImageUrls = () => {
   }
 
   urls.forEach(url => {
+    // Tự động chuyển đổi link Google Drive nếu có
+    const formattedUrl = formatGoogleDriveUrl(url)
     // Avoid duplicates
-    const alreadyAdded = selectedNewFiles.value.some(f => f.previewUrl === url)
+    const alreadyAdded = selectedNewFiles.value.some(f => f.previewUrl === formattedUrl)
     if (!alreadyAdded) {
       selectedNewFiles.value.push({
         file: null,        // No File object — this is a URL-based image
-        previewUrl: url,   // Direct URL used for both preview and submission
+        previewUrl: formattedUrl,   // Direct URL used for both preview and submission
         isUrl: true
       })
     }
@@ -3241,8 +3368,33 @@ const fetchUserProfile = async () => {
   }
 }
 
+const formatGoogleDriveUrl = (url) => {
+  if (!url) return ''
+  const driveRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/
+  const openRegex = /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/
+  const ucRegex = /drive\.google\.com\/uc\?(?:export=view&)?id=([a-zA-Z0-9_-]+)/
+  const lhRegex = /lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/
+  
+  let fileId = null
+  if (driveRegex.test(url)) {
+    fileId = url.match(driveRegex)[1]
+  } else if (openRegex.test(url)) {
+    fileId = url.match(openRegex)[1]
+  } else if (ucRegex.test(url)) {
+    fileId = url.match(ucRegex)[1]
+  } else if (lhRegex.test(url)) {
+    fileId = url.match(lhRegex)[1]
+  }
+  
+  if (fileId) {
+    return `https://lh3.googleusercontent.com/d/${fileId}`
+  }
+  return url
+}
+
 const handleUpdateProfile = async () => {
   updatingProfile.value = true
+  profileForm.value.avatarUrl = formatGoogleDriveUrl(profileForm.value.avatarUrl)
   try {
     const res = await updateProfile({
       fullName: profileForm.value.fullName,
@@ -3290,6 +3442,71 @@ const handleUpdatePassword = async () => {
   }
 }
 
+// Reviews logic
+const reviews = ref([])
+const loadingReviews = ref(false)
+const showReplyModal = ref(false)
+const selectedReviewToReply = ref(null)
+const replyText = ref('')
+const replySubmitting = ref(false)
+
+const fetchReviews = async () => {
+  loadingReviews.value = true
+  try {
+    const res = await axios.get('/reviews/host')
+    reviews.value = res.data ?? []
+  } catch (err) {
+    console.error('Lỗi lấy danh sách đánh giá:', err)
+    reviews.value = []
+  } finally {
+    loadingReviews.value = false
+  }
+}
+
+const openReplyModal = (rev) => {
+  selectedReviewToReply.value = rev
+  replyText.value = rev.hostReply || ''
+  showReplyModal.value = true
+}
+
+const closeReplyModal = () => {
+  showReplyModal.value = false
+  selectedReviewToReply.value = null
+  replyText.value = ''
+}
+
+const submitReviewReply = async () => {
+  if (!selectedReviewToReply.value) return
+  replySubmitting.value = true
+  try {
+    const res = await axios.patch(`/reviews/${selectedReviewToReply.value.id}/reply`, {
+      hostReply: replyText.value
+    })
+    toastStore.success(locale.value === 'vi' ? 'Gửi phản hồi thành công!' : 'Response submitted successfully!')
+    
+    // Cập nhật local state
+    const idx = reviews.value.findIndex(r => r.id === selectedReviewToReply.value.id)
+    if (idx !== -1) {
+      reviews.value[idx].hostReply = res.data.hostReply
+      reviews.value[idx].repliedAt = res.data.repliedAt
+    }
+    
+    closeReplyModal()
+  } catch (err) {
+    console.error('Lỗi khi gửi phản hồi:', err)
+    toastStore.error(err.response?.data?.message || (locale.value === 'vi' ? 'Gửi phản hồi thất bại!' : 'Failed to submit response!'))
+  } finally {
+    replySubmitting.value = false
+  }
+}
+
+// Watch activeSidebarTab to fetch reviews when needed
+watch(() => activeSidebarTab.value, (newTab) => {
+  if (newTab === 'reviews') {
+    fetchReviews()
+  }
+})
+
 onMounted(() => {
   if (!authStore.isLoggedIn) {
     router.push('/login')
@@ -3302,6 +3519,9 @@ onMounted(() => {
     fetchInvoices()
     fetchPayoutData()
     fetchUserProfile()
+    if (activeSidebarTab.value === 'reviews') {
+      fetchReviews()
+    }
   }
 })
 </script>

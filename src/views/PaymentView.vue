@@ -284,7 +284,7 @@
                 </div>
                 <div class="method-body">
                   <div class="method-name">{{ locale === 'vi' ? 'Thanh toán tại khách sạn' : 'Pay at property' }}</div>
-                  <div class="method-sub">{{ locale === 'vi' ? 'Trả tiền mặt hoặc thẻ khi check-in' : 'Pay with cash or card upon check-in' }}</div>
+                  <div class="method-sub">{{ locale === 'vi' ? 'Đặt cọc chuyển khoản 20% giữ chỗ, 80% trả khi check-in' : '20% deposit in advance, 80% rest upon check-in' }}</div>
                 </div>
                 <Banknote :size="26" class="ico-green" />
               </div>
@@ -330,9 +330,14 @@
 
             <!-- Onsite info -->
             <transition name="expand">
-            <div v-if="payMethod === 'onsite'" class="info-banner">
-              <Info :size="16" class="ico-blue" style="flex-shrink:0" />
-              <p>{{ locale === 'vi' ? 'Bạn sẽ thanh toán tại lễ tân khi check-in. Vui lòng mang theo CMND/CCCD hoặc hộ chiếu hợp lệ.' : 'You will pay at the reception upon check-in. Please bring valid ID or passport.' }}</p>
+            <div v-if="payMethod === 'onsite'" class="info-banner" style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 13.5px; line-height: 1.4; text-align: left;">
+              <Info :size="16" style="color: #16a34a; flex-shrink:0; margin-top: 2px;" />
+              <div>
+                <p style="font-weight: 700; margin: 0 0 4px 0;">{{ locale === 'vi' ? 'Chính sách đặt cọc 20%' : '20% Deposit Policy' }}</p>
+                <p style="margin: 0;">
+                  {{ locale === 'vi' ? 'Bạn cần đặt cọc trước 20% bằng chuyển khoản để xác nhận giữ chỗ. 80% còn lại thanh toán tại quầy lễ tân khi nhận phòng.' : 'You will pay a 20% deposit transfer in advance to secure your room. The remaining 80% will be paid at the reception upon check-in.' }}
+                </p>
+              </div>
             </div>
             </transition>
           </div>
@@ -457,6 +462,23 @@
             </div>
             <div class="total-amt">{{ fmtPrice(totalAmt) }}</div>
           </div>
+
+          <!-- Hiển thị đặt cọc 20% nếu chọn thanh toán tại khách sạn -->
+          <transition name="expand">
+            <div v-if="payMethod === 'onsite'" style="margin-top: 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; text-align: left;">
+              <div style="display: flex; justify-content: space-between; font-size: 13.5px; color: #1e3a8a;">
+                <span style="font-weight: 700;">{{ locale === 'vi' ? 'Đặt cọc trước (20%):' : 'Deposit (20%):' }}</span>
+                <span style="font-weight: 800; color: #2563eb;">{{ fmtPrice(totalAmt * 0.2) }}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13.5px; color: #475569;">
+                <span>{{ locale === 'vi' ? 'Thanh toán tại khách sạn (80%):' : 'Rest at check-in (80%):' }}</span>
+                <span style="font-weight: 700;">{{ fmtPrice(totalAmt * 0.8) }}</span>
+              </div>
+              <div style="border-top: 1px dashed #bfdbfe; margin-top: 4px; padding-top: 6px; font-size: 11px; color: #64748b; line-height: 1.4;">
+                📢 {{ locale === 'vi' ? 'Lưu ý: Bạn vui lòng chuyển khoản đặt cọc 20% sau khi tạo đơn. Host sẽ kiểm tra và xác nhận đơn đặt phòng.' : 'Note: Please transfer the 20% deposit after booking. The Host will check and confirm your stay.' }}
+              </div>
+            </div>
+          </transition>
 
           <div class="divider"></div>
 
@@ -623,6 +645,38 @@
       </div>
     </div>
     </transition>
+
+    <!-- PAY CONFIRMATION MODAL -->
+    <div class="modal-backdrop" v-if="showPayConfirmModal" style="z-index: 2300;">
+      <div class="confirm-modal" style="max-width: 480px; width: 90%; background: white; border-radius: 18px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); text-align: left; display: flex; flex-direction: column; gap: 16px; animation: pop 0.25s ease-out;">
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <ShieldCheck :size="20" style="color: #2563eb;" />
+          {{ confirmPayTitle }}
+        </h3>
+        
+        <p style="font-size: 0.92rem; color: #475569; margin: 0; line-height: 1.5;">
+          {{ confirmPayDesc }}
+        </p>
+
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 13px; font-weight: 700; color: #1e3a8a;">
+            {{ locale === 'vi' ? 'Số tiền thanh toán ngay:' : 'Amount to pay now:' }}
+          </span>
+          <span style="font-size: 17px; font-weight: 800; color: #2563eb;">
+            {{ fmtPrice(confirmPayAmount) }}
+          </span>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 8px; display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="btn-cancel" @click="showPayConfirmModal = false" style="padding: 10px 20px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; font-weight: 700; cursor: pointer; color: #475569;">
+            {{ locale === 'vi' ? 'Hủy bỏ' : 'Cancel' }}
+          </button>
+          <button class="btn-submit" @click="onConfirmPayCallback" style="padding: 10px 24px; border-radius: 8px; border: none; background: #2563eb; color: white; font-weight: 700; cursor: pointer;">
+            {{ locale === 'vi' ? 'Thanh toán ngay' : 'Pay Now' }}
+          </button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -887,62 +941,107 @@ const ensureBooking = async () => {
   return id
 }
 
+// ─── Pay confirmation state
+const showPayConfirmModal = ref(false)
+const confirmPayAmount = ref(0)
+const confirmPayTitle = ref('')
+const confirmPayDesc = ref('')
+const onConfirmPayCallback = ref(null)
+
+const triggerPayConfirm = (title, desc, amount, callback) => {
+  confirmPayTitle.value = title
+  confirmPayDesc.value = desc
+  confirmPayAmount.value = amount
+  onConfirmPayCallback.value = callback
+  showPayConfirmModal.value = true
+}
+
 // ─── VNPay: tạo booking → lấy URL → redirect
 const handleVNPayRedirect = async () => {
   if (!validateStep1()) { currentStep.value = 1; return }
-  paying.value = true
-  err.value = {}
-  try {
-    const bookingId = await ensureBooking()
-    const { data }  = await createVNPayUrl(bookingId, locale.value)
-    if (data?.paymentUrl) {
-      window.location.href = data.paymentUrl
-    } else {
-      err.value.submit = locale.value === 'vi' ? 'Không lấy được đường link thanh toán. Vui lòng thử lại.' : 'Failed to retrieve VNPay link. Please try again.'
+  
+  const title = locale.value === 'vi' ? 'Xác nhận thanh toán VNPay' : 'Confirm VNPay Payment'
+  const desc = locale.value === 'vi' 
+    ? 'Bạn sẽ được chuyển hướng sang cổng VNPay để thanh toán 100% số tiền đặt phòng.' 
+    : 'You will be redirected to VNPay to pay 100% of the booking amount.'
+  
+  triggerPayConfirm(title, desc, totalAmt.value, async () => {
+    showPayConfirmModal.value = false
+    paying.value = true
+    err.value = {}
+    try {
+      const bookingId = await ensureBooking()
+      const { data }  = await createVNPayUrl(bookingId, locale.value)
+      if (data?.paymentUrl) {
+        window.location.href = data.paymentUrl
+      } else {
+        err.value.submit = locale.value === 'vi' ? 'Không lấy được đường link thanh toán. Vui lòng thử lại.' : 'Failed to retrieve VNPay link. Please try again.'
+      }
+    } catch (e) {
+      err.value.submit = e.response?.data?.message || (locale.value === 'vi' ? 'Lỗi kết nối. Vui lòng thử lại.' : 'Connection error. Please try again.')
+    } finally {
+      paying.value = false
     }
-  } catch (e) {
-    err.value.submit = e.response?.data?.message || (locale.value === 'vi' ? 'Lỗi kết nối. Vui lòng thử lại.' : 'Connection error. Please try again.')
-  } finally {
-    paying.value = false
-  }
+  })
 }
 
 // ─── MoMo: tạo booking → lấy URL → redirect
 const handleMoMoRedirect = async () => {
   if (!validateStep1()) { currentStep.value = 1; return }
-  paying.value = true
-  err.value = {}
-  try {
-    const bookingId = await ensureBooking()
-    const { data }  = await createMoMoUrl(bookingId)
-    if (data?.paymentUrl) {
-      window.location.href = data.paymentUrl
-    } else {
-      err.value.submit = locale.value === 'vi' ? 'Không lấy được đường link thanh toán MoMo. Vui lòng thử lại.' : 'Failed to retrieve MoMo payment link. Please try again.'
+  
+  const title = locale.value === 'vi' ? 'Xác nhận thanh toán MoMo' : 'Confirm MoMo Payment'
+  const desc = locale.value === 'vi' 
+    ? 'Bạn sẽ được chuyển hướng sang cổng MoMo để thanh toán 100% số tiền đặt phòng.' 
+    : 'You will be redirected to MoMo to pay 100% of the booking amount.'
+  
+  triggerPayConfirm(title, desc, totalAmt.value, async () => {
+    showPayConfirmModal.value = false
+    paying.value = true
+    err.value = {}
+    try {
+      const bookingId = await ensureBooking()
+      const { data }  = await createMoMoUrl(bookingId)
+      if (data?.paymentUrl) {
+        window.location.href = data.paymentUrl
+      } else {
+        err.value.submit = locale.value === 'vi' ? 'Không lấy được đường link thanh toán MoMo. Vui lòng thử lại.' : 'Failed to retrieve MoMo payment link. Please try again.'
+      }
+    } catch (e) {
+      err.value.submit = e.response?.data?.message || (locale.value === 'vi' ? 'Lỗi kết nối. Vui lòng thử lại.' : 'Connection error. Please try again.')
+    } finally {
+      paying.value = false
     }
-  } catch (e) {
-    err.value.submit = e.response?.data?.message || (locale.value === 'vi' ? 'Lỗi kết nối. Vui lòng thử lại.' : 'Connection error. Please try again.')
-  } finally {
-    paying.value = false
-  }
+  })
 }
 
-// ─── Onsite: tạo booking → hiện success
+// ─── Onsite: tạo booking → chuyển hướng thanh toán đặt cọc 20% qua VNPay
 const handleOnsiteConfirm = async () => {
   if (!validateStep1()) { currentStep.value = 1; return }
   if (!form.value.agreed) { err.value = { agreed: locale.value === 'vi' ? 'Bạn cần đồng ý với điều khoản' : 'You must agree to the terms' }; return }
-  paying.value = true
-  err.value = {}
-  try {
-    await ensureBooking()
-    await new Promise(r => setTimeout(r, 800))
-    bookingRef.value = String(Math.floor(Math.random() * 900000 + 100000))
-    success.value = true
-  } catch (e) {
-    err.value.submit = e.response?.data?.message || (locale.value === 'vi' ? 'Có lỗi xảy ra. Vui lòng thử lại.' : 'An error occurred. Please try again.')
-  } finally {
-    paying.value = false
-  }
+  
+  const title = locale.value === 'vi' ? 'Xác nhận thanh toán đặt cọc' : 'Confirm Deposit Payment'
+  const desc = locale.value === 'vi' 
+    ? 'Bạn sẽ được chuyển hướng sang cổng VNPay để thanh toán cọc trước 20% giữ phòng. 80% còn lại sẽ trả trực tiếp tại quầy lễ tân khi check-in.' 
+    : 'You will be redirected to VNPay to pay 20% deposit to secure your room. The remaining 80% will be paid at reception.'
+  
+  triggerPayConfirm(title, desc, totalAmt.value * 0.2, async () => {
+    showPayConfirmModal.value = false
+    paying.value = true
+    err.value = {}
+    try {
+      const bookingId = await ensureBooking()
+      const { data }  = await createVNPayUrl(bookingId, locale.value)
+      if (data?.paymentUrl) {
+        window.location.href = data.paymentUrl
+      } else {
+        err.value.submit = locale.value === 'vi' ? 'Không lấy được đường link thanh toán đặt cọc 20%. Vui lòng thử lại.' : 'Failed to retrieve 20% deposit payment link. Please try again.'
+      }
+    } catch (e) {
+      err.value.submit = e.response?.data?.message || (locale.value === 'vi' ? 'Lỗi kết nối. Vui lòng thử lại.' : 'Connection error. Please try again.')
+    } finally {
+      paying.value = false
+    }
+  })
 }
 
 // ─── Confetti

@@ -583,8 +583,33 @@ const fetchUserProfile = async () => {
   }
 }
 
+const formatGoogleDriveUrl = (url) => {
+  if (!url) return ''
+  const driveRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/
+  const openRegex = /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/
+  const ucRegex = /drive\.google\.com\/uc\?(?:export=view&)?id=([a-zA-Z0-9_-]+)/
+  const lhRegex = /lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/
+  
+  let fileId = null
+  if (driveRegex.test(url)) {
+    fileId = url.match(driveRegex)[1]
+  } else if (openRegex.test(url)) {
+    fileId = url.match(openRegex)[1]
+  } else if (ucRegex.test(url)) {
+    fileId = url.match(ucRegex)[1]
+  } else if (lhRegex.test(url)) {
+    fileId = url.match(lhRegex)[1]
+  }
+  
+  if (fileId) {
+    return `https://lh3.googleusercontent.com/d/${fileId}`
+  }
+  return url
+}
+
 const handleUpdateProfile = async () => {
   updatingProfile.value = true
+  profileForm.value.avatarUrl = formatGoogleDriveUrl(profileForm.value.avatarUrl)
   try {
     const res = await updateProfile({
       fullName: profileForm.value.fullName,
@@ -594,6 +619,7 @@ const handleUpdateProfile = async () => {
     toastStore.success(locale.value === 'vi' ? 'Cập nhật thông tin thành công!' : 'Profile updated successfully!')
     if (authStore.user) {
       authStore.user.fullName = res.data.fullName
+      authStore.user.avatarUrl = res.data.avatarUrl
       localStorage.setItem('user', JSON.stringify(authStore.user))
     }
   } catch (err) {
@@ -763,7 +789,7 @@ const formatPrice = (price) => {
 const fetchBookings = async () => {
   try {
     const res = await axios.get('/bookings/my')
-    bookings.value = res.data
+    bookings.value = (res.data ?? []).sort((a, b) => b.id - a.id)
   } catch (err) {
     console.error('Lấy danh sách đặt phòng thất bại:', err)
   }

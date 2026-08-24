@@ -1107,8 +1107,33 @@ const fetchUserProfile = async () => {
   }
 }
 
+const formatGoogleDriveUrl = (url) => {
+  if (!url) return ''
+  const driveRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/
+  const openRegex = /drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/
+  const ucRegex = /drive\.google\.com\/uc\?(?:export=view&)?id=([a-zA-Z0-9_-]+)/
+  const lhRegex = /lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/
+  
+  let fileId = null
+  if (driveRegex.test(url)) {
+    fileId = url.match(driveRegex)[1]
+  } else if (openRegex.test(url)) {
+    fileId = url.match(openRegex)[1]
+  } else if (ucRegex.test(url)) {
+    fileId = url.match(ucRegex)[1]
+  } else if (lhRegex.test(url)) {
+    fileId = url.match(lhRegex)[1]
+  }
+  
+  if (fileId) {
+    return `https://lh3.googleusercontent.com/d/${fileId}`
+  }
+  return url
+}
+
 const handleUpdateProfile = async () => {
   updatingProfile.value = true
+  profileForm.value.avatarUrl = formatGoogleDriveUrl(profileForm.value.avatarUrl)
   try {
     const res = await updateProfile({
       fullName: profileForm.value.fullName,
@@ -1710,19 +1735,73 @@ onUnmounted(() => {
 })
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
+const toTitleCaseVietnamese = (str) => {
+  if (!str) return str
+  return str.trim().split(/\s+/)
+            .map(word => {
+              if (!word) return ''
+              return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            })
+            .join(' ')
+}
+
+const removeDiacritics = (str) => {
+  if (!str) return ''
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+}
+
+const getMatchingCity = (query) => {
+  if (!query) return null
+  const normalized = removeDiacritics(query).trim().toLowerCase()
+  if (normalized === 'ha noi') return 'Hà Nội'
+  if (normalized === 'ho chi minh' || normalized === 'sai gon' || normalized === 'hcm') return 'Hồ Chí Minh'
+  if (normalized === 'da nang') return 'Đà Nẵng'
+  if (normalized === 'phu quoc') return 'Phú Quốc'
+  if (normalized === 'da lat') return 'Đà Lạt'
+  if (normalized === 'nha trang') return 'Nha Trang'
+  if (normalized === 'vung tau') return 'Vũng Tàu'
+  return null
+}
+
 // ===== SEARCH =====
 const handleSearch = async () => {
   loading.value = true
   try {
+    const query = search.value.city ? search.value.city.trim() : ''
+    const matchedCity = getMatchingCity(query)
+    
+    // Nếu query khớp với một tỉnh/thành phố lớn đã biết, ta truyền thẳng city cho API
+    // Nếu không (hoặc trống), ta gọi API không lọc city, sau đó lọc theo tên/địa chỉ/tỉnh ở client
+    const cityParam = matchedCity || undefined
+    
     const res = await getRooms({
-      city: search.value.city || undefined,
+      city: cityParam,
       checkIn: search.value.checkIn || undefined,
       checkOut: search.value.checkOut || undefined,
       maxGuests: search.value.guests + search.value.children,
       page: 0,
       size: 1000
     })
-    rooms.value  = res.data.content ?? res.data
+    
+    let allRooms = res.data.content ?? res.data
+    
+    // Nếu query không trống và không khớp với tỉnh thành phố lớn nào (là tên ks hoặc địa chỉ cụ thể)
+    if (query && !matchedCity) {
+      const normalizedQuery = removeDiacritics(query)
+      allRooms = allRooms.filter(room => {
+        const nameMatch = room.name ? removeDiacritics(room.name).includes(normalizedQuery) : false
+        const addrMatch = room.address ? removeDiacritics(room.address).includes(normalizedQuery) : false
+        const cityMatch = room.city ? removeDiacritics(room.city).includes(normalizedQuery) : false
+        return nameMatch || addrMatch || cityMatch
+      })
+    }
+    
+    rooms.value  = allRooms
     searched.value = true
     searchPage.value = 1
     clearFilters()

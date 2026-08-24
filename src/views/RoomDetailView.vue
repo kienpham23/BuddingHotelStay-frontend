@@ -230,6 +230,16 @@
                   </div>
                 </div>
                 <p class="review-content">"{{ rev.comment }}"</p>
+                
+                <!-- Phản hồi của Host -->
+                <div v-if="rev.hostReply" class="host-reply-box" style="margin-left: 2.5rem; margin-top: 10px; background: #f8fafc; padding: 12px 16px; border-left: 4px solid #3b82f6; border-radius: 6px; text-align: left;">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <div style="background: #3b82f6; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; flex-shrink: 0;">H</div>
+                    <span style="font-size: 12px; font-weight: 700; color: #1e293b;">{{ locale === 'vi' ? 'Phản hồi của chủ phòng' : 'Response from Host' }}</span>
+                    <small style="font-size: 11px; color: #64748b; margin-left: auto;">{{ formatDate(rev.repliedAt) }}</small>
+                  </div>
+                  <p style="font-size: 13px; color: #475569; margin: 0; font-style: italic; line-height: 1.45;">"{{ rev.hostReply }}"</p>
+                </div>
               </div>
             </div>
             <div class="no-reviews" v-else>
